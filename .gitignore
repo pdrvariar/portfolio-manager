@@ -1,0 +1,71 @@
+# Dependencies
+/vendor/
+/node_modules/
+/composer.lock
+/package-lock.json
+/yarn.lock
+
+# Environment
+/.env
+/.env.local
+/.env.testing
+/.env.production
+
+# Logs
+/storage/logs/*.log
+*.log
+logs/
+*.log.*
+
+# Cache
+/storage/framework/cache/
+/storage/framework/views/
+cache/
+*.cache
+
+# Database
+*.sqlite
+*.sqlite-journal
+*.db
+/docker/mysql/data/
+
+# Uploads
+/public/uploads/
+/storage/app/public/
+
+# Backups
+backups/*.sql
+backups/*.tar.gz
+
+# IDE
+/.idea
+/.vscode
+/.vs
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+/coverage/
+.phpunit.result.cache
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+temp/
+
+# Assets
+/public/assets/build/
+
+# Session files
+/storage/framework/sessions/
+
+# Debug
+debug.log
