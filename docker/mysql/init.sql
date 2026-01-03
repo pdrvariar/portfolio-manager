@@ -1,114 +1,106 @@
+-- Banco de dados
+CREATE DATABASE IF NOT EXISTS portfolio_db;
+USE portfolio_db;
+
 -- Tabela de usuários
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    email_verified_at TIMESTAMP NULL,
-    verification_token VARCHAR(255) NULL,
-    reset_token VARCHAR(255) NULL,
-    reset_token_expires_at TIMESTAMP NULL,
     is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
--- Tabela de ativos
-CREATE TABLE IF NOT EXISTS assets (
+-- Tabela de ativos do sistema (padrão)
+CREATE TABLE system_assets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(150) NOT NULL,
-    type ENUM('STOCK', 'BOND', 'CRYPTO', 'COMMODITY', 'CURRENCY', 'INDEX') NOT NULL,
-    currency VARCHAR(3) DEFAULT 'BRL',
-    is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    name VARCHAR(100) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    asset_type VARCHAR(20) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- Tabela de histórico de preços
-CREATE TABLE IF NOT EXISTS asset_history (
+-- Tabela de dados históricos dos ativos
+CREATE TABLE asset_historical_data (
     id INT PRIMARY KEY AUTO_INCREMENT,
     asset_id INT NOT NULL,
-    date DATE NOT NULL,
-    price DECIMAL(20, 8) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
-    INDEX idx_asset_date (asset_id, date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `year_month` DATE NOT NULL, 
+    `value` DECIMAL(20, 10) NOT NULL,
+    FOREIGN KEY (asset_id) REFERENCES system_assets(id) ON DELETE CASCADE,
+    INDEX idx_asset_date (asset_id, `year_month`)
+);
 
 -- Tabela de portfólios
-CREATE TABLE IF NOT EXISTS portfolios (
+CREATE TABLE portfolios (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
-    initial_capital DECIMAL(15, 2) DEFAULT 100000.00,
+    initial_capital DECIMAL(15, 2) NOT NULL,
     start_date DATE NOT NULL,
-    end_date DATE NULL,
-    rebalance_frequency ENUM('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL', 'NEVER') DEFAULT 'MONTHLY',
+    end_date DATE,
+    rebalance_frequency VARCHAR(10) DEFAULT 'monthly',
     output_currency VARCHAR(3) DEFAULT 'BRL',
-    is_clone BOOLEAN DEFAULT FALSE,
+    is_system_default BOOLEAN DEFAULT FALSE,
     cloned_from INT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (cloned_from) REFERENCES portfolios(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
--- Tabela de alocação de ativos no portfólio
-CREATE TABLE IF NOT EXISTS portfolio_allocations (
+-- Tabela de alocação dos ativos no portfólio
+CREATE TABLE portfolio_assets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
     asset_id INT NOT NULL,
     allocation_percentage DECIMAL(10, 8) NOT NULL,
-    performance_factor DECIMAL(5, 2) DEFAULT 1.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    performance_factor DECIMAL(10, 4) DEFAULT 1.0,
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE,
-    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
+    FOREIGN KEY (asset_id) REFERENCES system_assets(id),
     UNIQUE KEY unique_portfolio_asset (portfolio_id, asset_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
--- Tabela de simulações
-CREATE TABLE IF NOT EXISTS simulations (
+-- Tabela de resultados de simulação
+CREATE TABLE simulation_results (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
-    user_id INT NOT NULL,
-    status ENUM('PENDING', 'RUNNING', 'COMPLETED', 'ERROR') DEFAULT 'PENDING',
-    execution_id VARCHAR(36) UNIQUE NOT NULL,
-    result_data JSON,
-    charts_html TEXT,
-    metrics JSON,
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP NULL,
-    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_execution_id (execution_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabela de histórico de câmbio
-CREATE TABLE IF NOT EXISTS exchange_rates (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    base_currency VARCHAR(3) NOT NULL,
-    target_currency VARCHAR(3) NOT NULL,
-    date DATE NOT NULL,
-    rate DECIMAL(20, 8) NOT NULL,
+    simulation_date DATE NOT NULL,
+    total_value DECIMAL(15, 2) NOT NULL,
+    annual_return DECIMAL(10, 4),
+    volatility DECIMAL(10, 4),
+    max_drawdown DECIMAL(10, 4),
+    sharpe_ratio DECIMAL(10, 4),
+    chart_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_rate_date (base_currency, target_currency, date),
-    INDEX idx_date_currency (date, base_currency, target_currency)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
+);
 
--- Inserir dados de exemplo
-INSERT INTO assets (code, name, type, currency, is_default) VALUES
-('BTC-USD', 'Bitcoin', 'CRYPTO', 'USD', true),
-('BVSP-IBOVESPA', 'Ibovespa', 'INDEX', 'BRL', true),
-('GSPC-SP500', 'S&P 500', 'INDEX', 'USD', true),
-('IRX-RF-USA-CURTO-PRAZO', 'US Short Term Bond', 'BOND', 'USD', true),
-('SELIC_MENSAL', 'SELIC', 'BOND', 'BRL', true),
-('XAU-OURO', 'Gold', 'COMMODITY', 'USD', true),
-('USD-BRL', 'US Dollar', 'CURRENCY', 'BRL', true);
+-- Tabela de resultados detalhados por ativo
+CREATE TABLE simulation_asset_details (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    simulation_id INT NOT NULL,
+    asset_id INT NOT NULL,
+    year INT NOT NULL,
+    annual_return DECIMAL(10, 4),
+    contribution DECIMAL(10, 4),
+    FOREIGN KEY (simulation_id) REFERENCES simulation_results(id) ON DELETE CASCADE,
+    FOREIGN KEY (asset_id) REFERENCES system_assets(id)
+);
 
--- Inserir usuário admin padrão (senha: admin123)
-INSERT INTO users (name, email, password, is_admin) VALUES
-('Administrador', 'admin@portfolio.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', true);
+-- Inserir usuário administrador padrão (senha: admin123)
+INSERT INTO users (username, email, password, is_admin) 
+VALUES ('admin', 'admin@portfolio.com', '$2y$10$8S84fVv89f.p85vLh4v.uO6v8XvVv8vVv8vVv8vVv8vVv8vVv8vVv', TRUE);
+
+-- Inserir alguns ativos padrão
+INSERT INTO system_assets (code, name, currency, asset_type) VALUES
+('BTC-USD', 'Bitcoin', 'USD', 'COTACAO'),
+('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO'),
+('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO'),
+('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL'),
+('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL'),
+('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO');

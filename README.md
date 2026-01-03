@@ -1,16 +1,30 @@
-# Portfolio Manager - PHP
+# Sistema de Backtest de Portfólios
 
-Sistema de gerenciamento e simulação de portfólios de investimentos.
+Sistema web para simulação e análise de portfólios de investimentos.
 
-## Requisitos
-- Docker Desktop
-- PHP 8.2+
-- MySQL 8.0+
+## Funcionalidades
+
+- ✅ Controle de usuários (login, registro)
+- ✅ CRUD de portfólios pessoais
+- ✅ Portfólios padrão do sistema (apenas admin)
+- ✅ Clone de portfólios
+- ✅ Backtest com dados históricos
+- ✅ Gráficos de performance e composição
+- ✅ Métricas de risco e retorno
+- ✅ Docker para desenvolvimento
+
+## Tecnologias
+
+- PHP 8.2
+- MySQL 8.0
+- Bootstrap 5
+- Chart.js
+- Docker
 - Composer
 
 ## Instalação
 
-1. Clone o repositório:
+1. **Clone o repositório:**
 ```bash
-git clone https://github.com/seu-usuario/portfolio-manager.git
-cd portfolio-manager
+git clone [url-do-repositorio]
+cd portfolio-backtest
