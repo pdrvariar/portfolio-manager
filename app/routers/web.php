@@ -27,6 +27,7 @@ function setupRoutes(Router $router) {
     
     // Rotas administrativas
     $router->add('admin/dashboard', ['controller' => 'admin', 'action' => 'dashboard']);
+    $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);
     $router->add('admin/users', ['controller' => 'admin', 'action' => 'users']);
     $router->add('admin/assets', ['controller' => 'admin', 'action' => 'assets']);
     $router->add('admin/create-default-portfolios', ['controller' => 'admin', 'action' => 'createDefaultPortfolios']);

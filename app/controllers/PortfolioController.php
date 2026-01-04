@@ -13,10 +13,14 @@ class PortfolioController {
     public function index() {
         Auth::checkAuthentication();
         
-        $userId = $_SESSION['user_id'];
-        $portfolios = $this->portfolioModel->getUserPortfolios($userId);
+        // Busca dados da sessão ou BD
+        $user = [
+            'name'  => $_SESSION['user_name'] ?? $_SESSION['username'] ?? 'Usuário',
+            'email' => $_SESSION['user_email'] ?? 'admin@exemplo.com',
+            'role'  => ($_SESSION['is_admin'] ?? false) ? 'Administrador' : 'Investidor'
+        ];
         
-        require_once __DIR__ . '/../views/portfolio/index.php';
+        require_once __DIR__ . '/../views/profile/index.php';
     }
     
     public function create() {
