@@ -97,7 +97,7 @@ $assets = $assetModel->getAll();
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="number" class="form-control" id="assetAllocation" step="0.01" min="0" max="100" placeholder="%">
+                                        <input type="number" class="form-control" id="assetAllocation" step="any" min="0" max="100" placeholder="%">
                                     </td>
                                     <td>
                                         <input type="number" class="form-control" id="assetFactor" step="0.01" min="0.1" max="10" value="1.00">
@@ -188,7 +188,7 @@ function updateAssetsTable() {
             <td>${asset.name}</td>
             <td>
                 <input type="number" class="form-control allocation-input" 
-                       value="${asset.allocation}" step="0.01" 
+                       value="${asset.allocation}" step="any" 
                        onchange="updateAssetAllocation(${asset.id}, this.value)">
             </td>
             <td>
@@ -221,12 +221,12 @@ function updateAssetFactor(id, value) {
 
 function updateTotal() {
     const total = assets.reduce((sum, asset) => sum + asset.allocation, 0);
-    document.getElementById('totalAllocation').textContent = total.toFixed(2);
+    document.getElementById('totalAllocation').textContent = total.toFixed(5);
     
     const warning = document.getElementById('allocationWarning');
     const submitBtn = document.getElementById('submitBtn');
     
-    if (Math.abs(total - 100) < 0.01) {
+    if (Math.abs(total - 100) < 0.00001) {
         warning.style.display = 'none';
         submitBtn.disabled = false;
     } else {
@@ -246,7 +246,7 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
         const allocationInput = document.createElement('input');
         allocationInput.type = 'hidden';
         allocationInput.name = `assets[${index}][allocation]`;
-        allocationInput.value = asset.allocation / 100; // Converter para decimal
+        allocationInput.value = asset.allocation;
         
         const factorInput = document.createElement('input');
         factorInput.type = 'hidden';

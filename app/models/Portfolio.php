@@ -133,17 +133,16 @@ class Portfolio {
     public function updateAssets($portfolioId, $assets) {
         // 1. Limpa as alocações antigas
         $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
-        $stmtDelete = $this->db->prepare($sqlDelete);
-        $stmtDelete->execute([$portfolioId]);
+        $this->db->prepare($sqlDelete)->execute([$portfolioId]);
         
-        // 2. Insere todas as alocações enviadas pelo formulário (antigas e novas)
+        // 2. Insere as novas alocações
         foreach ($assets as $assetData) {
             $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
                     VALUES (?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
             
-            // Converte 39% para 0.39000000 para o banco DECIMAL(10,8)
-            $allocation = floatval($assetData['allocation']) / 100;
+            // CORREÇÃO: Salvar o valor real (ex: 50) sem dividir por 100
+            $allocation = floatval($assetData['allocation']); 
             
             $stmt->execute([
                 $portfolioId,

@@ -43,8 +43,8 @@ class BacktestService {
     }
 
     private function getPortfolioAssetsData($id) {
-        // ADICIONADO sa.name à consulta
-        $sql = "SELECT pa.*, sa.name, sa.currency, sa.code 
+        // ADICIONADO sa.asset_type e sa.currency
+        $sql = "SELECT pa.*, sa.name, sa.currency, sa.code, sa.asset_type 
                 FROM portfolio_assets pa 
                 JOIN system_assets sa ON pa.asset_id = sa.id 
                 WHERE pa.portfolio_id = ?";
@@ -52,6 +52,23 @@ class BacktestService {
         $stmt->execute([$id]);
         return $stmt->fetchAll();
     }
+
+    // Novo método para buscar os dados de câmbio
+    private function getExchangeRateData($start, $end) {
+        $sql = "SELECT reference_date, price FROM asset_historical_data ahd
+                JOIN system_assets sa ON ahd.asset_id = sa.id
+                WHERE sa.code = 'USD-BRL' AND reference_date BETWEEN ? AND ?
+                ORDER BY reference_date ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$start, $end]);
+        $results = $stmt->fetchAll();
+        
+        $fxData = [];
+        foreach ($results as $row) {
+            $fxData[$row['reference_date']] = (float)$row['price'];
+        }
+        return $fxData;
+    }    
 
     private function loadHistoricalData($assets, $start, $end) {
         $data = [];
@@ -70,45 +87,72 @@ class BacktestService {
         return $data;
     }
 
+
     private function executeBacktest($portfolio, $assets, $historicalData) {
-        $initialCapital = $portfolio['initial_capital'];
+        $initialCapital = (float)$portfolio['initial_capital'];
+        $portfolioCurrency = $portfolio['output_currency']; // BRL ou USD
         $rebalanceFreq = $this->parseRebalanceFrequency($portfolio['rebalance_frequency']);
-        $results = [];
-        $quantities = [];
-        $dates = array_keys($historicalData);
         
-        // Alocação Inicial
+        // Carrega dados de câmbio se houver mistura de moedas
+        $fxData = $this->getExchangeRateData($portfolio['start_date'], $portfolio['end_date']);
+        
+        $results = [];
+        $currentBalances = [];
+        $dates = array_keys($historicalData);
+        $lastPrices = [];
+        $lastFxRate = null;
+
+        // Inicialização do saldo
         foreach ($assets as $asset) {
-            // Pega o preço da primeira data disponível nos dados carregados
-            $price = $historicalData[$dates[0]][$asset['asset_id']] ?? 0;
-            
-            // Se não encontrar preço, a simulação não pode continuar para este ativo
-            if ($price <= 0) {
-                throw new Exception("Preço não encontrado para o ativo {$asset['code']} na data de início.");
-            }
-            
-            $targetValue = $initialCapital * $asset['allocation_percentage'];
-            $quantities[$asset['asset_id']] = $targetValue / $price;
+            $currentBalances[$asset['asset_id']] = $initialCapital * ($asset['allocation_percentage'] / 100);
         }
 
         foreach ($dates as $index => $date) {
-            $monthPrices = $historicalData[$date];
+            $monthData = $historicalData[$date];
+            $currentFxRate = $fxData[$date] ?? null;
             $totalMonthValue = 0;
             $assetValues = [];
             
             foreach ($assets as $asset) {
-                $price = $monthPrices[$asset['asset_id']] ?? 0;
-                $val = $quantities[$asset['asset_id']] * $price * ($asset['performance_factor'] ?? 1);
-                $assetValues[$asset['asset_id']] = $val;
-                $totalMonthValue += $val;
+                $assetId = $asset['asset_id'];
+                $dbValue = (float)($monthData[$assetId] ?? 0);
+                $factor = (float)($asset['performance_factor'] ?? 1.0);
+                $monthlyReturn = 0;
+
+                // 1. Calcula o retorno na moeda original do ativo
+                if ($asset['asset_type'] === 'TAXA_MENSAL') {
+                    $monthlyReturn = ($dbValue * $factor) / 100;
+                } else {
+                    if (isset($lastPrices[$assetId]) && $lastPrices[$assetId] > 0) {
+                        $monthlyReturn = (($dbValue / $lastPrices[$assetId]) - 1) * $factor;
+                    }
+                    $lastPrices[$assetId] = $dbValue;
+                }
+
+                // 2. APLICA O CÂMBIO (Se Moedas forem diferentes)
+                // Se Portfólio é BRL e Ativo é USD: aplica a variação do Dólar
+                if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $lastFxRate > 0 && $currentFxRate > 0) {
+                    $fxVariation = ($currentFxRate / $lastFxRate) - 1;
+                    // Retorno Total = (1 + retorno_ativo) * (1 + variação_cambio) - 1
+                    $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVariation) - 1;
+                }
+                // Se Portfólio é USD e Ativo é BRL: inverte o câmbio
+                elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $lastFxRate > 0 && $currentFxRate > 0) {
+                    $fxVariation = ($lastFxRate / $currentFxRate) - 1;
+                    $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVariation) - 1;
+                }
+
+                $currentBalances[$assetId] *= (1 + $monthlyReturn);
+                $assetValues[$assetId] = $currentBalances[$assetId];
+                $totalMonthValue += $currentBalances[$assetId];
             }
             
-            // Lógica de Rebalanceamento
+            $lastFxRate = $currentFxRate;
+
+            // Rebalanceamento (mantém alocação original na moeda do portfólio)
             if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
                 foreach ($assets as $asset) {
-                    $price = $monthPrices[$asset['asset_id']] ?? 1;
-                    $targetValue = $totalMonthValue * $asset['allocation_percentage'];
-                    $quantities[$asset['asset_id']] = $targetValue / $price;
+                    $currentBalances[$asset['asset_id']] = $totalMonthValue * ($asset['allocation_percentage'] / 100);
                 }
             }
             
@@ -116,7 +160,7 @@ class BacktestService {
         }
         return $results;
     }
-
+    
     private function calculateMetrics($results) {
         $values = array_column($results, 'total_value');
         $initial = $values[0];

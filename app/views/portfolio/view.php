@@ -121,7 +121,7 @@
                                 <?php foreach ($assets as $asset): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($asset['name']); ?></td>
-                                    <td><?php echo number_format($asset['allocation_percentage'] * 100, 2); ?>%</td>
+                                    <td><?php echo number_format($asset['allocation_percentage'], 5); ?>%</td>
                                     <td><?php echo $asset['currency']; ?></td>
                                     <td><?php echo number_format($asset['performance_factor'], 2); ?></td>
                                 </tr>

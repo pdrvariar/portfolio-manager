@@ -144,7 +144,7 @@ let assets = [
         id: <?php echo $asset['asset_id'] ?? $asset['id']; ?>, 
         asset_id: <?php echo $asset['asset_id'] ?? $asset['id']; ?>,
         name: "<?php echo htmlspecialchars($asset['name']); ?>",
-        allocation: <?php echo (float)($asset['allocation_percentage'] * 100); ?>,
+        allocation: <?php echo number_format($asset['allocation_percentage'], 5, '.', ''); ?>,
         factor: <?php echo (float)$asset['performance_factor']; ?>
     },
     <?php endforeach; ?>
@@ -217,7 +217,7 @@ function updateTable() {
                 <td>${asset.name}</td>
                 <td>
                     <input type="number" name="assets[${asset.asset_id}][allocation]" 
-                        value="${asset.allocation}" class="form-control form-control-sm"
+                        value="${asset.allocation}" step="any" class="form-control form-control-sm"
                         oninput="updateAssetData(${asset.asset_id}, 'allocation', this.value)">
                 </td>
                 <td>
@@ -233,7 +233,7 @@ function updateTable() {
         `;
     });
 
-    totalSpan.innerText = total.toFixed(2);
+    totalSpan.innerText = total.toFixed(5);
     checkTotal(total);
 }
 
@@ -250,13 +250,13 @@ function updateAssetData(assetId, field, value) {
         let total = 0;
         assets.forEach(a => total += a.allocation);
         
-        document.getElementById('totalAllocation').innerText = total.toFixed(2);
+        document.getElementById('totalAllocation').innerText = total.toFixed(5);
         checkTotal(total);
     }
 }
 
 function checkTotal(total) {
-    const isCorrect = total.toFixed(2) === "100.00";
+    const isCorrect = total.toFixed(5) === "100.00000";
     const submitBtn = document.getElementById('submitBtn');
     
     // O botão só habilita se os ativos JÁ ADICIONADOS somarem 100%
@@ -275,12 +275,12 @@ function calculateLiveTotal() {
     let finalTotal = totalInList + typingValue;
     
     // Atualiza apenas o texto na tela
-    document.getElementById('totalAllocation').innerText = finalTotal.toFixed(2);
+    document.getElementById('totalAllocation').innerText = finalTotal.toFixed(5);
     
     // Mostra o aviso se a soma temporária não for 100
     const warning = document.getElementById('allocationWarning');
     if (warning) {
-        warning.style.display = (finalTotal.toFixed(2) === "100.00") ? 'none' : 'block';
+        warning.style.display = (finalTotal.toFixed(5) === "100.00000") ? 'none' : 'block';
     }
     
 }
