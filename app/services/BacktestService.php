@@ -23,7 +23,9 @@ class BacktestService {
         $results = $this->executeBacktest($portfolio, $assets, $historicalData);
         $metrics = $this->calculateMetrics($results);
         $chartData = $this->generateCharts($results, $assets);
-        
+
+        $chartData['audit_log'] = $results;
+
         $simulationId = $this->saveResults($portfolioId, $metrics, $chartData);
         $this->saveAssetDetails($simulationId, $results, $assets);
         
@@ -149,18 +151,26 @@ class BacktestService {
             
             $lastFxRate = $currentFxRate;
 
-            // Rebalanceamento (mantém alocação original na moeda do portfólio)
+            // 3. Lógica de Rebalanceamento
+            $wasRebalanced = false; // Flag para auditoria
             if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
+                $wasRebalanced = true;
                 foreach ($assets as $asset) {
-                    $currentBalances[$asset['asset_id']] = $totalMonthValue * ($asset['allocation_percentage'] / 100);
+                    $assetId = $asset['asset_id'];
+                    $allocationFactor = (float)$asset['allocation_percentage'] / 100;
+                    $currentBalances[$assetId] = $totalMonthValue * $allocationFactor;
                 }
             }
             
-            $results[$date] = ['total_value' => $totalMonthValue, 'asset_values' => $assetValues];
+            $results[$date] = [
+                'total_value' => $totalMonthValue, 
+                'asset_values' => $assetValues,
+                'rebalanced' => $wasRebalanced // Guardamos o estado para a tabela
+            ];
         }
         return $results;
     }
-    
+
     private function calculateMetrics($results) {
         $values = array_column($results, 'total_value');
         $initial = $values[0];
