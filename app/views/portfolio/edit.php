@@ -1,10 +1,6 @@
 <?php
 $title = 'Editar Portfólio';
 ob_start();
-
-$assetModel = new Asset();
-$allAssets = $assetModel->getAll();
-$portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
 ?>
 <div class="row">
     <div class="col-md-8 mx-auto">
@@ -13,7 +9,7 @@ $portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
                 <h4 class="mb-0">Editar Portfólio</h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="/portfolio/update/<?php echo $portfolio['id']; ?>" id="portfolioForm">
+                <form method="POST" action="/index.php?url=portfolio/update/<?php echo $portfolio['id']; ?>" id="portfolioForm">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -93,7 +89,8 @@ $portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
                                             <?php foreach ($allAssets as $asset): 
                                                 $alreadyAdded = false;
                                                 foreach ($portfolioAssets as $pa) {
-                                                    if ($pa['id'] == $asset['id']) {
+                                                    // CORREÇÃO: Comparar asset_id, não o id da alocação
+                                                    if ($pa['asset_id'] == $asset['id']) { 
                                                         $alreadyAdded = true;
                                                         break;
                                                     }
@@ -104,10 +101,10 @@ $portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
                                                     </option>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>
-                                        </select>
+                                        </select>                                    
                                     </td>
                                     <td>
-                                        <input type="number" class="form-control" id="assetAllocation" step="0.01" min="0" max="100" placeholder="%">
+                                        <input type="number" class="form-control" id="assetAllocation" step="0.01" min="0" max="100" placeholder="%" oninput="calculateLiveTotal()">
                                     </td>
                                     <td>
                                         <input type="number" class="form-control" id="assetFactor" step="0.01" min="0.1" max="10" value="1.00">
@@ -130,7 +127,7 @@ $portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
                     </div>
                     
                     <div class="d-flex justify-content-between">
-                        <a href="/portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-secondary">Cancelar</a>
+                        <a href="index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-secondary">Cancelar</a>
                         <button type="submit" class="btn btn-primary" id="submitBtn">Salvar Alterações</button>
                     </div>
                 </form>
@@ -143,18 +140,153 @@ $portfolioAssets = $portfolioModel->getPortfolioAssets($portfolio['id']);
 let assets = [
     <?php foreach ($portfolioAssets as $asset): ?>
     {
-        id: <?php echo $asset['id']; ?>,
-        asset_id: <?php echo $asset['asset_id']; ?>,
+        // Use asset_id para ambos se houver dúvida, para garantir consistência
+        id: <?php echo $asset['asset_id'] ?? $asset['id']; ?>, 
+        asset_id: <?php echo $asset['asset_id'] ?? $asset['id']; ?>,
         name: "<?php echo htmlspecialchars($asset['name']); ?>",
-        allocation: <?php echo $asset['allocation_percentage'] * 100; ?>,
-        factor: <?php echo $asset['performance_factor']; ?>
+        allocation: <?php echo (float)($asset['allocation_percentage'] * 100); ?>,
+        factor: <?php echo (float)$asset['performance_factor']; ?>
     },
     <?php endforeach; ?>
 ];
 
 let nextId = assets.length > 0 ? Math.max(...assets.map(a => a.id)) + 1 : 1;
 
-// Resto do JavaScript igual ao create.php...
+// FUNÇÃO CRUCIAL: Executar ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    updateTable();
+});
+
+// app/views/portfolio/edit.php
+
+function addAsset() {
+    const select = document.getElementById('assetSelect');
+    const allocationInput = document.getElementById('assetAllocation');
+    const factorInput = document.getElementById('assetFactor');
+    
+    // Validação básica
+    if (!select.value || !allocationInput.value) {
+        alert("Selecione um ativo e informe a alocação.");
+        return;
+    }
+
+    const assetId = parseInt(select.value);
+    const assetName = select.options[select.selectedIndex].getAttribute('data-name');
+
+    // Verifica se o ativo já está na lista para evitar duplicidade
+    if (assets.find(a => a.asset_id === assetId)) {
+        alert("Este ativo já foi adicionado.");
+        return;
+    }
+
+    // Adiciona ao array JavaScript
+    assets.push({
+        id: nextId++,
+        asset_id: assetId,
+        name: assetName,
+        allocation: parseFloat(allocationInput.value),
+        factor: parseFloat(factorInput.value) || 1.0
+    });
+
+    // Limpa os campos de inserção
+    select.value = '';
+    allocationInput.value = '';
+    factorInput.value = '1.00';
+
+    // Atualiza a interface
+    updateTable();
+    calculateLiveTotal(); // Recalcula o total para validar o botão de salvar
+}
+
+function removeAsset(id) {
+    assets = assets.filter(a => a.id !== id);
+    updateTable();
+}
+
+function updateTable() {
+    const tbody = document.getElementById('assetsBody');
+    const totalSpan = document.getElementById('totalAllocation');
+    let total = 0;
+    
+    tbody.innerHTML = '';
+    
+    assets.forEach(asset => {
+        total += asset.allocation;
+        tbody.innerHTML += `
+            <tr>
+                <td>${asset.name}</td>
+                <td>
+                    <input type="number" name="assets[${asset.asset_id}][allocation]" 
+                        value="${asset.allocation}" class="form-control form-control-sm"
+                        oninput="updateAssetData(${asset.asset_id}, 'allocation', this.value)">
+                </td>
+                <td>
+                    <input type="number" name="assets[${asset.asset_id}][performance_factor]" 
+                        value="${asset.factor}" class="form-control form-control-sm"
+                        oninput="updateAssetData(${asset.asset_id}, 'factor', this.value)">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeAsset(${asset.id})">x</button>
+                    <input type="hidden" name="assets[${asset.asset_id}][asset_id]" value="${asset.asset_id}">
+                </td>
+            </tr>
+        `;
+    });
+
+    totalSpan.innerText = total.toFixed(2);
+    checkTotal(total);
+}
+
+function updateAssetData(assetId, field, value) {
+    const asset = assets.find(a => a.asset_id == assetId);
+    if (asset) {
+        if (field === 'allocation') {
+            asset.allocation = parseFloat(value) || 0;
+        } else if (field === 'factor') {
+            asset.factor = parseFloat(value) || 0;
+        }
+        
+        // Recalcula o total sem redesenhar a tabela toda
+        let total = 0;
+        assets.forEach(a => total += a.allocation);
+        
+        document.getElementById('totalAllocation').innerText = total.toFixed(2);
+        checkTotal(total);
+    }
+}
+
+function checkTotal(total) {
+    const isCorrect = total.toFixed(2) === "100.00";
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // O botão só habilita se os ativos JÁ ADICIONADOS somarem 100%
+    submitBtn.disabled = !isCorrect;
+}
+
+
+function calculateLiveTotal() {
+    // Soma o que já está na lista
+    let totalInList = assets.reduce((sum, asset) => sum + asset.allocation, 0);
+    
+    // Pega o valor que você está digitando no campo de "novo ativo"
+    const newAllocationInput = document.getElementById('assetAllocation');
+    let typingValue = parseFloat(newAllocationInput.value) || 0;
+    
+    let finalTotal = totalInList + typingValue;
+    
+    // Atualiza apenas o texto na tela
+    document.getElementById('totalAllocation').innerText = finalTotal.toFixed(2);
+    
+    // Mostra o aviso se a soma temporária não for 100
+    const warning = document.getElementById('allocationWarning');
+    if (warning) {
+        warning.style.display = (finalTotal.toFixed(2) === "100.00") ? 'none' : 'block';
+    }
+    
+}
+
+
+
 </script>
 <?php
 $content = ob_get_clean();

@@ -24,12 +24,10 @@ class ChartService {
     }
     
     public function createCompositionChart($results, $assets) {
-        // Agrupar por ano
         $annualComposition = [];
         
         foreach ($results as $date => $data) {
             $year = date('Y', strtotime($date));
-            
             if (!isset($annualComposition[$year])) {
                 $annualComposition[$year] = [];
             }
@@ -37,7 +35,8 @@ class ChartService {
             $totalValue = $data['total_value'];
             
             foreach ($assets as $asset) {
-                $assetId = $asset['id'];
+                // CORREÇÃO: Use asset_id em vez de id
+                $assetId = $asset['asset_id']; 
                 $assetName = $asset['name'];
                 
                 $value = $data['asset_values'][$assetId] ?? 0;
@@ -49,27 +48,31 @@ class ChartService {
                 
                 $annualComposition[$year][$assetName] = $percentage;
             }
-        }
-        
+        }        
         // Preparar dados para Chart.js
         $years = array_keys($annualComposition);
         $assetNames = array_keys($annualComposition[$years[0]] ?? []);
         
         $datasets = [];
-        $colors = $this->generateColors(count($assetNames));
+        $defaultColors = [
+            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
+            '#20c997', '#fd7e14', '#e83e8c', '#6c757d', '#17a2b8'
+        ];
         
         foreach ($assetNames as $index => $assetName) {
             $data = [];
-            
             foreach ($years as $year) {
                 $data[] = $annualComposition[$year][$assetName] ?? 0;
             }
             
+            // CORREÇÃO: Tenta pegar a cor fixa, senão usa a paleta padrão
+            $color = $this->getAssetColor($assetName) ?? ($defaultColors[$index % count($defaultColors)]);
+            
             $datasets[] = [
                 'label' => $assetName,
                 'data' => $data,
-                'backgroundColor' => $colors[$index],
-                'borderColor' => $colors[$index],
+                'backgroundColor' => $color,
+                'borderColor' => $color,
                 'borderWidth' => 1
             ];
         }
@@ -78,49 +81,51 @@ class ChartService {
             'labels' => $years,
             'datasets' => $datasets
         ];
-    }
-    
+    }    
+
+    private function getAssetColor($assetName) {
+        // Mapeamento de cores padronizadas do mercado financeiro
+        $colorMap = [
+            'Bitcoin' => '#F7931A',         // Laranja Bitcoin
+            'BTC-USD' => '#F7931A',
+            'Ibovespa' => '#004b8d',        // Azul B3
+            'BVSP-IBOVESPA' => '#004b8d',
+            'Taxa Selic' => '#28a745',      // Verde Selic
+            'SELIC' => '#28a745',
+            'S&P 500' => '#5b9bd5',         // Azul claro
+            'GSPC-SP500' => '#5b9bd5',
+            'Dólar' => '#85bb65',           // Verde Dólar
+            'USD-BRL' => '#85bb65',
+            'Ethereum' => '#627EEA'         // Roxo Ethereum
+        ];
+
+        // Se o ativo for conhecido, retorna a cor fixa, senão usa uma cor aleatória
+        return $colorMap[$assetName] ?? null;
+    }    
+
     public function createAnnualReturnsChart($results) {
-        // Agrupar por ano
         $annualReturns = [];
-        
-        $years = [];
-        $currentYear = null;
-        $yearStartValue = null;
-        
+        $dataByYear = [];
+
+        // Agrupa os valores mensais por ano
         foreach ($results as $date => $data) {
             $year = date('Y', strtotime($date));
+            $dataByYear[$year][] = $data['total_value'];
+        }
+
+        foreach ($dataByYear as $year => $values) {
+            $startValue = $values[0];
+            $endValue = end($values);
             
-            if ($year !== $currentYear) {
-                if ($currentYear !== null && $yearStartValue !== null) {
-                    $yearEndValue = $data['total_value'];
-                    $return = (($yearEndValue - $yearStartValue) / $yearStartValue) * 100;
-                    $annualReturns[$currentYear] = $return;
-                }
-                
-                $currentYear = $year;
-                $yearStartValue = $data['total_value'];
+            if ($startValue > 0) {
+                $annualReturns[$year] = (($endValue - $startValue) / $startValue) * 100;
             }
         }
-        
-        // Último ano
-        if ($currentYear !== null && $yearStartValue !== null) {
-            end($results);
-            $lastData = current($results);
-            $yearEndValue = $lastData['total_value'];
-            $return = (($yearEndValue - $yearStartValue) / $yearStartValue) * 100;
-            $annualReturns[$currentYear] = $return;
-        }
-        
-        // Preparar dados
+
         $labels = array_keys($annualReturns);
         $returns = array_values($annualReturns);
-        $colors = [];
-        
-        foreach ($returns as $return) {
-            $colors[] = $return >= 0 ? '#28a745' : '#dc3545';
-        }
-        
+        $colors = array_map(fn($r) => $r >= 0 ? '#28a745' : '#dc3545', $returns);
+
         return [
             'labels' => $labels,
             'datasets' => [[

@@ -5,10 +5,13 @@ class Database {
     
     private function __construct() {
         $config = DatabaseConfig::getConfig();
-        
         try {
             $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
             $this->connection = new PDO($dsn, $config['username'], $config['password'], $config['options']);
+            
+            // ADICIONE ESTA LINHA:
+            $this->connection->exec("set names utf8mb4"); 
+            
         } catch (PDOException $e) {
             die("Connection failed: " . $e->getMessage());
         }

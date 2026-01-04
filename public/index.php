@@ -10,7 +10,8 @@ $filesToLoad = [
     'core/Session.php',
     'core/Auth.php',
     'core/Router.php',
-    'config/database.php' 
+    'config/database.php',
+    'utils/helpers.php' 
 ];
 
 foreach ($filesToLoad as $file) {
@@ -45,15 +46,17 @@ if (file_exists($routesPath)) {
 }
 
 // IMPORTANTE: Limpeza da URL para o Router
-$url = $_SERVER['QUERY_STRING'] ?? '';
+$url = $_GET['url'] ?? '';
 
+// 2. Se a URL estiver vazia (usuário acessou a raiz), tentamos o fallback por REQUEST_URI
 if (empty($url)) {
-    // Remove o "/index.php" e limpa a barra inicial para o Router dar o match
     $url = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+    // Se o resultado for index.php, tratamos como página inicial (vazia)
     if ($url === 'index.php') $url = '';
 }
 
 try {
+    // Agora o dispatch recebe apenas "assets" ou "portfolio/create"
     $router->dispatch($url);
 } catch (Exception $e) {
     http_response_code($e->getCode() == 404 ? 404 : 500);

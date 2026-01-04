@@ -67,15 +67,21 @@ class Router {
         if ($url != '') {
             $parts = explode('&', $url, 2);
             
-            if (strpos($parts[0], '=') === false) {
-                $url = $parts[0];
+            // Se a primeira parte contiver um '=', significa que a URL não foi limpa no index.php
+            // Ajustamos para pegar apenas o valor após o '=' se for o parâmetro 'url'
+            if (strpos($parts[0], '=') !== false) {
+                if (strpos($parts[0], 'url=') === 0) {
+                    $url = substr($parts[0], 4);
+                } else {
+                    $url = '';
+                }
             } else {
-                $url = '';
+                $url = $parts[0];
             }
         }
-        return $url;
+        return trim($url, '/');
     }
-    
+        
     public function getRoutes() {
         return $this->routes;
     }

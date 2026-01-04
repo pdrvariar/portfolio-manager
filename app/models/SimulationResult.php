@@ -17,9 +17,10 @@ class SimulationResult {
     }
     
     public function getLatest($portfolioId) {
+        // ALTERADO: Ordenar por 'id' que é garantido existir
         $sql = "SELECT * FROM simulation_results 
                 WHERE portfolio_id = ? 
-                ORDER BY created_at DESC 
+                ORDER BY id DESC 
                 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$portfolioId]);

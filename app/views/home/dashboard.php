@@ -18,7 +18,7 @@ ob_start();
         <div class="card text-center">
             <div class="card-header">Simulações</div>
             <div class="card-body">
-                <h3 class="card-title"><?php echo $stats['total_simulations']; ?></h3>
+                <h3 class="card-title"><?php echo $stats['total_simulations'] ?? 0; ?></h3>
             </div>
         </div>
     </div>
@@ -26,8 +26,8 @@ ob_start();
         <div class="card text-center">
             <div class="card-header">Retorno Médio</div>
             <div class="card-body">
-                <h3 class="card-title <?php echo $stats['avg_return'] >= 0 ? 'text-success' : 'text-danger'; ?>">
-                    <?php echo number_format($stats['avg_return'], 2); ?>%
+                <h3 class="card-title <?php echo ($stats['avg_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'; ?>">
+                    <?php echo number_format($stats['avg_return'] ?? 0, 2); ?>%
                 </h3>
             </div>
         </div>
@@ -36,7 +36,7 @@ ob_start();
         <div class="card text-center">
             <div class="card-header">Volatilidade Média</div>
             <div class="card-body">
-                <h3 class="card-title"><?php echo number_format($stats['avg_volatility'], 2); ?>%</h3>
+                <h3 class="card-title"><?php echo number_format($stats['avg_volatility'] ?? 0, 2); ?>%</h3>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@ ob_start();
         <div class="card text-center">
             <div class="card-header">Melhor Retorno</div>
             <div class="card-body">
-                <h3 class="card-title text-success"><?php echo number_format($stats['max_return'], 2); ?>%</h3>
+                <h3 class="card-title text-success"><?php echo number_format($stats['max_return'] ?? 0, 2); ?>%</h3>
             </div>
         </div>
     </div>
@@ -134,22 +134,22 @@ ob_start();
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
-                        <a href="/portfolio/create" class="btn btn-outline-primary w-100 mb-2">
+                        <a href="index.php?url=portfolio/create" class="btn btn-outline-primary w-100 mb-2">
                             <i class="bi bi-plus-lg"></i> Novo Portfólio
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="/assets" class="btn btn-outline-secondary w-100 mb-2">
+                        <a href="index.php?url=assets" class="btn btn-outline-secondary w-100 mb-2">
                             <i class="bi bi-graph-up"></i> Explorar Ativos
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="/portfolio" class="btn btn-outline-success w-100 mb-2">
+                        <a href="index.php?url=portfolio" class="btn btn-outline-success w-100 mb-2">
                             <i class="bi bi-folder"></i> Meus Portfólios
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="/profile" class="btn btn-outline-info w-100 mb-2">
+                        <a href="index.php?url=profile" class="btn btn-outline-info w-100 mb-2">
                             <i class="bi bi-person"></i> Meu Perfil
                         </a>
                     </div>

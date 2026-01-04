@@ -87,14 +87,18 @@ class Portfolio {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
-    
-    public function update($id, $data) {
-        $sql = "UPDATE portfolios SET 
-                name = ?, description = ?, initial_capital = ?, 
-                start_date = ?, end_date = ?, rebalance_frequency = ?, 
-                output_currency = ?, updated_at = CURRENT_TIMESTAMP 
-                WHERE id = ? AND (user_id = ? OR is_system_default = FALSE)";
         
+    public function update($data) {
+        $sql = "UPDATE portfolios SET 
+                name = ?, 
+                description = ?, 
+                initial_capital = ?, 
+                start_date = ?, 
+                end_date = ?, 
+                rebalance_frequency = ?, 
+                output_currency = ? 
+                WHERE id = ? AND user_id = ?";
+                
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             $data['name'],
@@ -104,11 +108,11 @@ class Portfolio {
             $data['end_date'],
             $data['rebalance_frequency'],
             $data['output_currency'],
-            $id,
+            $data['id'],
             $_SESSION['user_id']
         ]);
     }
-    
+
     public function delete($id) {
         $sql = "DELETE FROM portfolios WHERE id = ? AND user_id = ? AND is_system_default = FALSE";
         $stmt = $this->db->prepare($sql);
@@ -116,33 +120,38 @@ class Portfolio {
     }
     
     public function getPortfolioAssets($portfolioId) {
-        $sql = "SELECT a.*, pa.allocation_percentage, pa.performance_factor 
+        // Adicionado sa.currency para que a view.php consiga exibir a moeda
+        $sql = "SELECT sa.id as asset_id, sa.name, sa.currency, pa.allocation_percentage, pa.performance_factor, pa.id 
                 FROM portfolio_assets pa
-                JOIN system_assets a ON pa.asset_id = a.id
+                JOIN system_assets sa ON pa.asset_id = sa.id
                 WHERE pa.portfolio_id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$portfolioId]);
         return $stmt->fetchAll();
     }
-    
+
     public function updateAssets($portfolioId, $assets) {
-        // Remover alocações existentes
-        $this->db->prepare("DELETE FROM portfolio_assets WHERE portfolio_id = ?")
-                ->execute([$portfolioId]);
+        // 1. Limpa as alocações antigas
+        $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
+        $stmtDelete = $this->db->prepare($sqlDelete);
+        $stmtDelete->execute([$portfolioId]);
         
-        // Inserir novas alocações
-        foreach ($assets as $asset) {
+        // 2. Insere todas as alocações enviadas pelo formulário (antigas e novas)
+        foreach ($assets as $assetData) {
             $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
                     VALUES (?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
+            
+            // Converte 39% para 0.39000000 para o banco DECIMAL(10,8)
+            $allocation = floatval($assetData['allocation']) / 100;
+            
             $stmt->execute([
                 $portfolioId,
-                $asset['asset_id'],
-                $asset['allocation'],
-                $asset['performance_factor'] ?? 1.0
+                $assetData['asset_id'],
+                $allocation,
+                $assetData['performance_factor'] ?? 1.0
             ]);
         }
-        
         return true;
     }
 }

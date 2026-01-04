@@ -55,13 +55,13 @@ class DataImportService {
             while (($row = fgetcsv($handle)) !== false) {
                 if (count($row) >= 2) {
                     $date = $row[0];
-                    $value = $row[1];
+                    $price = $row[1];
                     
                     // Validar e converter dados
-                    if ($this->isValidDate($date) && is_numeric($value)) {
+                    if ($this->isValidDate($date) && is_numeric($price)) {
                         $data[] = [
                             'date' => $this->formatDate($date),
-                            'value' => (float) $value
+                            'price' => (float) $price
                         ];
                     }
                 }
@@ -74,14 +74,14 @@ class DataImportService {
     }
     
     private function insertHistoricalData($assetId, $data) {
-        $sql = "INSERT INTO asset_historical_data (asset_id, year_month, value) 
+        $sql = "INSERT INTO asset_historical_data (asset_id, reference_date, price) 
                 VALUES (?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         
         $count = 0;
         
         foreach ($data as $record) {
-            $stmt->execute([$assetId, $record['date'], $record['value']]);
+            $stmt->execute([$assetId, $record['date'], $record['price']]);
             $count++;
         }
         

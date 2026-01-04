@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title ?? 'Portfolio Backtest'; ?></title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
@@ -26,7 +27,7 @@
                             <a class="nav-link" href="/portfolio">Meus Portfólios</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/assets">Ativos</a>
+                            <a class="nav-link" href="index.php?url=assets">Ativos</a>
                         </li>
                         <?php if (Auth::isAdmin()): ?>
                             <li class="nav-item dropdown">

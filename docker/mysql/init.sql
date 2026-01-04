@@ -28,10 +28,10 @@ CREATE TABLE system_assets (
 CREATE TABLE asset_historical_data (
     id INT PRIMARY KEY AUTO_INCREMENT,
     asset_id INT NOT NULL,
-    `year_month` DATE NOT NULL, 
-    `value` DECIMAL(20, 10) NOT NULL,
+    reference_date DATE NOT NULL, 
+    price DECIMAL(20, 10) NOT NULL,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id) ON DELETE CASCADE,
-    INDEX idx_asset_date (asset_id, `year_month`)
+    INDEX idx_asset_date (asset_id, reference_date)
 );
 
 -- Tabela de portfólios
@@ -94,7 +94,7 @@ CREATE TABLE simulation_asset_details (
 
 -- Inserir usuário administrador padrão (senha: admin123)
 INSERT INTO users (username, email, password, is_admin) 
-VALUES ('admin', 'admin@portfolio.com', '$2y$10$8S84fVv89f.p85vLh4v.uO6v8XvVv8vVv8vVv8vVv8vVv8vVv8vVv', TRUE);
+VALUES ('admin', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE);
 
 -- Inserir alguns ativos padrão
 INSERT INTO system_assets (code, name, currency, asset_type) VALUES

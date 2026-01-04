@@ -57,10 +57,10 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="/portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-info">Ver</a>
+                            <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-info">Ver</a>
                             <?php if (!$portfolio['is_system_default']): ?>
-                                <a href="/portfolio/edit/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-warning">Editar</a>
-                                <a href="/portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-secondary">Clonar</a>
+                                <a href="/index.php?url=portfolio/edit/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-warning">Editar</a>
+                                <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-secondary">Clonar</a>
                             <?php endif; ?>
                         </td>
                     </tr>

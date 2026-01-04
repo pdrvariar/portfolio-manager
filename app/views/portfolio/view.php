@@ -12,7 +12,7 @@
     <link href="/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <?php include_once '../app/views/layouts/header.php'; ?>
+    <?php include_once __DIR__ . '/../layouts/header.php'; ?>
     
     <div class="container mt-4">
         <div class="row">
@@ -21,8 +21,10 @@
                 <p class="text-muted"><?php echo htmlspecialchars($portfolio['description']); ?></p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="/portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-success">Executar Simulação</a>
-                <a href="/portfolio" class="btn btn-secondary">Voltar</a>
+                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-success">
+                    Executar Simulação
+                </a>
+                <a href="/index.php?url=portfolio" class="btn btn-secondary">Voltar</a>
             </div>
         </div>
         
@@ -32,8 +34,8 @@
                 <div class="card text-center">
                     <div class="card-header">Retorno Total</div>
                     <div class="card-body">
-                        <h3 class="card-title <?php echo $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'; ?>">
-                            <?php echo number_format($metrics['total_return'], 2); ?>%
+                        <h3 class="card-title <?php echo ($metrics['total_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'; ?>">
+                            <?php echo number_format($metrics['total_return'] ?? 0, 2); ?>%
                         </h3>
                     </div>
                 </div>
@@ -42,8 +44,8 @@
                 <div class="card text-center">
                     <div class="card-header">Retorno Anual</div>
                     <div class="card-body">
-                        <h3 class="card-title <?php echo $metrics['annual_return'] >= 0 ? 'text-success' : 'text-danger'; ?>">
-                            <?php echo number_format($metrics['annual_return'], 2); ?>%
+                        <h3 class="card-title <?php echo ($metrics['annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'; ?>">
+                            <?php echo number_format($metrics['annual_return'] ?? 0, 2); ?>%
                         </h3>
                     </div>
                 </div>
@@ -52,7 +54,9 @@
                 <div class="card text-center">
                     <div class="card-header">Volatilidade</div>
                     <div class="card-body">
-                        <h3 class="card-title"><?php echo number_format($metrics['volatility'], 2); ?>%</h3>
+                        <h3 class="card-title">
+                            <?php echo number_format($metrics['volatility'] ?? 0, 2); ?>%
+                        </h3>
                     </div>
                 </div>
             </div>
@@ -60,7 +64,9 @@
                 <div class="card text-center">
                     <div class="card-header">Sharpe Ratio</div>
                     <div class="card-body">
-                        <h3 class="card-title"><?php echo number_format($metrics['sharpe_ratio'], 2); ?></h3>
+                        <h3 class="card-title">
+                            <?php echo number_format($metrics['sharpe_ratio'] ?? 0, 2); ?>
+                        </h3>
                     </div>
                 </div>
             </div>
@@ -71,8 +77,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">Evolução do Valor do Portfólio</div>
-                    <div class="card-body">
-                        <canvas id="valueChart" height="100"></canvas>
+                    <div class="card-body" style="height: 400px;"> <canvas id="valueChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -136,9 +141,35 @@
             data: <?php echo json_encode($chartData['value_chart']); ?>,
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 plugins: {
-                    legend: {
-                        position: 'top',
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    // Formata como moeda (ex: R$ 100.000,00)
+                                    label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
                     }
                 }
             }

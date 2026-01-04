@@ -19,7 +19,11 @@ function setupRoutes(Router $router) {
     // Rotas de ativos
     $router->add('assets', ['controller' => 'asset', 'action' => 'index']);
     $router->add('assets/import', ['controller' => 'asset', 'action' => 'import']);
+    $router->add('assets/view/{id:\d+}', ['controller' => 'asset', 'action' => 'view']);
+    $router->add('assets/delete/{id:\d+}', ['controller' => 'asset', 'action' => 'delete']);    
     $router->add('assets/historical/{id:\d+}', ['controller' => 'asset', 'action' => 'historicalData']);
+    $router->add('api/assets/{id:\d+}', ['controller' => 'asset', 'action' => 'getAssetApi']);
+    $router->add('api/assets/update', ['controller' => 'asset', 'action' => 'updateApi']);    
     
     // Rotas administrativas
     $router->add('admin/dashboard', ['controller' => 'admin', 'action' => 'dashboard']);

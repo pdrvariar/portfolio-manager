@@ -1,18 +1,27 @@
 <?php
 class AssetController {
-    private $assetModel;
-    
-    public function __construct() {
-        $this->assetModel = new Asset();
+private $assetModel;
+    private $params; // Adicione esta propriedade
+
+    public function __construct($params = []) { // Receba os parâmetros aqui
+        $this->params = $params;
         Session::start();
+        $this->assetModel = new Asset();
     }
     
     public function index() {
         Auth::checkAuthentication();
         
-        $assets = $this->assetModel->getAll();
+        $isAdmin = $_SESSION['is_admin'] ?? false;
         
-        require_once '../app/views/asset/index.php';
+        if ($isAdmin) {
+            // CORREÇÃO: Altere de getAssetsWithData() para getAllWithDetails()
+            $assets = $this->assetModel->getAllWithDetails();
+        } else {
+            $assets = $this->assetModel->getAll();
+        }
+        
+        require_once __DIR__ . '/../views/asset/index.php';
     }
     
     public function import() {
@@ -20,20 +29,7 @@ class AssetController {
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
-                $file = $_FILES['csv_file'];
-                
-                // Validar extensão
-                $allowed = ['csv', 'txt'];
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                
-                if (!in_array(strtolower($ext), $allowed)) {
-                    Session::setFlash('error', 'Apenas arquivos CSV são permitidos.');
-                    header('Location: /assets/import');
-                    exit;
-                }
-                
-                // Processar arquivo
-                $result = $this->assetModel->importFromCSV($file['tmp_name']);
+                $result = $this->processCSV($_FILES['csv_file']['tmp_name'], $_FILES['csv_file']['name']);
                 
                 if ($result['success']) {
                     Session::setFlash('success', $result['message']);
@@ -41,25 +37,134 @@ class AssetController {
                     Session::setFlash('error', $result['message']);
                 }
                 
-                header('Location: /assets');
-                exit;
-            } else {
-                Session::setFlash('error', 'Erro no upload do arquivo.');
-                header('Location: /assets/import');
+                // REDIRECIONAMENTO CORRIGIDO: Sempre use o caminho da raiz com "/"
+                header('Location: /index.php?url=assets');
                 exit;
             }
         }
-        
-        require_once '../app/views/asset/import.php';
+        require_once __DIR__ . '/../views/asset/import.php';
     }
+
+    private function processCSV($filePath, $originalName) {
+        try {
+            $handle = fopen($filePath, 'r');
+            fgetcsv($handle); // Pula cabeçalho
+
+            $assetCode = strtoupper(str_replace('.csv', '', $originalName));
+            $asset = $this->assetModel->findByCode($assetCode);
+            
+            if (!$asset) {
+                $this->assetModel->create(['code' => $assetCode, 'name' => $assetCode]);
+                $asset = $this->assetModel->findByCode($assetCode);
+            }
+
+            $historicalData = [];
+            while (($row = fgetcsv($handle)) !== false) {
+                if (count($row) >= 2) {
+                    $historicalData[] = [
+                        'date' => $row[0] . '-01', // Converte YYYY-MM para YYYY-MM-DD
+                        'price' => floatval($row[1]) // Usando price em vez de value
+                    ];
+                }
+            }
+            fclose($handle);
+
+            if (!empty($historicalData)) {
+                $count = $this->assetModel->importHistoricalData($asset['id'], $historicalData);
+                return ['success' => true, 'message' => "Importados $count registros para $assetCode"];
+            }
+            return ['success' => false, 'message' => 'Nenhum dado válido no CSV.'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }    
     
-    public function historicalData($assetId) {
+    public function view() {
         Auth::checkAuthentication();
+        
+        // Recupere o ID dos parâmetros armazenados
+        $id = $this->params['id'] ?? null;
+        
+        if (!$id) {
+            header('Location: index.php?url=assets');
+            exit;
+        }
+
+        $asset = $this->assetModel->findById($id);
+        if (!$asset) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'message' => 'Ativo não encontrado'];
+            header('Location: index.php?url=assets');
+            exit;
+        }
+        
+        $historicalData = $this->assetModel->getHistoricalData($id);
+        require_once __DIR__ . '/../views/asset/view.php';
+    }
+
+    public function apiHistorical($assetId) {
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Não autorizado']);
+            exit;
+        }
         
         $data = $this->assetModel->getHistoricalData($assetId);
         
         header('Content-Type: application/json');
         echo json_encode($data);
     }
+
+    public function delete() {
+        Auth::checkAdmin();
+        
+        $id = $this->params['id'] ?? null;
+        $result = $this->assetModel->delete($id);
+        
+        if ($result['success']) {
+            $_SESSION['flash_message'] = ['type' => 'success', 'message' => 'Ativo removido com sucesso.'];
+        } else {
+            $_SESSION['flash_message'] = ['type' => 'error', 'message' => 'Erro ao remover ativo.'];
+        }
+        
+        header('Location: index.php?url=assets');
+        exit;
+    }
+
+    public function getAssetApi() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+        
+        $asset = $this->assetModel->findById($id);
+        
+        header('Content-Type: application/json');
+        if ($asset) {
+            echo json_encode($asset);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Ativo não encontrado']);
+        }
+        exit;
+    }
+
+    public function updateApi() {
+        Auth::checkAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'];
+            $data = [
+                'name' => $_POST['name'],
+                'currency' => $_POST['currency'],
+                'asset_type' => $_POST['asset_type'],
+                'is_active' => 1
+            ];
+            
+            $result = $this->assetModel->update($id, $data);
+            
+            header('Content-Type: application/json');
+            echo json_encode($result);
+            exit;
+        }
+    }    
+
 }
 ?>
