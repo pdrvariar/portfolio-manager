@@ -1,345 +1,284 @@
 <?php
-// Esta view mostrará os resultados da simulação com gráficos
+$title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
+ob_start();
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($portfolio['name']); ?> - Detalhes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="/css/style.css" rel="stylesheet">
 
-    <style>
-        #auditTable thead th {
-            border-bottom: 2px solid #dee2e6;
-            box-shadow: inset 0 -1px 0 #212529; /* Reforça a linha do cabeçalho sticky */
-        }
-        .font-monospace {
-            font-family: 'Courier New', Courier, monospace !important;
-            font-size: 0.9rem;
-        }
-    </style>    
-</head>
-<body>
-    <?php include_once __DIR__ . '/../layouts/header.php'; ?>
+<style>
+    /* Estilos de Especialista em UX */
+    .metric-card { transition: transform 0.2s; border: none; }
+    .metric-card:hover { transform: translateY(-5px); }
+    .bg-success-soft { background-color: rgba(25, 135, 84, 0.1) !important; color: #198754 !important; }
+    .bg-danger-soft { background-color: rgba(220, 53, 69, 0.1) !important; color: #dc3545 !important; }
+    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1) !important; color: #087990 !important; }
     
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-8">
-                <h1><?php echo htmlspecialchars($portfolio['name']); ?></h1>
-                <p class="text-muted"><?php echo htmlspecialchars($portfolio['description']); ?></p>
-            </div>
-            <div class="col-md-4 text-end">
-                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" 
-                class="btn btn-primary" id="btnRunSimulation">
-                    <span class="spinner-border spinner-border-sm d-none" id="loader"></span>
-                    <i class="bi bi-play-fill"></i> Executar Simulação
-                </a>
+    /* Tabela de Auditoria Profissional */
+    .sticky-top-table { top: -1px; z-index: 10; background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .table-responsive-audit { max-height: 450px; overflow-y: auto; border-radius: 8px; }
+    .table-responsive-audit::-webkit-scrollbar { width: 6px; }
+    .table-responsive-audit::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 10px; }
+    
+    .rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
+    .chart-container { position: relative; height: 350px; width: 100%; }
+</style>
 
-                <script>
-                document.getElementById('btnRunSimulation').addEventListener('click', function() {
-                    this.classList.add('disabled');
-                    document.getElementById('loader').classList.remove('d-none');
-                });
-                </script>
-                <a href="/index.php?url=portfolio" class="btn btn-secondary">Voltar</a>
-            </div>
-        </div>
-        
-        <!-- Métricas principais -->
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-header">Retorno Total</div>
-                    <div class="card-body">
-                        <h3 class="card-title <?php echo ($metrics['total_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'; ?>">
-                            <?php echo number_format($metrics['total_return'] ?? 0, 2); ?>%
-                        </h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-header">Retorno Anual</div>
-                    <div class="card-body">
-                        <h3 class="card-title <?php echo ($metrics['annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'; ?>">
-                            <?php echo number_format($metrics['annual_return'] ?? 0, 2); ?>%
-                        </h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-header">Volatilidade</div>
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <?php echo number_format($metrics['volatility'] ?? 0, 2); ?>%
-                        </h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-header">Sharpe Ratio</div>
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <?php echo number_format($metrics['sharpe_ratio'] ?? 0, 2); ?>
-                        </h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Gráficos -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">Evolução do Valor do Portfólio</div>
-                    <div class="card-body" style="height: 400px;"> <canvas id="valueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Composição por Ano</div>
-                    <div class="card-body">
-                        <canvas id="compositionChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Retornos Anuais</div>
-                    <div class="card-body">
-                        <canvas id="returnsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tabela de ativos -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">Alocação de Ativos</div>
-                    <div class="card-body">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Ativo</th>
-                                    <th>Alocação</th>
-                                    <th>Moeda</th>
-                                    <th>Fator de Performance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($assets as $asset): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($asset['name']); ?></td>
-                                    <td><?php echo number_format($asset['allocation_percentage'], 5); ?>%</td>
-                                    <td><?php echo $asset['currency']; ?></td>
-                                    <td><?php echo number_format($asset['performance_factor'], 2); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card shadow-sm border-0 mt-5">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary fw-bold">
-                    <i class="bi bi-journal-check me-2"></i>Histórico Mensal Detalhado (Auditoria)
-                </h5>
-                <div class="d-flex gap-2">
-                    <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data (Ex: 2024)..." style="width: 200px;">
-                    <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-download me-1"></i>Exportar CSV
-                    </button>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                    <table class="table table-hover align-middle mb-0" id="auditTable">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th class="ps-4">Mês/Ano</th>
-                                <th>Valor Total</th>
-                                <th>Variação Mensal</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-end pe-4">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            $prevValue = $portfolio['initial_capital'];
-                            foreach ($chartData['audit_log'] as $date => $data): 
-                                $currentValue = $data['total_value'];
-                                $monthlyReturn = (($currentValue / $prevValue) - 1) * 100;
-                                $isRebalanced = $data['rebalanced'] ?? false;
-                            ?>
-                            <tr class="<?php echo $isRebalanced ? 'table-info-light' : ''; ?>">
-                                <td class="ps-4">
-                                    <span class="fw-bold"><?php echo date('M / Y', strtotime($date)); ?></span>
-                                </td>
-                                <td>
-                                    <?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?>
-                                </td>
-                                <td>
-                                    <span class="badge <?php echo $monthlyReturn >= 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'; ?>">
-                                        <?php echo ($monthlyReturn >= 0 ? '+' : '') . number_format($monthlyReturn, 2, ',', '.'); ?>%
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <?php if ($isRebalanced): ?>
-                                        <span class="badge rounded-pill bg-info text-dark" title="Alocação resetada para o peso alvo">
-                                            <i class="bi bi-arrow-repeat me-1"></i>Rebalanceado
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-muted small">Mantido</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-link text-decoration-none py-0" 
-                                            onclick='showMonthDetails(<?php echo json_encode($data["asset_values"]); ?>, "<?php echo $date; ?>")'>
-                                        Ver Ativos <i class="bi bi-chevron-right small"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php 
-                                $prevValue = $currentValue; 
-                            endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        </div>     
+<div class="row mb-4 align-items-end">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1"><?php echo htmlspecialchars($portfolio['name']); ?></h2>
+        <p class="text-muted mb-0">
+            <i class="bi bi-calendar3 me-1"></i> Período: <?php echo formatDate($portfolio['start_date']); ?>
+            <?php echo $portfolio['end_date'] ? ' até ' . formatDate($portfolio['end_date']) : ' (Até o presente)'; ?>
+            | <i class="bi bi-currency-exchange ms-2 me-1"></i> Moeda: <?php echo $portfolio['output_currency']; ?>
+        </p>
     </div>
-    
-    <script>
-        // Gráfico de valor
-        new Chart(document.getElementById('valueChart'), {
-            type: 'line',
-            data: <?php echo json_encode($chartData['value_chart']); ?>,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) {
-                                    // Formata como moeda (ex: R$ 100.000,00)
-                                    label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        ticks: {
-                            callback: function(value) {
-                                return 'R$ ' + value.toLocaleString('pt-BR');
-                            }
-                        }
+    <div class="col-md-4 text-end">
+        <div class="btn-group shadow-sm">
+            <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-primary" id="btnRun">
+                <i class="bi bi-play-fill me-1"></i>Simular
+            </a>
+            <a href="/index.php?url=portfolio/edit/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary" title="Editar">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary" title="Clonar">
+                <i class="bi bi-files"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card shadow-sm h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <h6 class="text-muted small text-uppercase fw-bold">Retorno Total</h6>
+                <h3 class="<?php echo $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold mb-0">
+                    <?php echo formatPercentage($metrics['total_return']); ?>
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card shadow-sm h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <h6 class="text-muted small text-uppercase fw-bold">CAGR (Anual)</h6>
+                <h3 class="text-success fw-bold mb-0"><?php echo formatPercentage($metrics['annual_return']); ?></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card shadow-sm h-100 border-start border-4 border-warning">
+            <div class="card-body">
+                <h6 class="text-muted small text-uppercase fw-bold">Volatilidade</h6>
+                <h3 class="fw-bold mb-0"><?php echo formatPercentage($metrics['volatility']); ?></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card shadow-sm h-100 border-start border-4 border-info">
+            <div class="card-body">
+                <h6 class="text-muted small text-uppercase fw-bold">Sharpe Ratio</h6>
+                <h3 class="fw-bold mb-0"><?php echo number_format($metrics['sharpe_ratio'], 2); ?></h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up text-primary me-2"></i>Evolução do Patrimônio</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="valueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-pie-chart text-primary me-2"></i>Composição Histórica</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="compositionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-bar-chart text-primary me-2"></i>Retorno por Ano</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="returnsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-5">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-journal-check text-primary me-2"></i>Auditoria Mensal</h5>
+        <div class="d-flex gap-2">
+            <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data..." style="width: 180px;">
+            <button onclick="exportAuditCSV()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive-audit">
+            <table class="table table-hover align-middle mb-0" id="auditTable">
+                <thead class="sticky-top-table">
+                    <tr>
+                        <th class="ps-4 py-3">Mês/Ano</th>
+                        <th>Saldo</th>
+                        <th>Variação</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $prevValue = $portfolio['initial_capital'];
+                    if (isset($chartData['audit_log'])):
+                        foreach ($chartData['audit_log'] as $date => $data): 
+                            $currentValue = $data['total_value'];
+                            $variation = (($currentValue / $prevValue) - 1) * 100;
+                            $rebalanced = $data['rebalanced'] ?? false;
+                    ?>
+                    <tr class="<?php echo $rebalanced ? 'rebalanced-row' : ''; ?>">
+                        <td class="ps-4 fw-bold"><?php echo date('m/Y', strtotime($date)); ?></td>
+                        <td><?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?></td>
+                        <td>
+                            <span class="badge <?php echo $variation >= 0 ? 'bg-success-soft' : 'bg-danger-soft'; ?>">
+                                <?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <?php if ($rebalanced): ?>
+                                <span class="badge rounded-pill bg-info-soft"><i class="bi bi-arrow-repeat me-1"></i>Rebalanced</span>
+                            <?php else: ?>
+                                <span class="text-muted small">Mantido</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-link text-primary text-decoration-none" 
+                                    onclick='openDetailsModal("<?php echo date('m/Y', strtotime($date)); ?>", <?php echo json_encode($data["asset_values"]); ?>, <?php echo $currentValue; ?>)'>
+                                Ver Ativos <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <?php 
+                            $prevValue = $currentValue;
+                        endforeach; 
+                    endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Composição: <span id="modalDate"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table mb-0">
+                    <thead class="table-light"><tr><th class="ps-4">Ativo</th><th class="text-end">Valor</th><th class="text-end pe-4">Peso</th></tr></thead>
+                    <tbody id="modalAssetsBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light"><div class="w-100 d-flex justify-content-between"><strong>Total:</strong><strong class="text-primary" id="modalTotal"></strong></div></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const currency = '<?php echo $portfolio['output_currency']; ?>';
+    const chartData = <?php echo json_encode($chartData); ?>;
+    const assetNames = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.htmlspecialchars($a['name']).'",'; ?>};
+
+    // 1. Gráfico de Evolução (Linha)
+    new Chart(document.getElementById('valueChart'), {
+        type: 'line',
+        data: chartData.value_chart,
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `Valor: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(ctx.raw)}`
                     }
                 }
-            }
+            },
+            scales: { y: { ticks: { callback: (val) => val.toLocaleString('pt-BR') } } }
+        }
+    });
+
+    // 2. Gráfico de Composição (Barras Empilhadas)
+    new Chart(document.getElementById('compositionChart'), {
+        type: 'bar',
+        data: chartData.composition_chart,
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true, max: 100, ticks: { callback: (v) => v + '%' } } }
+        }
+    });
+
+    // 3. Gráfico de Retornos (Barras)
+    new Chart(document.getElementById('returnsChart'), {
+        type: 'bar',
+        data: chartData.returns_chart,
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { ticks: { callback: (v) => v + '%' } } }
+        }
+    });
+
+    // Lógica do Modal e Busca
+    function openDetailsModal(date, assetValues, total) {
+        document.getElementById('modalDate').innerText = date;
+        document.getElementById('modalTotal').innerText = new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(total);
+        const body = document.getElementById('modalAssetsBody');
+        body.innerHTML = '';
+        for (const [id, val] of Object.entries(assetValues)) {
+            body.innerHTML += `<tr><td class="ps-4">${assetNames[id] || id}</td><td class="text-end">${val.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td><td class="text-end pe-4 text-muted">${((val/total)*100).toFixed(2)}%</td></tr>`;
+        }
+        new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+
+    document.getElementById('auditSearch').addEventListener('keyup', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#auditTable tbody tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none');
+    });
+
+    function exportAuditCSV() {
+        let csv = ["Data,Saldo,Variacao"];
+        document.querySelectorAll("#auditTable tbody tr").forEach(r => {
+            const c = r.querySelectorAll("td");
+            csv.push(`${c[0].innerText},${c[1].innerText.replace(/[^\d,]/g,'')},${c[2].innerText}`);
         });
-        
-        // Gráfico de composição
-        new Chart(document.getElementById('compositionChart'), {
-            type: 'bar',
-            data: <?php echo json_encode($chartData['composition_chart']); ?>,
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        stacked: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Gráfico de retornos
-        new Chart(document.getElementById('returnsChart'), {
-            type: 'bar',
-            data: <?php echo json_encode($chartData['returns_chart']); ?>,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        const blob = new Blob([csv.join("\n")], {type: 'text/csv'});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `auditoria_<?php echo $portfolio['id']; ?>.csv`;
+        link.click();
+    }
+</script>
 
-
-
-        function exportAuditToCSV() {
-            let csv = [];
-            const rows = document.querySelectorAll("#auditTable tr");
-            
-            for (let i = 0; i < rows.length; i++) {
-                let row = [], cols = rows[i].querySelectorAll("td, th");
-                
-                for (let j = 0; j < cols.length; j++) {
-                    // Limpa formatação de moeda e percentual para o Excel entender como número
-                    let data = cols[j].innerText
-                        .replace("R$ ", "")
-                        .replace(/\./g, "")
-                        .replace(",", ".")
-                        .replace("%", "");
-                    row.push('"' + data + '"');
-                }
-                csv.push(row.join(";")); // Usando ponto e vírgula para compatibilidade com Excel PT-BR
-            }
-
-            const csvFile = new Blob(["\ufeff" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-            const downloadLink = document.createElement("a");
-            const fileName = "audit_backtest_<?php echo $portfolio['id']; ?>.csv";
-
-            downloadLink.download = fileName;
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-        }        
-    </script>
-</body>
-</html>
+<?php
+$content = ob_get_clean();
+include_once __DIR__ . '/../layouts/main.php';
+?>
