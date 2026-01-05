@@ -12,6 +12,7 @@ ob_start(); // Inicia a captura do conteúdo
             <h4 class="mb-0"><?php echo htmlspecialchars($user['name']); ?></h4>
             <p class="text-muted"><?php echo htmlspecialchars($user['email']); ?></p>
             <span class="badge bg-primary px-3"><?php echo $user['role']; ?></span>
+            <span class="badge bg-primary px-3"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span>
         </div>
     </div>
 
@@ -21,7 +22,17 @@ ob_start(); // Inicia a captura do conteúdo
                 <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Editar Dados</h5>
             </div>
             <div class="card-body">
+                <?php if (isset($_SESSION['flash_message'])): ?>
+                    <div class="alert alert-<?php echo $_SESSION['flash_type'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
+                        <?php echo htmlspecialchars($_SESSION['flash_message']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['flash_message'], $_SESSION['flash_type']); ?>
+                <?php endif; ?>
+
                 <form method="POST" action="/index.php?url=profile/update">
+                    <!-- TODO: Implementar Token CSRF aqui para segurança -->
+                    <!-- <input type="hidden" name="csrf_token" value="<?php // echo $_SESSION['csrf_token']; ?>"> -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Nome Completo</label>
