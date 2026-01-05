@@ -11,52 +11,135 @@
     <?php echo $additional_css ?? ''; ?>
     
     <style>
-        body { display: flex; flex-direction: column; height: 100vh; }
-        main { flex: 1 0 auto; }
-        .navbar-brand { font-weight: bold; letter-spacing: -0.5px; }
-        .breadcrumb { background: transparent; padding: 0; margin-bottom: 1.5rem; }
+        /* Estilos de Interface Sênior */
+        :root {
+            --nav-bg: #1a1d21; /* Um tom de cinza mais profundo e moderno que o preto puro */
+            --nav-accent: #0d6efd;
+        }
+
+        .navbar {
+            background-color: var(--nav-bg) !important;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            font-size: 1.25rem;
+            background: linear-gradient(45deg, #fff 30%, var(--nav-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Feedback de Estado Ativo (UEX) */
+        .nav-link {
+            font-weight: 500;
+            font-size: 0.92rem;
+            color: rgba(255,255,255,0.7) !important;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-link.active {
+            color: #fff !important;
+            background: rgba(13, 110, 253, 0.15) !important;
+            box-shadow: inset 0 -2px 0 var(--nav-accent);
+            border-radius: 6px 6px 0 0;
+        }
+
+        /* Perfil do Usuário (Visual Profissional) */
+        .user-profile-dropdown {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+
+        .user-profile-dropdown:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--nav-accent);
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            margin-top: 10px !important;
+        }
     </style>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-lg">
         <div class="container">
-            <a class="navbar-brand" href="/index.php?url=">
-                <i class="bi bi-graph-up-arrow me-2"></i>Portfolio Backtest
+            <a class="navbar-brand d-flex align-items-center" href="/index.php?url=dashboard">
+                <i class="bi bi-graph-up-arrow me-2" style="-webkit-text-fill-color: #0d6efd;"></i>
+                PORTFOLIO<span class="fw-light">BACKTEST</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <?php if (Auth::isLoggedIn()): ?>
-                        <li class="nav-item"><a class="nav-link" href="/index.php?url=dashboard">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/index.php?url=portfolio">Meus Portfólios</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/index.php?url=assets">Ativos</a></li>
+                <ul class="navbar-nav mx-auto"> <?php if (Auth::isLoggedIn()): ?>
+                        <?php 
+                            $current_url = $_GET['url'] ?? ''; 
+                            $is_active = fn($path) => strpos($current_url, $path) !== false ? 'active' : '';
+                        ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('dashboard'); ?>" href="/index.php?url=dashboard">
+                                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('portfolio'); ?>" href="/index.php?url=portfolio">
+                                <i class="bi bi-briefcase me-1"></i> Portfólios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo $is_active('assets'); ?>" href="/index.php?url=assets">
+                                <i class="bi bi-layers me-1"></i> Ativos
+                            </a>
+                        </li>
                     <?php endif; ?>
                 </ul>
                 
                 <ul class="navbar-nav">
                     <?php if (Auth::isLoggedIn()): ?>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle btn btn-outline-secondary btn-sm text-white ms-lg-3 px-3" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>
-                                <?php echo htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['username'] ?? 'Usuário'); ?>
+                            <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                    <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                                </div>
+                                <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><h6 class="dropdown-header">Minha Conta</h6></li>
                                 <li><a class="dropdown-item" href="/index.php?url=profile"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
+                                <?php if (Auth::isAdmin()): ?>
+                                    <li><a class="dropdown-item" href="/index.php?url=admin"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
+                                <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/index.php?url=logout"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
                             </ul>
                         </li>
                     <?php else: ?>
-                        <li class="nav-item"><a class="nav-link" href="/index.php?url=login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/index.php?url=login">Entrar</a></li>
                     <?php endif; ?>
                 </ul>
             </div>
         </div>
-    </nav>
-    
+    </nav>    
     <main class="container py-4">
         <?php if (Auth::isLoggedIn() && isset($this->params)): ?>
             <?php echo renderBreadcrumbs($this->params); ?>
