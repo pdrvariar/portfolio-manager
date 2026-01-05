@@ -15,7 +15,7 @@ class AdminController {
         // Estatísticas
         $stats = $this->getStats();
         
-        require_once '../app/views/admin/dashboard.php';
+        require_once __DIR__ . '/../views/admin/dashboard.php';
     }
     
     public function users() {
@@ -23,7 +23,7 @@ class AdminController {
         
         $users = $this->userModel->getAllUsers();
         
-        require_once '../app/views/admin/users.php';
+        require_once __DIR__ . '/../views/admin/users.php';
     }
     
     public function assets() {
@@ -31,7 +31,7 @@ class AdminController {
         
         $assets = $this->assetModel->getAllWithDetails();
         
-        require_once '../app/views/admin/assets.php';
+        require_once __DIR__ . '/../views/admin/assets.php';
     }
     
     public function createDefaultPortfolios() {
@@ -72,29 +72,21 @@ class AdminController {
     
     private function getStats() {
         $db = Database::getInstance()->getConnection();
-        
-        // Total de usuários
-        $stmt = $db->query("SELECT COUNT(*) as total FROM users");
-        $users = $stmt->fetch()['total'];
-        
-        // Total de portfólios
-        $stmt = $db->query("SELECT COUNT(*) as total FROM portfolios");
-        $portfolios = $stmt->fetch()['total'];
-        
-        // Total de simulações
-        $stmt = $db->query("SELECT COUNT(*) as total FROM simulation_results");
-        $simulations = $stmt->fetch()['total'];
-        
-        // Total de ativos
-        $stmt = $db->query("SELECT COUNT(*) as total FROM system_assets");
-        $assets = $stmt->fetch()['total'];
-        
-        return [
-            'users' => $users,
-            'portfolios' => $portfolios,
-            'simulations' => $simulations,
-            'assets' => $assets
+        $tables = [
+            'users' => 'users',
+            'portfolios' => 'portfolios',
+            'simulations' => 'simulation_results',
+            'assets' => 'system_assets'
         ];
+        $stats = [];
+        
+        foreach ($tables as $key => $table) {
+            // TODO: Mover esta lógica para os respectivos Models (ex: User::count())
+            $stmt = $db->query("SELECT COUNT(*) as total FROM {$table}");
+            $stats[$key] = $stmt->fetch()['total'];
+        }
+        
+        return $stats;
     }
 }
 ?>

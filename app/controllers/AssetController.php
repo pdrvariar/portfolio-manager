@@ -101,7 +101,9 @@ private $assetModel;
         require_once __DIR__ . '/../views/asset/view.php';
     }
 
-    public function apiHistorical($assetId) {
+    public function apiHistorical() {
+        $assetId = $this->params['id'] ?? null;
+
         if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
             echo json_encode(['error' => 'Não autorizado']);
@@ -149,7 +151,7 @@ private $assetModel;
     public function updateApi() {
         Auth::checkAdmin();
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
             $id = $_POST['id'];
             $data = [
                 'name' => $_POST['name'],

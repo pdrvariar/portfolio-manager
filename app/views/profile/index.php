@@ -9,10 +9,9 @@ ob_start(); // Inicia a captura do conteúdo
             <div class="mb-3">
                 <i class="bi bi-person-circle text-primary" style="font-size: 4rem;"></i>
             </div>
-            <h4 class="mb-0"><?php echo htmlspecialchars($user['name']); ?></h4>
-            <p class="text-muted"><?php echo htmlspecialchars($user['email']); ?></p>
-            <span class="badge bg-primary px-3"><?php echo $user['role']; ?></span>
-            <span class="badge bg-primary px-3"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span>
+            <h4 class="mb-0"><?= htmlspecialchars($user['name'] ?? '') ?></h4>
+            <p class="text-muted"><?= htmlspecialchars($user['email'] ?? '') ?></p>
+            <span class="badge bg-primary px-3"><?= htmlspecialchars(ucfirst($user['role'] ?? '')) ?></span>
         </div>
     </div>
 
@@ -23,8 +22,8 @@ ob_start(); // Inicia a captura do conteúdo
             </div>
             <div class="card-body">
                 <?php if (isset($_SESSION['flash_message'])): ?>
-                    <div class="alert alert-<?php echo $_SESSION['flash_type'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
-                        <?php echo htmlspecialchars($_SESSION['flash_message']); ?>
+                    <div class="alert alert-<?= $_SESSION['flash_type'] ?? 'info' ?> alert-dismissible fade show" role="alert">
+                        <?= htmlspecialchars($_SESSION['flash_message']) ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     <?php unset($_SESSION['flash_message'], $_SESSION['flash_type']); ?>
@@ -33,14 +32,15 @@ ob_start(); // Inicia a captura do conteúdo
                 <form method="POST" action="/index.php?url=profile/update">
                     <!-- TODO: Implementar Token CSRF aqui para segurança -->
                     <!-- <input type="hidden" name="csrf_token" value="<?php // echo $_SESSION['csrf_token']; ?>"> -->
+                    <!-- TODO: Implementar Token CSRF -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Nome Completo</label>
-                            <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($user['name']); ?>" required>
+                            <input type="text" name="name" class="form-control" value="<?= htmlspecialchars($user['name'] ?? '') ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">E-mail</label>
-                            <input type="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" disabled>
+                            <input type="email" class="form-control" value="<?= htmlspecialchars($user['email'] ?? '') ?>" disabled>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Salvar Alterações</button>
