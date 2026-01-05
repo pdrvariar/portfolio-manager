@@ -4,73 +4,66 @@ ob_start();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Meus Portfólios</h1>
-    <a href="/index.php?url=portfolio/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Novo Portfólio
+    <div>
+        <h2 class="fw-bold mb-0">Meus Portfólios</h2>
+        <p class="text-muted small mb-0">Gerencie e analise suas estratégias de investimento.</p>
+    </div>
+    <a href="/index.php?url=portfolio/create" class="btn btn-primary shadow-sm rounded-pill px-4">
+        <i class="bi bi-plus-lg me-1"></i> Novo Portfólio
     </a>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table id="portfoliosTable" class="table table-hover">
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="overflow-x: hidden;"> <table id="portfoliosTable" class="table table-hover align-middle mb-0" style="width: 100%;">
                 <thead class="table-light">
                     <tr>
-                        <th>Nome</th>
-                        <th>Capital Inicial</th>
-                        <th>Período</th>
-                        <th>Moeda</th>
-                        <th>Tipo</th>
-                        <th class="text-end">Ações</th>
+                        <th class="ps-3 py-3" style="width: 25%">Estratégia</th>
+                        <th style="width: 20%">Capital</th>
+                        <th style="width: 25%">Período Histórico</th>
+                        <th class="text-center" style="width: 10%">Status</th>
+                        <th class="text-end pe-3" style="width: 20%">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($portfolios as $portfolio): ?>
                     <tr>
-                        <td><strong><?php echo htmlspecialchars($portfolio['name']); ?></strong></td>
-                        <td>R$ <?php echo number_format($portfolio['initial_capital'], 2, ',', '.'); ?></td>
-                        <td>
-                            <small>
-                                <?php echo date('d/m/Y', strtotime($portfolio['start_date'])); ?>
-                                <?php if ($portfolio['end_date']): ?>
-                                    - <?php echo date('d/m/Y', strtotime($portfolio['end_date'])); ?>
-                                <?php endif; ?>
-                            </small>
+                        <td class="ps-3">
+                            <div class="fw-bold text-dark" style="font-size: 1rem; line-height: 1.2; max-width: 220px; word-wrap: break-word;">
+                                <?php echo htmlspecialchars($portfolio['name']); ?>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.7rem;">
+                                <i class="bi bi-arrow-repeat me-1"></i><?php echo ucfirst($portfolio['rebalance_frequency']); ?>
+                            </div>
                         </td>
-                        <td><span class="badge bg-light text-dark border"><?php echo $portfolio['output_currency']; ?></span></td>
                         <td>
+                            <div class="fw-bold text-primary">
+                                <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.65rem; font-weight: 600;">
+                                <?php echo $portfolio['output_currency']; ?>
+                            </span>
+                        </td>
+                        <td class="text-nowrap"> <div class="fw-medium text-dark small">
+                                <i class="bi bi-calendar3 text-muted me-1"></i>
+                                <?php echo date('d/m/y', strtotime($portfolio['start_date'])); ?> 
+                                <span class="mx-1 text-muted">→</span> 
+                                <?php echo $portfolio['end_date'] ? date('d/m/y', strtotime($portfolio['end_date'])) : 'Hoje'; ?>
+                            </div>
+                        </td>
+                        <td class="text-center">
                             <?php if ($portfolio['is_system_default']): ?>
-                                <span class="badge bg-info">Sistema</span>
+                                <span class="badge rounded-pill bg-soft-info text-info px-2 py-1" style="font-size: 0.7rem;">Sistema</span>
                             <?php else: ?>
-                                <span class="badge bg-success">Pessoal</span>
+                                <span class="badge rounded-pill bg-soft-success text-success px-2 py-1" style="font-size: 0.7rem;">Pessoal</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
-                            <div class="btn-group" role="group">
-                                <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" 
-                                class="btn btn-sm btn-outline-info" 
-                                title="Visualizar">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                
-                                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" 
-                                class="btn btn-sm btn-outline-success" 
-                                title="Simular Backtest">
-                                    <i class="bi bi-play-fill"></i>
-                                </a>
-                                
-                                <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" 
-                                class="btn btn-sm btn-outline-primary" 
-                                title="Clonar Portfólio">
-                                    <i class="bi bi-files"></i>
-                                </a>
-                                
-                                <a href="/index.php?url=portfolio/delete/<?php echo $portfolio['id']; ?>" 
-                                class="btn btn-outline-danger" 
-                                title="Excluir"
-                                onclick="return confirm('Tem certeza que deseja excluir este portfólio? Esta ação não pode ser desfeita.')">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Visualizar"><i class="bi bi-graph-up text-primary"></i></a>
+                                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
+                                <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
+                                <a href="/index.php?url=portfolio/delete/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Excluir" onclick="return confirm('Excluir portfólio?')"><i class="bi bi-trash text-danger"></i></a>
                             </div>
                         </td>
                     </tr>
@@ -81,19 +74,43 @@ ob_start();
     </div>
 </div>
 
+<style>
+    /* Minimização técnica de espaços horizontais */
+    #portfoliosTable th, 
+    #portfoliosTable td { 
+        padding-left: 0.4rem !important; 
+        padding-right: 0.4rem !important; 
+    }
+    
+    #portfoliosTable .ps-3 { padding-left: 1rem !important; }
+    #portfoliosTable .pe-3 { padding-right: 1.5rem !important; }
+
+    .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
+    .bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+    .btn-white { background: #fff; border-color: #dee2e6 !important; }
+    .btn-white:hover { background: #f8f9fa; }
+    
+    .table td { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
+
+    /* Força o ajuste do DataTables para o container */
+    .dataTables_wrapper { width: 100%; margin: 0 auto; }
+</style>
+
 <?php
-// Scripts específicos para esta página
 $additional_js = '
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(document).ready(function() {
         $("#portfoliosTable").DataTable({
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json"
-            },
+            language: { url: "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json" },
             order: [[0, "asc"]],
-            pageLength: 10
+            pageLength: 10,
+            autoWidth: false, // UEX: Impede que o DataTables calcule larguras que forçam o scroll
+            columnDefs: [{ orderable: false, targets: 4 }],
+            dom: "<\'row mb-2\'<\'col-sm-6\'l><\'col-sm-6 text-end\'f>>" +
+                 "<\'row\'<\'col-sm-12\'tr>>" +
+                 "<\'row mt-3\'<\'col-sm-5\'i><\'col-sm-7\'p>>"
         });
     });
 </script>';
