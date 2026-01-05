@@ -150,7 +150,7 @@ class PortfolioController {
         
         // --- CORREÇÃO: Busque os dados que a View precisa aqui ---
         $assetModel = new Asset();
-        $allAssets = $assetModel->getAll();
+        $allAssets = $assetModel->getAllWithDetails();
         $portfolioAssets = $this->portfolioModel->getPortfolioAssets($id);
         // ---------------------------------------------------------
         
