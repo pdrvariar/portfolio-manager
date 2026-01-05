@@ -156,22 +156,31 @@ ob_start();
                 </div>
             </div>
             
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Ações</h5>
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-gear me-2"></i>Gestão do Ativo</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="/index.php?url=assets/import" class="btn btn-outline-primary">
-                            <i class="bi bi-upload"></i> Importar CSV
-                        </a>
-
-                        <?php if ($_SESSION['is_admin'] ?? false): ?>
-                            <a href="/index.php?url=assets/delete/<?php echo $asset['id']; ?>" 
-                            class="btn btn-outline-danger"
-                            onclick="return confirm('Excluir este ativo permanentemente?')">
-                                <i class="bi bi-trash"></i> Excluir Ativo
+                        <?php if (Auth::isAdmin()): ?>
+                            <a href="/index.php?url=assets/import" class="btn btn-primary shadow-sm">
+                                <i class="bi bi-upload me-2"></i>Importar Novos Dados (CSV)
                             </a>
+                            
+                            <hr class="my-2">
+
+                            <a href="/index.php?url=assets/delete/<?php echo $asset['id']; ?>" 
+                            class="btn btn-outline-danger btn-sm"
+                            onclick="return confirm('ATENÇÃO: Isso excluirá permanentemente todos os registros históricos deste ativo. Confirmar?')">
+                                <i class="bi bi-trash me-2"></i>Excluir Ativo e Histórico
+                            </a>
+                        <?php else: ?>
+                            <div class="text-center p-2">
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Os dados deste ativo são atualizados mensalmente pela administração.
+                                </p>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
