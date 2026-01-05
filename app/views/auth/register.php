@@ -10,6 +10,7 @@ ob_start();
             </div>
             <div class="card-body">
                 <form method="POST" action="/register">
+                    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     <div class="mb-3">
                         <label for="username" class="form-label">Usuário</label>
                         <input type="text" class="form-control" id="username" name="username" required>

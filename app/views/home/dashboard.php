@@ -26,7 +26,7 @@ ob_start();
         <p class="text-muted mb-0">Aqui está o resumo do seu ecossistema de investimentos.</p>
     </div>
     <div>
-        <a href="/index.php?url=portfolio/create" class="btn btn-primary shadow-sm">
+        <a href="/index.php?url=<?= obfuscateUrl('portfolio/create') ?>" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-lg"></i> Criar Portfólio
         </a>
     </div>
@@ -88,19 +88,19 @@ ob_start();
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-briefcase me-2 text-primary"></i>Portfólios Recentes</h5>
-                <a href="/index.php?url=portfolio" class="btn btn-sm btn-link text-decoration-none">Ver todos</a>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>" class="btn btn-sm btn-link text-decoration-none">Ver todos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($portfolios)): ?>
                     <div class="text-center py-5">
                         <img src="https://cdn-icons-png.flaticon.com/512/4076/4076402.png" width="80" class="mb-3 opacity-25" alt="Empty">
                         <p class="text-muted">Você ainda não possui portfólios configurados.</p>
-                        <a href="/index.php?url=portfolio/create" class="btn btn-sm btn-outline-primary">Começar Agora</a>
+                        <a href="/index.php?url=<?= obfuscateUrl('portfolio/create') ?>" class="btn btn-sm btn-outline-primary">Começar Agora</a>
                     </div>
                 <?php else: ?>
                     <div class="list-group list-group-flush">
                         <?php foreach (array_slice($portfolios, 0, 5) as $portfolio): ?>
-                            <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="list-group-item list-group-item-action py-3">
+                            <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="list-group-item list-group-item-action py-3">
                                 <div class="row align-items-center">
                                     <div class="col">
                                         <h6 class="mb-0 fw-bold"><?php echo htmlspecialchars($portfolio['name']); ?></h6>

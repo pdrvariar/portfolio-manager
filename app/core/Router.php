@@ -13,6 +13,12 @@ class Router {
     }
     
     public function dispatch($url) {
+        // SÊNIOR: Não tentamos descriptografar se a rota começar com 'api/' 
+        // ou se for uma rota de sistema conhecida que não deve ser mascarada.
+        if (function_exists('deobfuscateUrl') && strpos($url, 'api/') !== 0) {
+            $url = deobfuscateUrl($url);
+        }
+
         $url = $this->removeQueryStringVariables($url);
         
         if ($this->match($url)) {

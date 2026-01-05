@@ -1,4 +1,6 @@
 <?php
+// app/core/Database.php
+
 class Database {
     private static $instance = null;
     private $connection;
@@ -7,13 +9,19 @@ class Database {
         $config = DatabaseConfig::getConfig();
         try {
             $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
-            $this->connection = new PDO($dsn, $config['username'], $config['password'], $config['options']);
             
-            // ADICIONE ESTA LINHA:
-            $this->connection->exec("set names utf8mb4"); 
+            // Passamos as opções configuradas no database.php
+            $this->connection = new PDO(
+                $dsn, 
+                $config['username'], 
+                $config['password'], 
+                $config['options']
+            );
             
         } catch (PDOException $e) {
-            die("Connection failed: " . $e->getMessage());
+            // Em vez de apenas die, poderíamos usar error_log para o Docker capturar
+            error_log("Erro de Conexão: " . $e->getMessage());
+            die("Erro crítico: Não foi possível conectar ao banco de dados.");
         }
     }
     
@@ -28,14 +36,10 @@ class Database {
         return $this->connection;
     }
     
+    // Método auxiliar para facilitar queries rápidas
     public function query($sql, $params = []) {
         $stmt = $this->connection->prepare($sql);
         $stmt->execute($params);
         return $stmt;
     }
-    
-    public function lastInsertId() {
-        return $this->connection->lastInsertId();
-    }
 }
-?>

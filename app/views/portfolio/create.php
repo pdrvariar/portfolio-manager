@@ -13,6 +13,7 @@ $assets = $assetModel->getAll();
             </div>
             <div class="card-body">
                 <form method="POST" action="/portfolio/create" id="portfolioForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">

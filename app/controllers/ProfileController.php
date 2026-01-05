@@ -27,14 +27,15 @@ class ProfileController {
         Auth::checkAuthentication();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Lógica: Aqui chamaria o User Model para gravar no BD
-            // Ex: $this->userModel->update($_SESSION['user_id'], $_POST);
-            
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=profile');
+            }            
             // Atualiza a sessão para refletir a mudança no cabeçalho imediatamente
             Session::set('user_name', $_POST['name']);
             
             Session::setFlash('success', 'Dados do perfil atualizados com sucesso!');
-            header('Location: /index.php?url=profile');
+            header('Location: /index.php?url=' . obfuscateUrl('profile'));
             exit;
         }
     }

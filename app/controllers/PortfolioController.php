@@ -23,6 +23,10 @@ class PortfolioController {
         Auth::checkAuthentication();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=' . obfuscateUrl('portfolio/create'));
+            }           
             $data = [
                 'user_id' => $_SESSION['user_id'],
                 'name' => $_POST['name'],
@@ -40,7 +44,7 @@ class PortfolioController {
                     $this->portfolioModel->updateAssets($portfolioId, $_POST['assets']);
                 }
                 // CORREÇÃO: Redirecionamento absoluto
-                header('Location: /index.php?url=portfolio/view/' . $portfolioId);
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
                 exit;
             }
         }
@@ -53,16 +57,16 @@ class PortfolioController {
         $portfolioId = $this->params['id'] ?? null;
         
         if (!$portfolioId) {
-            header('Location: index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
         
         $newPortfolioId = $this->portfolioModel->clone($portfolioId, $_SESSION['user_id']);
         
         if ($newPortfolioId) {
-            header('Location: index.php?url=portfolio/view/' . $newPortfolioId);
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $newPortfolioId));
         } else {
-            header('Location: index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
         }
         exit;
     }
@@ -71,7 +75,7 @@ class PortfolioController {
         Auth::checkAuthentication();
         $portfolioId = $this->params['id'] ?? null;
         if (!$portfolioId) {
-            header('Location: /index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
         
@@ -85,7 +89,7 @@ class PortfolioController {
             Session::setFlash('error', 'Erro na simulação: ' . $result['message']);
         }
         
-        header('Location: /index.php?url=portfolio/view/' . $portfolioId);
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
         exit;
     }
 
@@ -94,7 +98,7 @@ class PortfolioController {
         $id = $this->params['id'] ?? null;
         
         if (!$id) {
-            header('Location: /index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
         
@@ -137,14 +141,14 @@ class PortfolioController {
         
         $id = $this->params['id'] ?? null;
         if (!$id) {
-            header('Location: index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
         
         $portfolio = $this->portfolioModel->findById($id);
         
         if (!$portfolio || $portfolio['user_id'] != $_SESSION['user_id']) {
-            header('Location: index.php?url=portfolio');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
         
@@ -162,6 +166,11 @@ class PortfolioController {
         $id = $this->params['id'] ?? null;
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id) {
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=' . obfuscateUrl('portfolio/edit/' . $id));
+            }
+
             $data = [
                 'id' => $id,
                 'name' => $_POST['name'],
@@ -180,7 +189,7 @@ class PortfolioController {
                 // CORREÇÃO: Use Session::setFlash para o main.php mostrar o alerta
                 Session::setFlash('success', 'Portfólio atualizado com sucesso!');
             }
-            header('Location: /index.php?url=portfolio/view/' . $id);
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
             exit;
         }
     }
@@ -202,7 +211,7 @@ class PortfolioController {
         }
         
         // 4. Redireciona de volta para a listagem principal
-        header('Location: /index.php?url=portfolio');
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
         exit;
     }    
 }

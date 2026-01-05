@@ -33,7 +33,8 @@ ob_start();
                 <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar Configurações do Portfólio</h4>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="/index.php?url=portfolio/update/<?php echo $portfolio['id']; ?>" id="portfolioForm">
+                <form method="POST" action="/index.php?url=<?php echo obfuscateUrl('portfolio/update/' . $portfolio['id']); ?>" id="portfolioForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label for="name" class="form-label fw-bold">Nome do Portfólio *</label>
@@ -138,7 +139,7 @@ ob_start();
                     </div>
                     
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary">
+                        <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-1"></i> Cancelar
                         </a>
                         <button type="submit" class="btn btn-primary px-4 shadow-sm" id="submitBtn">

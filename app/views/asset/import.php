@@ -21,6 +21,7 @@ ob_start();
                     </div>
                     
                     <form method="POST" action="index.php?url=assets/import" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                         <div class="mb-4">
                             <label for="csv_file" class="form-label">Arquivo CSV</label>
                             <input type="file" class="form-control" id="csv_file" name="csv_file" 

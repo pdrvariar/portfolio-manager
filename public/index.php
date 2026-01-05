@@ -21,6 +21,9 @@ $filesToLoad = [
     'utils/helpers.php' 
 ];
 
+require_once $baseDir . '/core/Env.php';
+Env::load(__DIR__ . '/../.env');
+
 foreach ($filesToLoad as $file) {
     $fullPath = $baseDir . '/' . $file;
     if (file_exists($fullPath)) {

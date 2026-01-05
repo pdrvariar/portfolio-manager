@@ -81,7 +81,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-lg">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/index.php?url=dashboard">
+            <a class="navbar-brand d-flex align-items-center" href="/index.php?url=<?= obfuscateUrl('dashboard') ?>">
                 <i class="bi bi-graph-up-arrow me-2" style="-webkit-text-fill-color: #0d6efd;"></i>
                 PORTFOLIO<span class="fw-light">BACKTEST</span>
             </a>
@@ -97,17 +97,17 @@
                             $is_active = fn($path) => strpos($current_url, $path) !== false ? 'active' : '';
                         ?>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo $is_active('dashboard'); ?>" href="/index.php?url=dashboard">
+                            <a class="nav-link <?php echo $is_active('dashboard'); ?>" href="/index.php?url=<?= obfuscateUrl('dashboard') ?>">
                                 <i class="bi bi-speedometer2 me-1"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo $is_active('portfolio'); ?>" href="/index.php?url=portfolio">
+                            <a class="nav-link <?php echo $is_active('portfolio'); ?>" href="/index.php?url=<?= obfuscateUrl('portfolio') ?>">
                                 <i class="bi bi-briefcase me-1"></i> Portfólios
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo $is_active('assets'); ?>" href="/index.php?url=assets">
+                            <a class="nav-link <?php echo $is_active('assets'); ?>" href="/index.php?url=<?= obfuscateUrl('assets') ?>">
                                 <i class="bi bi-layers me-1"></i> Ativos
                             </a>
                         </li>
@@ -125,12 +125,12 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>
-                                <li><a class="dropdown-item" href="/index.php?url=profile"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
+                                <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('profile') ?>"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
                                 <?php if (Auth::isAdmin()): ?>
                                     <li><a class="dropdown-item" href="/index.php?url=admin"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="/index.php?url=logout"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
+                                <li><a class="dropdown-item text-danger" href="/index.php?url=<?= obfuscateUrl('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
                             </ul>
                         </li>
                     <?php else: ?>

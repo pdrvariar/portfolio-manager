@@ -66,7 +66,7 @@ class AdminController {
         ]);
         
         Session::setFlash('success', 'Portfólios padrão criados com sucesso!');
-        header('Location: /admin/dashboard');
+        header('Location: /index.php?url=' . obfuscateUrl('admin/dashboard'));
         exit;
     }
     

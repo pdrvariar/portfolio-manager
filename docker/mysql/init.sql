@@ -58,7 +58,7 @@ CREATE TABLE portfolio_assets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
     asset_id INT NOT NULL,
-    allocation_percentage DECIMAL(10, 8) NOT NULL,
+    allocation_percentage DECIMAL(10, 6) NOT NULL,
     performance_factor DECIMAL(10, 4) DEFAULT 1.0,
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id),

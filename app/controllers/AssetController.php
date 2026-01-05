@@ -28,6 +28,11 @@ private $assetModel;
         Auth::checkAdmin();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=' . obfuscateUrl('assets/import'));
+            }            
+
             if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
                 $result = $this->processCSV($_FILES['csv_file']['tmp_name'], $_FILES['csv_file']['name']);
                 
@@ -38,7 +43,7 @@ private $assetModel;
                 }
                 
                 // REDIRECIONAMENTO CORRIGIDO: Sempre use o caminho da raiz com "/"
-                header('Location: /index.php?url=assets');
+                header('Location: /index.php?url=' . obfuscateUrl('assets'));
                 exit;
             }
         }
@@ -86,14 +91,14 @@ private $assetModel;
         $id = $this->params['id'] ?? null;
         
         if (!$id) {
-            header('Location: index.php?url=assets');
+            header('Location: /index.php?url=' . obfuscateUrl('assets'));
             exit;
         }
 
         $asset = $this->assetModel->findById($id);
         if (!$asset) {
             Session::setFlash('error', 'Ativo não encontrado.');
-            header('Location: index.php?url=assets');
+            header('Location: /index.php?url=' . obfuscateUrl('assets'));
             exit;
         }
         
@@ -128,7 +133,7 @@ private $assetModel;
             Session::setFlash('error', 'Erro ao remover ativo.');
         }
         
-        header('Location: index.php?url=assets');
+        header('Location: /index.php?url=' . obfuscateUrl('assets'));
         exit;
     }
 
@@ -152,21 +157,28 @@ private $assetModel;
         Auth::checkAdmin();
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
+            // QA: Validação do Token CSRF enviado via AJAX
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                header('Content-Type: application/json');
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Token de segurança inválido.']);
+                exit;
+            }
+
             $id = $_POST['id'];
             $data = [
-                'name' => $_POST['name'],
-                'currency' => $_POST['currency'],
-                'asset_type' => $_POST['asset_type'],
+                'name' => sanitize($_POST['name']),
+                'currency' => sanitize($_POST['currency']),
+                'asset_type' => sanitize($_POST['asset_type']),
                 'is_active' => 1
             ];
             
             $result = $this->assetModel->update($id, $data);
-            
             header('Content-Type: application/json');
             echo json_encode($result);
             exit;
         }
-    }    
+    } 
 
 }
 ?>

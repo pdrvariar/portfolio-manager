@@ -123,4 +123,57 @@ function renderBreadcrumbs($params) {
     
     return $html;
 }
+
+function redirectBack($fallbackUrl) {
+    $location = $_SERVER['HTTP_REFERER'] ?? $fallbackUrl;
+    header('Location: ' . $location);
+    exit;
+}
+
+function obfuscateUrl($url) {
+    if (getenv('URL_OBFUSCATE') !== 'true') return $url;
+
+    $key = getenv('URL_SECRET_KEY');
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    $encrypted = openssl_encrypt($url, 'aes-256-cbc', $key, 0, $iv);
+    
+    // Retorna o IV + Dado criptografado em Base64 seguro para URL
+    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($iv . $encrypted));
+}
+
+function deobfuscateUrl($hash) {
+    if (getenv('URL_OBFUSCATE') !== 'true' || empty($hash)) return $hash;
+
+    // HEURÍSTICA DE QA: Se a URL contém "/", ela já é um caminho legível, 
+    // então não tentamos descriptografar para evitar o erro de IV curto.
+    if (strpos($hash, '/') !== false) return $hash;
+
+    $key = getenv('URL_SECRET_KEY');
+    
+    // 1. Restaurar caracteres e preenchimento (Padding) do Base64
+    $base64 = str_replace(['-', '_'], ['+', '/'], $hash);
+    $remainder = strlen($base64) % 4;
+    if ($remainder) {
+        $base64 .= str_repeat('=', 4 - $remainder);
+    }
+    
+    $data = base64_decode($base64, true); // O 'true' ativa validação estrita
+    $ivSize = openssl_cipher_iv_length('aes-256-cbc'); // Esperado: 16 bytes
+
+    // 2. VALIDAÇÃO CRUCIAL: O dado decodificado deve ter pelo menos 16 bytes (tamanho do IV)
+    if (!$data || strlen($data) < $ivSize) {
+        return $hash; // Retorna o original se não parecer um hash válido
+    }
+
+    $iv = substr($data, 0, $ivSize);
+    $encrypted = substr($data, $ivSize);
+    
+    // 3. Tenta descriptografar
+    $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', $key, 0, $iv);
+    
+    // Se a chave estiver errada ou o dado for lixo, o openssl retorna false.
+    // Nesse caso, retornamos o hash original para o Router tentar processar.
+    return $decrypted ?: $hash;
+}
+
 ?>

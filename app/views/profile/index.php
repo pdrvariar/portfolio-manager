@@ -30,9 +30,7 @@ ob_start(); // Inicia a captura do conteúdo
                 <?php endif; ?>
 
                 <form method="POST" action="/index.php?url=profile/update">
-                    <!-- TODO: Implementar Token CSRF aqui para segurança -->
-                    <!-- <input type="hidden" name="csrf_token" value="<?php // echo $_SESSION['csrf_token']; ?>"> -->
-                    <!-- TODO: Implementar Token CSRF -->
+                    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Nome Completo</label>

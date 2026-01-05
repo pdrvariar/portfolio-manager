@@ -53,5 +53,35 @@ class Session {
     public static function hasFlash($type) {
         return self::has('flash_' . $type);
     }
+    
+    /**
+     * Gera um token CSRF único para a sessão, se não existir
+     */
+    public static function generateCsrfToken() {
+        if (!self::has('csrf_token')) {
+            $token = bin2hex(random_bytes(32));
+            self::set('csrf_token', $token);
+        }
+        return self::get('csrf_token');
+    }
+
+    /**
+     * Retorna o token atual da sessão
+     */
+    public static function getCsrfToken() {
+        return self::get('csrf_token') ?? self::generateCsrfToken();
+    }
+
+    /**
+     * Valida se o token enviado é igual ao da sessão
+     */
+    public static function validateCsrfToken($token) {
+        $storedToken = self::get('csrf_token');
+        // hash_equals evita ataques de tempo (timing attacks)
+        if ($storedToken && hash_equals($storedToken, (string)$token)) {
+            return true;
+        }
+        return false;
+    }
 }
 ?>

@@ -42,9 +42,9 @@ ob_start();
     </div>
     <div class="col-md-4 text-end">
         <div class="btn-group shadow-sm">
-            <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-primary"><i class="bi bi-play-fill"></i> Simular</a>
-            <a href="/index.php?url=portfolio/edit/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
-            <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary" title="Clonar"><i class="bi bi-files"></i></a>
+            <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-primary"><i class="bi bi-play-fill"></i> Simular</a>
+            <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+            <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar"><i class="bi bi-files"></i></a>
         </div>
     </div>
 </div>

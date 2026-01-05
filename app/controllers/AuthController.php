@@ -11,11 +11,17 @@ class AuthController {
     public function login() {
         // Se já estiver logado, manda para a home
         if (Auth::isLoggedIn()) {
-            header('Location: /');
+            header('Location: /index.php?url=' . obfuscateUrl('dashboard'));
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // VALIDAÇÃO CSRF CRUCIAL
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=login');
+            }            
+            
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
             
@@ -27,7 +33,7 @@ class AuthController {
                 exit;
             } else {
                 Session::setFlash('error', 'Usuário ou senha inválidos.');
-                header('Location: /login');
+                header('Location: /index.php?url=' . obfuscateUrl('login'));
                 exit;
             }
         }
@@ -43,6 +49,12 @@ class AuthController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // VALIDAÇÃO CSRF CRUCIAL
+            if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Segurança: Token inválido.');
+                redirectBack('/index.php?url=login');
+            }           
+
             $username = $_POST['username'] ?? '';
             $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
@@ -51,19 +63,19 @@ class AuthController {
             // Validações básicas
             if (empty($username) || empty($email) || empty($password)) {
                 Session::setFlash('error', 'Todos os campos são obrigatórios.');
-                header('Location: /register');
+                header('Location: /index.php?url=' . obfuscateUrl('register'));
                 exit;
             }
             
             if ($password !== $confirmPassword) {
                 Session::setFlash('error', 'As senhas não coincidem.');
-                header('Location: /register');
+                header('Location: /index.php?url=' . obfuscateUrl('register'));
                 exit;
             }
             
             if (strlen($password) < 6) {
                 Session::setFlash('error', 'A senha deve ter no mínimo 6 caracteres.');
-                header('Location: /register');
+                header('Location: /index.php?url=' . obfuscateUrl('register'));
                 exit;
             }
             
@@ -71,7 +83,7 @@ class AuthController {
             $existingUser = $this->userModel->findByUsername($username);
             if ($existingUser) {
                 Session::setFlash('error', 'Nome de usuário já está em uso.');
-                header('Location: /register');
+                header('Location: /index.php?url=' . obfuscateUrl('register'));
                 exit;
             }
             
@@ -80,11 +92,11 @@ class AuthController {
             
             if ($success) {
                 Session::setFlash('success', 'Conta criada com sucesso! Faça login.');
-                header('Location: /login');
+                header('Location: /index.php?url=' . obfuscateUrl('login'));
                 exit;
             } else {
                 Session::setFlash('error', 'Erro ao criar conta. Tente novamente.');
-                header('Location: /register');
+                header('Location: /index.php?url=' . obfuscateUrl('register'));
                 exit;
             }
         }

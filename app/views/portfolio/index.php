@@ -8,7 +8,7 @@ ob_start();
         <h2 class="fw-bold mb-0">Meus Portfólios</h2>
         <p class="text-muted small mb-0">Gerencie e analise suas estratégias de investimento.</p>
     </div>
-    <a href="/index.php?url=portfolio/create" class="btn btn-primary shadow-sm rounded-pill px-4">
+    <a href="/index.php?url=<?= obfuscateUrl('portfolio/create') ?>" class="btn btn-primary shadow-sm rounded-pill px-4">
         <i class="bi bi-plus-lg me-1"></i> Novo Portfólio
     </a>
 </div>
@@ -60,10 +60,10 @@ ob_start();
                         </td>
                         <td class="text-end pe-3">
                             <div class="btn-group shadow-sm">
-                                <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Visualizar"><i class="bi bi-graph-up text-primary"></i></a>
-                                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
-                                <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
-                                <a href="/index.php?url=portfolio/delete/<?php echo $portfolio['id']; ?>" class="btn btn-sm btn-white border px-2" title="Excluir" onclick="return confirm('Excluir portfólio?')"><i class="bi bi-trash text-danger"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Visualizar"><i class="bi bi-graph-up text-primary"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Excluir" onclick="return confirm('Excluir portfólio?')"><i class="bi bi-trash text-danger"></i></a>
                             </div>
                         </td>
                     </tr>
