@@ -24,12 +24,10 @@ ob_start();
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mb-3">
                         <label for="description" class="form-label">Descrição</label>
                         <textarea class="form-control" id="description" name="description" rows="2"><?php echo htmlspecialchars($portfolio['description']); ?></textarea>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
@@ -154,7 +152,7 @@ let nextId = assets.length > 0 ? Math.max(...assets.map(a => a.id)) + 1 : 1;
 
 // FUNÇÃO CRUCIAL: Executar ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
-    updateAssetsTable(); // Nome correto da função
+    updateTable(); // Nome correto da função
 });
 
 // app/views/portfolio/edit.php

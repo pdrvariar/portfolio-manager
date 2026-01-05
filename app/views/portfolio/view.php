@@ -19,6 +19,24 @@ ob_start();
     
     .rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
     .chart-container { position: relative; height: 350px; width: 100%; }
+
+    #compositionCollapse .card {
+        background: linear-gradient(to right, #ffffff, #fcfcfc);
+    }
+
+    #compositionCollapse .progress {
+        background-color: #f0f0f0;
+    }
+
+    #compositionCollapse .progress-bar {
+        border-radius: 10px;
+        opacity: 0.8;
+    }
+
+    /* Efeito de transição suave */
+    .collapse {
+        transition: all 0.35s ease-in-out;
+    }    
 </style>
 
 <div class="row mb-4 align-items-end">
@@ -44,7 +62,6 @@ ob_start();
         </div>
     </div>
 </div>
-
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card metric-card shadow-sm h-100 border-start border-4 border-primary">
@@ -129,7 +146,7 @@ ob_start();
         <h5 class="mb-0 fw-bold"><i class="bi bi-journal-check text-primary me-2"></i>Auditoria Mensal</h5>
         <div class="d-flex gap-2">
             <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data..." style="width: 180px;">
-            <button onclick="exportAuditCSV()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></button>
+            <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></button>
         </div>
     </div>
     <div class="card-body p-0">
@@ -325,17 +342,65 @@ ob_start();
         document.querySelectorAll('#auditTable tbody tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none');
     });
 
-    function exportAuditCSV() {
-        let csv = ["Data,Saldo,Variacao"];
-        document.querySelectorAll("#auditTable tbody tr").forEach(r => {
-            const c = r.querySelectorAll("td");
-            csv.push(`${c[0].innerText},${c[1].innerText.replace(/[^\d,]/g,'')},${c[2].innerText}`);
+    function exportAuditToCSV() {
+        // 1. Definição de Cabeçalhos (UEX: Nomes claros e técnicos)
+        const headers = [
+            "Referencia (Mes/Ano)", 
+            "Patrimonio Total", 
+            "Variacao Mensal (%)", 
+            "Status Rebalanceamento"
+        ];
+        
+        let csvContent = [];
+        csvContent.push(headers.join(";")); // Semicolon para compatibilidade Excel BR
+
+        // 2. Captura das linhas da tabela de auditoria
+        const rows = document.querySelectorAll("#auditTable tbody tr");
+        
+        rows.forEach(row => {
+            const cols = row.querySelectorAll("td");
+            
+            // Extração e Limpeza Técnica de Dados
+            // Referência (Data)
+            const date = cols[0].innerText.trim();
+            
+            // Saldo (Remove símbolos de moeda, mantém vírgula decimal para Excel BR)
+            const balance = cols[1].innerText.replace(/[^\d,-]/g, '').trim(); 
+            
+            // Variação (Remove %, mantém o sinal de negativo se houver)
+            const variation = cols[2].innerText.replace(/[^\d,-]/g, '').trim();
+            
+            // Status (Identifica se é Rebalanceado ou Mantido via texto ou classe)
+            const status = cols[3].innerText.includes("Rebalanceado") ? "REBALANCEADO" : "MANTIDO";
+
+            // Montagem da linha com aspas para evitar quebras por caracteres especiais
+            csvContent.push([
+                `"${date}"`,
+                `"${balance}"`,
+                `"${variation}"`,
+                `"${status}"`
+            ].join(";"));
         });
-        const blob = new Blob([csv.join("\n")], {type: 'text/csv'});
+
+        // 3. Geração do Arquivo com expertise de codificação (UTF-8 com BOM)
+        // O prefixo \ufeff é essencial para o Excel reconhecer acentos (como em 'Referência')
+        const universalBOM = "\uFEFF";
+        const blob = new Blob([universalBOM + csvContent.join("\n")], { type: 'text/csv;charset=utf-8;' });
+        
+        // 4. Download dinâmico com nome de arquivo inteligente (UEX: Contexto)
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `auditoria_<?php echo $portfolio['id']; ?>.csv`;
-        link.click();
+        const timestamp = new Date().toISOString().slice(0,10);
+        const fileName = `Backtest_Auditoria_<?php echo preg_replace('/[^a-z0-9]/i', '_', $portfolio['name']); ?>_${timestamp}.csv`;
+
+        if (navigator.msSaveBlob) { // Compatibilidade com navegadores legados (IE/Edge antigo)
+            navigator.msSaveBlob(blob, fileName);
+        } else {
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 </script>
 
