@@ -81,22 +81,25 @@ ob_start();
                                     </td>
                                 <?php endif; ?>
                                 <td>
-                                    <a href="/index.php?url=assets/view/<?php echo $asset['id']; ?>" 
-                                    class="btn btn-sm btn-info text-white">
-                                        <i class="bi bi-eye"></i> Visualizar
-                                    </a>
-                                    
-                                    <?php if ($_SESSION['is_admin'] ?? false): ?>
-                                        <button class="btn btn-sm btn-warning" onclick="editAsset(<?php echo $asset['id']; ?>)">
-                                            <i class="bi bi-pencil"></i> Editar
-                                        </button>
-
-                                        <a href="/index.php?url=assets/delete/<?php echo $asset['id']; ?>" 
-                                        class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Tem certeza que deseja remover este ativo?')">
-                                            <i class="bi bi-trash"></i> Excluir
+                                    <div class="btn-group" role="group">
+                                        <a href="/index.php?url=assets/view/<?php echo $asset['id']; ?>" 
+                                        class="btn btn-sm btn-outline-info" title="Visualizar">
+                                            <i class="bi bi-eye"></i>
                                         </a>
-                                    <?php endif; ?>
+                                        
+                                        <?php if ($_SESSION['is_admin'] ?? false): ?>
+                                            <button class="btn btn-sm btn-outline-warning" 
+                                                    onclick="editAsset(<?php echo $asset['id']; ?>)" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+
+                                            <a href="/index.php?url=assets/delete/<?php echo $asset['id']; ?>" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            onclick="return confirm('Remover este ativo?')" title="Excluir">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

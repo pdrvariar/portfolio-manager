@@ -92,7 +92,7 @@ private $assetModel;
 
         $asset = $this->assetModel->findById($id);
         if (!$asset) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'message' => 'Ativo não encontrado'];
+            Session::setFlash('error', 'Ativo não encontrado.');
             header('Location: index.php?url=assets');
             exit;
         }
@@ -121,9 +121,9 @@ private $assetModel;
         $result = $this->assetModel->delete($id);
         
         if ($result['success']) {
-            $_SESSION['flash_message'] = ['type' => 'success', 'message' => 'Ativo removido com sucesso.'];
+            Session::setFlash('success', 'Ativo removido com sucesso.');
         } else {
-            $_SESSION['flash_message'] = ['type' => 'error', 'message' => 'Erro ao remover ativo.'];
+            Session::setFlash('error', 'Erro ao remover ativo.');
         }
         
         header('Location: index.php?url=assets');

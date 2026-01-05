@@ -32,9 +32,18 @@
                 <p class="text-muted"><?php echo htmlspecialchars($portfolio['description']); ?></p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" class="btn btn-success">
-                    Executar Simulação
+                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" 
+                class="btn btn-primary" id="btnRunSimulation">
+                    <span class="spinner-border spinner-border-sm d-none" id="loader"></span>
+                    <i class="bi bi-play-fill"></i> Executar Simulação
                 </a>
+
+                <script>
+                document.getElementById('btnRunSimulation').addEventListener('click', function() {
+                    this.classList.add('disabled');
+                    document.getElementById('loader').classList.remove('d-none');
+                });
+                </script>
                 <a href="/index.php?url=portfolio" class="btn btn-secondary">Voltar</a>
             </div>
         </div>
@@ -143,70 +152,74 @@
                 </div>
             </div>
         </div>
-
-        <div class="row mt-5 mb-5">
-            <div class="col-md-12">
-                <div class="card shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-                        <h5 class="mb-0 text-primary"><i class="bi bi-list-check"></i> Histórico Mensal Detalhado (Auditoria)</h5>
-                        <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
-                        </button>
-                    </div>
-                    <div class="card-body p-0"> <div class="table-responsive" style="max-height: 600px; overflow-y: auto; overflow-x: auto;">
-                            <table class="table table-sm table-hover mb-0" id="auditTable" style="white-space: nowrap; min-width: 1000px;">
-                                <thead class="sticky-top">
-                                    <tr class="bg-dark text-white"> <th class="ps-3 py-2">Mês/Ano</th>
-                                        <th class="text-end py-2">Valor Total</th>
-                                        <th class="text-end py-2">Rent. Mensal</th>
-                                        <?php foreach ($assets as $asset): ?>
-                                            <th class="text-end py-2"><?php echo htmlspecialchars($asset['name']); ?></th>
-                                        <?php endforeach; ?>
-                                        <th class="text-center py-2 px-3">Rebal.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                    $prevValue = null;
-                                    $auditLog = $chartData['audit_log'] ?? [];
-                                    foreach ($auditLog as $date => $data): 
-                                        $monthlyReturn = $prevValue ? (($data['total_value'] / $prevValue) - 1) * 100 : 0;
-                                        $isRebalanced = $data['rebalanced'] ?? false;
-                                    ?>
-                                    <tr class="<?php echo $isRebalanced ? 'table-primary' : ''; ?>">
-                                        <td class="ps-3"><strong><?php echo date('m/Y', strtotime($date)); ?></strong></td>
-                                        <td class="text-end font-monospace">R$ <?php echo number_format($data['total_value'], 2, ',', '.'); ?></td>
-                                        <td class="text-end font-monospace <?php echo $monthlyReturn >= 0 ? 'text-success' : 'text-danger'; ?>">
-                                            <?php echo $prevValue ? ($monthlyReturn >= 0 ? '+' : '') . number_format($monthlyReturn, 2) . '%' : '-'; ?>
-                                        </td>
-                                        <?php foreach ($assets as $asset): ?>
-                                            <td class="text-end text-muted font-monospace">
-                                                R$ <?php echo number_format($data['asset_values'][$asset['asset_id']] ?? 0, 2, ',', '.'); ?>
-                                            </td>
-                                        <?php endforeach; ?>
-                                        <td class="text-center">
-                                            <?php if ($isRebalanced): ?>
-                                                <span class="badge rounded-pill bg-primary" title="Rebalanceado">SIM</span>
-                                            <?php else: ?>
-                                                <span class="text-muted small">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                    <?php 
-                                        $prevValue = $data['total_value'];
-                                    endforeach; 
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light py-2">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle"></i> Use a barra de rolagem na base da tabela para ver todos os ativos. Linhas destacadas em <strong>azul</strong> indicam meses de rebalanceamento.
-                        </small>
-                    </div>
+        <div class="card shadow-sm border-0 mt-5">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary fw-bold">
+                    <i class="bi bi-journal-check me-2"></i>Histórico Mensal Detalhado (Auditoria)
+                </h5>
+                <div class="d-flex gap-2">
+                    <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data (Ex: 2024)..." style="width: 200px;">
+                    <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download me-1"></i>Exportar CSV
+                    </button>
                 </div>
             </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0" id="auditTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="ps-4">Mês/Ano</th>
+                                <th>Valor Total</th>
+                                <th>Variação Mensal</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-end pe-4">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $prevValue = $portfolio['initial_capital'];
+                            foreach ($chartData['audit_log'] as $date => $data): 
+                                $currentValue = $data['total_value'];
+                                $monthlyReturn = (($currentValue / $prevValue) - 1) * 100;
+                                $isRebalanced = $data['rebalanced'] ?? false;
+                            ?>
+                            <tr class="<?php echo $isRebalanced ? 'table-info-light' : ''; ?>">
+                                <td class="ps-4">
+                                    <span class="fw-bold"><?php echo date('M / Y', strtotime($date)); ?></span>
+                                </td>
+                                <td>
+                                    <?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $monthlyReturn >= 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'; ?>">
+                                        <?php echo ($monthlyReturn >= 0 ? '+' : '') . number_format($monthlyReturn, 2, ',', '.'); ?>%
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <?php if ($isRebalanced): ?>
+                                        <span class="badge rounded-pill bg-info text-dark" title="Alocação resetada para o peso alvo">
+                                            <i class="bi bi-arrow-repeat me-1"></i>Rebalanceado
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted small">Mantido</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-link text-decoration-none py-0" 
+                                            onclick='showMonthDetails(<?php echo json_encode($data["asset_values"]); ?>, "<?php echo $date; ?>")'>
+                                        Ver Ativos <i class="bi bi-chevron-right small"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php 
+                                $prevValue = $currentValue; 
+                            endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
         </div>     
     </div>
     

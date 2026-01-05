@@ -15,6 +15,7 @@ function setupRoutes(Router $router) {
     $router->add('portfolio/delete/{id:\d+}', ['controller' => 'portfolio', 'action' => 'delete']);
     $router->add('portfolio/clone/{id:\d+}', ['controller' => 'portfolio', 'action' => 'clone']);
     $router->add('portfolio/run/{id:\d+}', ['controller' => 'portfolio', 'action' => 'runSimulation']);
+
     
     // Rotas de ativos
     $router->add('assets', ['controller' => 'asset', 'action' => 'index']);

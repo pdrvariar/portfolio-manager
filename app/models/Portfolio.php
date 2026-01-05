@@ -153,5 +153,23 @@ class Portfolio {
         }
         return true;
     }
+
+    public function getAll($userId = null) {
+        if ($userId) {
+            $sql = "SELECT * FROM portfolios WHERE user_id = ? OR is_system_default = TRUE ORDER BY created_at DESC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$userId]);
+        } else {
+            $sql = "SELECT * FROM portfolios ORDER BY created_at DESC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+        }
+        return $stmt->fetchAll();
+    }    
+
+    public function getTotalCount() {
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM portfolios");
+        return $stmt->fetch()['total'];
+    }    
 }
 ?>

@@ -1,9 +1,6 @@
 <?php
 $title = 'Meus Portfólios';
 ob_start();
-
-// CSS adicional para o DataTables
-$additional_css = '<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -49,18 +46,31 @@ $additional_css = '<link href="https://cdn.datatables.net/1.11.5/css/dataTables.
                             <?php endif; ?>
                         </td>
                         <td class="text-end">
-                            <div class="btn-group btn-group-sm">
-                                <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" class="btn btn-outline-info" title="Ver Detalhes">
+                            <div class="btn-group" role="group">
+                                <a href="/index.php?url=portfolio/view/<?php echo $portfolio['id']; ?>" 
+                                class="btn btn-sm btn-outline-info" 
+                                title="Visualizar">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <?php if (!$portfolio['is_system_default']): ?>
-                                    <a href="/index.php?url=portfolio/edit/<?php echo $portfolio['id']; ?>" class="btn btn-outline-warning" title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" class="btn btn-outline-secondary" title="Clonar">
-                                        <i class="bi bi-files"></i>
-                                    </a>
-                                <?php endif; ?>
+                                
+                                <a href="/index.php?url=portfolio/run/<?php echo $portfolio['id']; ?>" 
+                                class="btn btn-sm btn-outline-success" 
+                                title="Simular Backtest">
+                                    <i class="bi bi-play-fill"></i>
+                                </a>
+                                
+                                <a href="/index.php?url=portfolio/clone/<?php echo $portfolio['id']; ?>" 
+                                class="btn btn-sm btn-outline-primary" 
+                                title="Clonar Portfólio">
+                                    <i class="bi bi-files"></i>
+                                </a>
+                                
+                                <a href="/index.php?url=portfolio/delete/<?php echo $portfolio['id']; ?>" 
+                                class="btn btn-sm btn-outline-danger" 
+                                onclick="return confirm('Tem certeza que deseja excluir este portfólio?')" 
+                                title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>

@@ -154,7 +154,7 @@ let nextId = assets.length > 0 ? Math.max(...assets.map(a => a.id)) + 1 : 1;
 
 // FUNÇÃO CRUCIAL: Executar ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
-    updateTable();
+    updateAssetsTable(); // Nome correto da função
 });
 
 // app/views/portfolio/edit.php
