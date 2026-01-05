@@ -184,5 +184,26 @@ class PortfolioController {
             exit;
         }
     }
+
+    public function delete() {
+        // 1. Garante que o usuário está logado
+        Auth::checkAuthentication();
+        
+        // 2. Recupera o ID enviado pela rota
+        $id = $this->params['id'] ?? null;
+        
+        if ($id) {
+            // 3. Tenta excluir no Model (a regra de negócio protege contra exclusão de portfólios de outros usuários)
+            if ($this->portfolioModel->delete($id)) {
+                Session::setFlash('success', 'Portfólio excluído com sucesso!');
+            } else {
+                Session::setFlash('error', 'Não foi possível excluir o portfólio. Verifique se ele é um padrão do sistema.');
+            }
+        }
+        
+        // 4. Redireciona de volta para a listagem principal
+        header('Location: /index.php?url=portfolio');
+        exit;
+    }    
 }
 ?>

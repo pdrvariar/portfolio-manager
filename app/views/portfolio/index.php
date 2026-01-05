@@ -66,9 +66,9 @@ ob_start();
                                 </a>
                                 
                                 <a href="/index.php?url=portfolio/delete/<?php echo $portfolio['id']; ?>" 
-                                class="btn btn-sm btn-outline-danger" 
-                                onclick="return confirm('Tem certeza que deseja excluir este portfólio?')" 
-                                title="Excluir">
+                                class="btn btn-outline-danger" 
+                                title="Excluir"
+                                onclick="return confirm('Tem certeza que deseja excluir este portfólio? Esta ação não pode ser desfeita.')">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
