@@ -3,23 +3,6 @@ $title = 'Dashboard';
 ob_start();
 ?>
 
-<style>
-    /* Estilos de Interface Sênior */
-    .dashboard-header { margin-bottom: 2rem; }
-    .metric-card { border: none; transition: transform 0.2s; }
-    .metric-card:hover { transform: translateY(-3px); }
-    .bg-primary-soft { background-color: rgba(13, 110, 253, 0.08); color: #0d6efd; }
-    .bg-success-soft { background-color: rgba(25, 135, 84, 0.08); color: #198754; }
-    .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); color: #856404; }
-    .bg-info-soft { background-color: rgba(13, 202, 240, 0.08); color: #087990; }
-    
-    .list-group-item-action { border-left: 3px solid transparent; transition: all 0.2s; }
-    .list-group-item-action:hover { border-left: 3px solid #0d6efd; background-color: #f8f9fa; }
-    
-    .btn-action-quick { transition: all 0.3s; border: 1px dashed #dee2e6; }
-    .btn-action-quick:hover { background-color: #fff; border-style: solid; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-</style>
-
 <div class="dashboard-header d-flex justify-content-between align-items-center">
     <div>
         <h2 class="fw-bold mb-0">Olá, <?php echo htmlspecialchars($_SESSION['username']); ?>! 👋</h2>

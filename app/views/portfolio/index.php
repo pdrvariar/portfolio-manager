@@ -74,28 +74,6 @@ ob_start();
     </div>
 </div>
 
-<style>
-    /* Minimização técnica de espaços horizontais */
-    #portfoliosTable th, 
-    #portfoliosTable td { 
-        padding-left: 0.4rem !important; 
-        padding-right: 0.4rem !important; 
-    }
-    
-    #portfoliosTable .ps-3 { padding-left: 1rem !important; }
-    #portfoliosTable .pe-3 { padding-right: 1.5rem !important; }
-
-    .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
-    .bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
-    .btn-white { background: #fff; border-color: #dee2e6 !important; }
-    .btn-white:hover { background: #f8f9fa; }
-    
-    .table td { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
-
-    /* Força o ajuste do DataTables para o container */
-    .dataTables_wrapper { width: 100%; margin: 0 auto; }
-</style>
-
 <?php
 $additional_js = '
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>

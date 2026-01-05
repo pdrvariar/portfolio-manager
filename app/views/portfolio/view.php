@@ -3,29 +3,6 @@ $title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>
 
-<style>
-    /* Estilos de Especialista em UX */
-    .metric-card { transition: transform 0.2s; border: none; }
-    .metric-card:hover { transform: translateY(-5px); }
-    .bg-success-soft { background-color: rgba(25, 135, 84, 0.1) !important; color: #198754 !important; }
-    .bg-danger-soft { background-color: rgba(220, 53, 69, 0.1) !important; color: #dc3545 !important; }
-    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1) !important; color: #087990 !important; }
-    
-    /* Tabela de Auditoria Profissional */
-    .sticky-top-table { top: -1px; z-index: 10; background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .table-responsive-audit { max-height: 450px; overflow-y: auto; border-radius: 8px; }
-    .table-responsive-audit::-webkit-scrollbar { width: 6px; }
-    .table-responsive-audit::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 10px; }
-    
-    .rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
-    .chart-container { position: relative; height: 350px; width: 100%; }
-
-    /* Estilo do Mini-Dashboard de Alocação */
-    #compositionCollapse .card { background: #fcfcfc; border: 1px solid #eee; }
-    #compositionCollapse .progress { background-color: #f0f0f0; border-radius: 10px; }
-    .collapse { transition: all 0.3s ease-in-out; }
-</style>
-
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
         <div class="d-flex align-items-center gap-3">

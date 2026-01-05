@@ -3,16 +3,6 @@ $title = 'Editar Portfólio: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>
 
-<style>
-    /* Estilos Sênior para Disponibilidade e UX */
-    .metric-card { transition: transform 0.2s; border: none; }
-    .asset-range-info { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
-    .text-limit { color: #dc3545; font-weight: bold; }
-    #rangeWarning { border-left: 5px solid #ffc107; display: none; }
-    .table-responsive { border-radius: 8px; }
-    .allocation-input { font-weight: bold; color: #0d6efd; }
-</style>
-
 <div class="row">
     <div class="col-md-10 mx-auto">
         <div class="alert alert-warning shadow-sm mb-4" id="rangeWarning">

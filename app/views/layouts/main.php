@@ -8,75 +8,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
+
+    <link rel="stylesheet" href="/css/style.css">
+
     <?php echo $additional_css ?? ''; ?>
-    
-    <style>
-        /* Estilos de Interface Sênior */
-        :root {
-            --nav-bg: #1a1d21; /* Um tom de cinza mais profundo e moderno que o preto puro */
-            --nav-accent: #0d6efd;
-        }
-
-        .navbar {
-            background-color: var(--nav-bg) !important;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.3s ease;
-        }
-
-        .navbar-brand {
-            font-weight: 800;
-            letter-spacing: -0.8px;
-            font-size: 1.25rem;
-            background: linear-gradient(45deg, #fff 30%, var(--nav-accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Feedback de Estado Ativo (UEX) */
-        .nav-link {
-            font-weight: 500;
-            font-size: 0.92rem;
-            color: rgba(255,255,255,0.7) !important;
-            padding: 0.5rem 1rem !important;
-            margin: 0 0.2rem;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-link:hover {
-            color: #fff !important;
-            background: rgba(255,255,255,0.05);
-        }
-
-        .nav-link.active {
-            color: #fff !important;
-            background: rgba(13, 110, 253, 0.15) !important;
-            box-shadow: inset 0 -2px 0 var(--nav-accent);
-            border-radius: 6px 6px 0 0;
-        }
-
-        /* Perfil do Usuário (Visual Profissional) */
-        .user-profile-dropdown {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 0.4rem 1rem;
-            border-radius: 50px;
-            transition: all 0.2s;
-        }
-
-        .user-profile-dropdown:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--nav-accent);
-        }
-
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border-radius: 12px;
-            margin-top: 10px !important;
-        }
-    </style>
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-lg">

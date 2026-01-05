@@ -121,18 +121,6 @@ ob_start();
     </div>
 </div>
 
-<style>
-    #assetsTable th, #assetsTable td { padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
-    #assetsTable .ps-3 { padding-left: 1rem !important; }
-    #assetsTable .pe-3 { padding-right: 1.5rem !important; }
-    .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
-    .bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); }
-    .btn-white { background: #fff; border-color: #dee2e6 !important; }
-    .btn-white:hover { background: #f8f9fa; }
-    .table td { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
-    .smaller { font-size: 0.75rem; }
-</style>
-
 <?php
 $isAdminFlag = Auth::isAdmin() ? 4 : 3;
 $additional_js = <<<JS
