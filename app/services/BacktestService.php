@@ -152,20 +152,36 @@ class BacktestService {
             $lastFxRate = $currentFxRate;
 
             // 3. Lógica de Rebalanceamento
-            $wasRebalanced = false; // Flag para auditoria
+            $wasRebalanced = false;
+            $trades = [];
+
             if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
                 $wasRebalanced = true;
                 foreach ($assets as $asset) {
                     $assetId = $asset['asset_id'];
-                    $allocationFactor = (float)$asset['allocation_percentage'] / 100;
-                    $currentBalances[$assetId] = $totalMonthValue * $allocationFactor;
+                    $preValue = $currentBalances[$assetId]; 
+                    $targetAllocation = (float)$asset['allocation_percentage'] / 100;
+                    $postValue = $totalMonthValue * $targetAllocation;
+                    
+                    $trades[$assetId] = [
+                        'pre_value' => $preValue,
+                        'post_value' => $postValue,
+                        'delta' => $postValue - $preValue
+                    ];
+                    
+                    // ATUALIZAÇÃO CRUCIAL:
+                    $currentBalances[$assetId] = $postValue;
+                    
+                    // CORREÇÃO: Atualiza o assetValues para refletir o saldo PÓS-rebalanceamento
+                    $assetValues[$assetId] = $postValue; 
                 }
             }
-            
+
             $results[$date] = [
                 'total_value' => $totalMonthValue, 
-                'asset_values' => $assetValues,
-                'rebalanced' => $wasRebalanced // Guardamos o estado para a tabela
+                'asset_values' => $assetValues, // Agora levará o valor corrigido
+                'rebalanced' => $wasRebalanced,
+                'trades' => $trades
             ];
         }
         return $results;

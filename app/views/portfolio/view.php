@@ -169,9 +169,14 @@ ob_start();
                             <?php endif; ?>
                         </td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-link text-primary text-decoration-none" 
-                                    onclick='openDetailsModal("<?php echo date('m/Y', strtotime($date)); ?>", <?php echo json_encode($data["asset_values"]); ?>, <?php echo $currentValue; ?>)'>
-                                Ver Ativos <i class="bi bi-chevron-right"></i>
+                            <button class="btn btn-detail text-primary" 
+                                    onclick='openDetailsModal(
+                                        "<?php echo date('m/Y', strtotime($date)); ?>", 
+                                        <?php echo json_encode($data["asset_values"]); ?>, 
+                                        <?php echo $currentValue; ?>,
+                                        <?php echo json_encode($data["trades"] ?? []); ?> // PASSE OS TRADES AQUI
+                                    )'>
+                                Ver Ativos <i class="bi bi-chevron-right ms-1"></i>
                             </button>
                         </td>
                     </tr>
@@ -208,6 +213,11 @@ ob_start();
     const currency = '<?php echo $portfolio['output_currency']; ?>';
     const chartData = <?php echo json_encode($chartData); ?>;
     const assetNames = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.htmlspecialchars($a['name']).'",'; ?>};
+    const assetTargets = {
+        <?php foreach ($assets as $a): ?>
+            "<?php echo $a['asset_id']; ?>": <?php echo $a['allocation_percentage']; ?>,
+        <?php endforeach; ?>
+    };    
 
     // 1. Gráfico de Evolução (Linha)
     new Chart(document.getElementById('valueChart'), {
@@ -247,15 +257,66 @@ ob_start();
         }
     });
 
-    // Lógica do Modal e Busca
-    function openDetailsModal(date, assetValues, total) {
-        document.getElementById('modalDate').innerText = date;
-        document.getElementById('modalTotal').innerText = new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(total);
+    function openDetailsModal(dateLabel, assetValues, totalValue, trades) {
+        document.getElementById('modalDate').innerText = dateLabel;
         const body = document.getElementById('modalAssetsBody');
         body.innerHTML = '';
-        for (const [id, val] of Object.entries(assetValues)) {
-            body.innerHTML += `<tr><td class="ps-4">${assetNames[id] || id}</td><td class="text-end">${val.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td><td class="text-end pe-4 text-muted">${((val/total)*100).toFixed(2)}%</td></tr>`;
+        
+        const isRebalanceMonth = Object.keys(trades).length > 0;
+        const currency = '<?php echo $portfolio['output_currency']; ?>';
+
+        // Cabeçalho elegante
+        const tableHead = document.querySelector('#detailsModal thead tr');
+        tableHead.innerHTML = `
+            <th class="ps-4">Ativo</th>
+            <th class="text-end">${isRebalanceMonth ? 'Operação (Delta)' : 'Peso Atual'}</th>
+            <th class="text-end pe-4">Saldo Final</th>
+        `;
+
+        for (const [id, value] of Object.entries(assetValues)) {
+            const name = assetNames[id] || `Ativo ID: ${id}`;
+            const targetPercent = assetTargets[id] || 0;
+            let finalValue = value;
+            let actionHtml = '';
+
+            if (isRebalanceMonth && trades[id]) {
+                finalValue = trades[id].post_value; // Garante o valor pós-rebalanceamento
+                const delta = trades[id].delta;
+                const isPositive = delta >= 0;
+                
+                actionHtml = `
+                    <div class="text-end ${isPositive ? 'text-success' : 'text-danger'}" style="font-size: 0.85rem;">
+                        <i class="bi ${isPositive ? 'bi-plus' : 'bi-dash'}"></i>
+                        ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(Math.abs(delta))}
+                    </div>
+                `;
+            } else {
+                const currentWeight = (value / totalValue) * 100;
+                actionHtml = `<div class="text-end text-muted small">${currentWeight.toFixed(2)}%</div>`;
+            }
+
+            body.innerHTML += `
+                <tr>
+                    <td class="ps-4 py-3">
+                        <div class="fw-bold">${name}</div>
+                        ${isRebalanceMonth ? `<div class="text-muted" style="font-size: 0.75rem;">Anterior: ${new Intl.NumberFormat('pt-BR').format(trades[id].pre_value)}</div>` : ''}
+                    </td>
+                    <td class="text-end">${actionHtml}</td>
+                    <td class="text-end pe-4">
+                        <div class="fw-bold text-dark">
+                            ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(finalValue)}
+                        </div>
+                        ${isRebalanceMonth ? `
+                            <div class="text-muted" style="font-size: 0.7rem; opacity: 0.7; letter-spacing: 0.5px;">
+                                <i class="bi bi-pin-angle-fill small"></i> ALVO ${targetPercent.toFixed(2)}%
+                            </div>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
         }
+        
+        document.getElementById('modalTotal').innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(totalValue);
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
     }
 
