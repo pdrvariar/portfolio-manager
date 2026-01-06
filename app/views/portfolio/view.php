@@ -124,13 +124,21 @@ ob_start();
                             $variation = (($currentValue / $prevValue) - 1) * 100;
                             $rebalanced = $data['rebalanced'] ?? false;
                     ?>
-                    <tr class="<?php echo $rebalanced ? 'rebalanced-row' : ''; ?>">
+                    <tr>
                         <td class="ps-4 fw-bold"><?php echo date('m/Y', strtotime($date)); ?></td>
                         <td><?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?></td>
-                        <td><span class="badge <?php echo $variation >= 0 ? 'bg-success-soft' : 'bg-danger-soft'; ?>"><?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%</span></td>
-                        <td class="text-center"><?php echo $rebalanced ? '<span class="badge rounded-pill bg-info-soft">Rebalanced</span>' : '<span class="text-muted small">Mantido</span>'; ?></td>
+                        <td>
+                            <span class="badge <?php echo $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger'; ?>">
+                                <?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <?php echo $rebalanced ? '<span class="badge rounded-pill bg-soft-info">Rebalanced</span>' : '<span class="text-muted small">Mantido</span>'; ?>
+                        </td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-link text-decoration-none" onclick='openDetailsModal("<?php echo date('m/Y', strtotime($date)); ?>", <?php echo json_encode($data["asset_values"]); ?>, <?php echo $currentValue; ?>, <?php echo json_encode($data["trades"] ?? []); ?>)'>Ver Ativos <i class="bi bi-chevron-right ms-1"></i></button>
+                            <button class="btn btn-sm btn-link text-decoration-none" onclick='openDetailsModal(...)'>
+                                Ver Ativos <i class="bi bi-chevron-right ms-1"></i>
+                            </button>
                         </td>
                     </tr>
                     <?php $prevValue = $currentValue; endforeach; endif; ?>

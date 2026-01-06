@@ -1,26 +1,27 @@
-/* public/css/style.css */
+/* public/css/style.css - VERSÃO CONSOLIDADA E OTIMIZADA */
 
 :root {
-    /* Cores do Sistema */
+    /* Design System - Cores Base */
     --primary: #0d6efd;
     --nav-bg: #1a1d21;
     --bg-light: #f8f9fa;
     --border-color: #dee2e6;
     
-    /* Variantes Soft (transparências) */
+    /* Variantes Soft (Otimizadas com Variáveis) */
     --soft-info: rgba(13, 202, 240, 0.1);
     --soft-success: rgba(25, 135, 84, 0.1);
     --soft-secondary: rgba(108, 117, 125, 0.1);
     --soft-danger: rgba(220, 53, 69, 0.1);
+    --soft-primary: rgba(13, 110, 253, 0.08);
+    --soft-warning: rgba(255, 193, 7, 0.1);
 }
 
-/* Base */
+/* 1. BASE & NAVBAR */
 body {
     background-color: var(--bg-light);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Navbar Customizada */
 .navbar {
     background-color: var(--nav-bg) !important;
     padding: 0.75rem 0;
@@ -34,144 +35,24 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
-/* Componentes de Tabela (DataTable) */
+/* 2. TABELAS (DataTables & Auditoria) */
 #assetsTable th, #portfoliosTable th { font-weight: 600; color: #495057; }
-.btn-white { background: #fff; border: 1px solid var(--border-color) !important; }
-.btn-white:hover { background: #f8f9fa; }
 
-/* Badges e utilitários de cores customizados */
-.bg-soft-info { background-color: var(--soft-info); color: #0aa2c0 !important; }
-.bg-soft-success { background-color: var(--soft-success); color: #198754 !important; }
-.bg-soft-secondary { background-color: var(--soft-secondary); color: #6c757d !important; }
-.bg-soft-danger { background-color: var(--soft-danger); color: #dc3545 !important; }
-
-/* Cards e Métricas */
-.metric-card { transition: transform 0.2s; border: none; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
-.metric-card:hover { transform: translateY(-5px); }
-
-.asset-range-info { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
-
-/* Tabela de Auditoria (Resultados) */
-.table-responsive-audit { max-height: 450px; overflow-y: auto; border-radius: 8px; }
-.sticky-top-table { top: -1px; z-index: 10; background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-#assetsTable th, 
-#assetsTable td { 
+/* Ajuste de espaçamento comum para todas as tabelas principais */
+#assetsTable td, #assetsTable th,
+#portfoliosTable td, #portfoliosTable th,
+#auditTable td, #auditTable th { 
     padding-left: 0.4rem !important; 
     padding-right: 0.4rem !important; 
+    padding-top: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
 }
 
-#assetsTable .ps-3 { padding-left: 1rem !important; }
-#assetsTable .pe-3 { padding-right: 1.5rem !important; }
+#assetsTable .ps-3, #portfoliosTable .ps-3, #auditTable .ps-4 { padding-left: 1rem !important; }
+#assetsTable .pe-3, #portfoliosTable .pe-3, #auditTable .pe-4 { padding-right: 1.5rem !important; }
 
-/* Cores suaves para badges e tabelas */
-.bg-soft-info { background-color: rgba(13, 202, 240, 0.1); color: #0aa2c0 !important; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d !important; }
+.table-rounded { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
 
-.btn-white { 
-    background: #fff; 
-    border: 1px solid #dee2e6 !important; 
-}
-.btn-white:hover { background: #f8f9fa; }
-
-.table td { 
-    padding-top: 0.8rem !important; 
-    padding-bottom: 0.8rem !important; 
-}
-
-.smaller { font-size: 0.75rem; }
-
-/* Layout do Dashboard */
-.dashboard-header { margin-bottom: 2rem; }
-
-/* Cores Soft (Unificadas) */
-.bg-soft-primary { background-color: rgba(13, 110, 253, 0.08) !important; color: #0d6efd !important; }
-.bg-soft-success { background-color: rgba(25, 135, 84, 0.08) !important; color: #198754 !important; }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.1) !important; color: #856404 !important; }
-.bg-soft-info    { background-color: rgba(13, 202, 240, 0.08) !important; color: #087990 !important; }
-
-/* Lista de Portfólios */
-.list-group-item-action { 
-    border-left: 3px solid transparent; 
-    transition: all 0.2s; 
-}
-.list-group-item-action:hover { 
-    border-left: 3px solid var(--primary); 
-    background-color: #f8f9fa; 
-}
-
-/* Botões de Ações Rápidas */
-.btn-action-quick { 
-    transition: all 0.3s; 
-    border: 1px dashed #dee2e6; 
-    text-decoration: none;
-    display: block;
-}
-.btn-action-quick:hover { 
-    background-color: #fff; 
-    border-style: solid; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-    transform: translateY(-2px);
-}
-
-/* Alerta de conflito de datas com borda destacada */
-.alert-bordered-warning {
-    border-left: 5px solid #ffc107;
-    background-color: #fffdf5;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* Estilo para inputs de percentagem e range de ativos */
-.allocation-input {
-    font-weight: bold;
-    color: var(--primary);
-}
-
-.asset-range-info {
-    font-size: 0.75rem;
-    color: #6c757d;
-    margin-top: 2px;
-}
-
-/* Garante que tabelas responsivas fiquem elegantes */
-.table-rounded {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-}
-
-/* Ajustes finos para as tabelas do sistema */
-#portfoliosTable th, 
-#portfoliosTable td,
-#assetsTable th, 
-#assetsTable td { 
-    padding-left: 0.4rem !important; 
-    padding-right: 0.4rem !important; 
-}
-
-#portfoliosTable .ps-3, #assetsTable .ps-3 { padding-left: 1rem !important; }
-#portfoliosTable .pe-3, #assetsTable .pe-3 { padding-right: 1.5rem !important; }
-
-.table td { 
-    padding-top: 0.8rem !important; 
-    padding-bottom: 0.8rem !important; 
-}
-
-/* Garante que o DataTables ocupe 100% da largura sem forçar scroll desnecessário */
-.dataTables_wrapper { 
-    width: 100%; 
-    margin: 0 auto; 
-}
-
-/* Tipografia técnica para dados financeiros */
-.financial-value {
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-
-/* public/css/style.css */
-
-/* Tabela de Auditoria Profissional com Scroll Customizado */
 .table-responsive-audit { 
     max-height: 450px; 
     overflow-y: auto; 
@@ -179,35 +60,42 @@ body {
     border: 1px solid var(--border-color);
 }
 
-.table-responsive-audit::-webkit-scrollbar { width: 6px; }
-.table-responsive-audit::-webkit-scrollbar-thumb { 
-    background: #dee2e6; 
-    border-radius: 10px; 
-}
-
 .sticky-top-table { 
-    position: sticky;
-    top: -1px; 
-    z-index: 10; 
-    background: #f8f9fa !important; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    position: sticky; top: -1px; z-index: 10; 
+    background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
 }
 
-/* Destaque para linhas de Rebalanceamento */
+/* 3. COMPONENTES (Badges, Buttons, Cards) */
+.bg-soft-info { background-color: var(--soft-info) !important; color: #087990 !important; }
+.bg-soft-success { background-color: var(--soft-success) !important; color: #198754 !important; }
+.bg-soft-secondary { background-color: var(--soft-secondary) !important; color: #6c757d !important; }
+.bg-soft-danger { background-color: var(--soft-danger) !important; color: #dc3545 !important; }
+.bg-soft-primary { background-color: var(--soft-primary) !important; color: var(--primary) !important; }
+.bg-soft-warning { background-color: var(--soft-warning) !important; color: #856404 !important; }
+
+.btn-white { background: #fff; border: 1px solid var(--border-color) !important; transition: background 0.2s; }
+.btn-white:hover { background: #f8f9fa; }
+
+.btn-action-quick { 
+    transition: all 0.3s; border: 1px dashed var(--border-color); 
+    text-decoration: none; display: block; 
+}
+.btn-action-quick:hover { background: #fff; border-style: solid; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+.metric-card { transition: transform 0.2s; border: none; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+.metric-card:hover { transform: translateY(-5px); }
+
+/* 4. UTILITÁRIOS ESPECÍFICOS */
+.financial-value { font-size: 0.9rem; font-weight: 700; }
+.smaller { font-size: 0.75rem; }
+.asset-range-info { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
 .rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
+.alert-bordered-warning { border-left: 5px solid #ffc107; background-color: #fffdf5; }
 
-/* Contentores de Gráficos Chart.js */
-.chart-container { 
-    position: relative; 
-    height: 350px; 
-    width: 100%; 
+/* 5. Contentores de Gráficos Chart.js - Define a altura fixa */
+.chart-container {
+    position: relative;
+    /* Ajuste este valor se quiser o gráfico mais alto ou mais baixo */
+    height: 500px; 
+    width: 100%;
 }
-
-/* Cores Soft para Variação de Auditoria */
-.bg-soft-success { background-color: rgba(25, 135, 84, 0.1) !important; color: #198754 !important; }
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1) !important; color: #dc3545 !important; }
-.bg-soft-info { background-color: rgba(13, 202, 240, 0.1) !important; color: #087990 !important; }
-
-/* Mini-Dashboard de Alocação */
-#compositionCollapse .card { background: #fcfcfc; border: 1px solid #eee; }
-#compositionCollapse .progress { background-color: #f0f0f0; border-radius: 10px; }
