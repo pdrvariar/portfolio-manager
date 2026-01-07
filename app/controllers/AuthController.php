@@ -215,12 +215,15 @@ class AuthController {
      * Ponto de Entrada para Login com Google
      */
     public function googleLogin() {
-        $client = new GoogleClient(); 
-        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
-        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+        // Recupera a URL base usando getenv() que validamos ser mais estável na Hostinger
+        $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
         
-        // Sênior: Usamos o APP_URL definido no .env para garantir consistência entre local e produção
-        $redirectUri = $_ENV['APP_URL'] . "/index.php?url=google/callback";
+        $client = new GoogleClient(); 
+        $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
+        
+        // Garante que a URL seja absoluta e sem barras duplicadas
+        $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
         $client->setRedirectUri($redirectUri);
         
         $client->addScope("email");
@@ -288,33 +291,35 @@ class AuthController {
     /**
      * Callback do Google - Processa o retorno da autenticação social
      */
-public function googleCallback() {
+    public function googleCallback() {
+        $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
+        
         $client = new GoogleClient();
-        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
-        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
-        $client->setRedirectUri($_ENV['APP_URL'] . "/index.php?url=google/callback");
+        $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
+        
+        // Mantém a consistência da Redirect URI absoluta
+        $client->setRedirectUri(rtrim($baseUrl, '/') . "/index.php?url=google/callback");
 
         if (isset($_GET['code'])) {
             try {
                 $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
                 $client->setAccessToken($token);
 
-                $googleService = new Google_Service_Oauth2($client);
+                // Corrigido para usar a classe importada no topo via alias (GoogleServiceOauth2)
+                $googleService = new GoogleServiceOauth2($client);
                 $googleUser = $googleService->userinfo->get();
 
                 $data = [
                     'email' => $googleUser->email,
                     'name'  => $googleUser->name,
-                    'google_id' => $googleUser->id // Certifique-se que o User.php trata isto
+                    'google_id' => $googleUser->id 
                 ];
 
                 $user = $this->userModel->findOrCreateGoogleUser($data);
 
                 if ($user) {
                     Auth::login($user); 
-                    // Debug Sênior: Se quiser ter certeza, descomente a linha abaixo para ver se o login "pegou"
-                    //die(var_dump($_SESSION)); 
-                    
                     Session::setFlash('success', "Bem-vindo, " . $user['full_name']);
                     header('Location: /index.php?url=' . obfuscateUrl('dashboard'));
                     exit;
