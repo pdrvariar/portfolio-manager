@@ -25,7 +25,19 @@ ob_start();
         </div>
     </div>
 </div>
-
+<?php if (Auth::isAdmin()): ?>
+<div class="alert alert-soft-info d-flex justify-content-between align-items-center mb-4 rounded-4 border-0">
+    <div class="small">
+        <i class="bi bi-shield-check me-2"></i>
+        <strong>Painel Administrativo:</strong> 
+        <?= $portfolio['is_system_default'] ? 'Este é um portfólio oficial do sistema.' : 'Deseja tornar este portfólio visível para todos?' ?>
+    </div>
+    <a href="/index.php?url=<?= obfuscateUrl('portfolio/toggle-system/' . $portfolio['id']) ?>" 
+       class="btn btn-sm <?= $portfolio['is_system_default'] ? 'btn-outline-danger' : 'btn-primary' ?> rounded-pill px-3">
+        <?= $portfolio['is_system_default'] ? 'Remover do Sistema' : 'Tornar Portfólio de Sistema' ?>
+    </a>
+</div>
+<?php endif; ?>
 <div class="collapse mb-4" id="compositionCollapse">
     <div class="card card-body shadow-sm border-0">
         <?php if (!empty($portfolio['description'])): ?>
@@ -55,7 +67,13 @@ ob_start();
     <?php 
     $metricsList = [
         ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return']), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'],
-        ['label' => 'CAGR (Anual)', 'val' => formatPercentage($metrics['annual_return']), 'class' => 'border-success', 'text' => 'text-success'],
+        [
+            // Se for um período curto, muda o label para não enganar o investidor
+            'label' => ($metrics['is_short_period'] ?? false) ? 'Retorno no Período' : 'CAGR (Anual)', 
+            'val'   => formatPercentage($metrics['annual_return']), 
+            'class' => 'border-success', 
+            'text'  => 'text-success'
+        ],
         ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility']), 'class' => 'border-warning', 'text' => 'text-dark'],
         ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark']
     ];
@@ -123,9 +141,14 @@ ob_start();
                             $currentValue = $data['total_value'];
                             $variation = (($currentValue / $prevValue) - 1) * 100;
                             $rebalanced = $data['rebalanced'] ?? false;
+                            
+                            // PREPARAÇÃO SÊNIOR: Transformamos os arrays em JSON seguro para o JS
+                            $dateLabel = date('m/Y', strtotime($date));
+                            $assetValuesJson = htmlspecialchars(json_encode($data['asset_values']), ENT_QUOTES, 'UTF-8');
+                            $tradesJson = htmlspecialchars(json_encode($data['trades'] ?? []), ENT_QUOTES, 'UTF-8');
                     ?>
                     <tr>
-                        <td class="ps-4 fw-bold"><?php echo date('m/Y', strtotime($date)); ?></td>
+                        <td class="ps-4 fw-bold"><?php echo $dateLabel; ?></td>
                         <td><?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?></td>
                         <td>
                             <span class="badge <?php echo $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger'; ?>">
@@ -136,7 +159,8 @@ ob_start();
                             <?php echo $rebalanced ? '<span class="badge rounded-pill bg-soft-info">Rebalanced</span>' : '<span class="text-muted small">Mantido</span>'; ?>
                         </td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-link text-decoration-none" onclick='openDetailsModal(...)'>
+                            <button class="btn btn-sm btn-link text-decoration-none" 
+                                    onclick='openDetailsModal("<?= $dateLabel ?>", <?= $assetValuesJson ?>, <?= $currentValue ?>, <?= $tradesJson ?>)'>
                                 Ver Ativos <i class="bi bi-chevron-right ms-1"></i>
                             </button>
                         </td>

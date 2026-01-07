@@ -2,23 +2,25 @@
 // app/core/Session.php - CORRIGIDO
 class Session {
     public static function start() {
-        // VERIFICA apenas, não inicia
-        if (session_status() == PHP_SESSION_NONE) {
-            // Sessão não foi iniciada - erro de configuração
-            error_log("AVISO: Sessão não iniciada. Configure session_start() no index.php");
-            return false;
+        if (session_status() === PHP_SESSION_NONE) {
+            // Inicia a sessão com parâmetros de segurança profissionais
+            session_start([
+                'cookie_httponly' => true,
+                'cookie_secure'   => isset($_SERVER['HTTPS']),
+                'cookie_samesite' => 'Lax'
+            ]);
         }
         return true;
     }
-    
+
     public static function set($key, $value) {
         $_SESSION[$key] = $value;
     }
-    
+
     public static function get($key, $default = null) {
         return $_SESSION[$key] ?? $default;
     }
-    
+
     public static function has($key) {
         return isset($_SESSION[$key]);
     }
@@ -38,13 +40,15 @@ class Session {
     
     // Flash Messages
     public static function setFlash($type, $message) {
-        self::set('flash_' . $type, $message);
+        // Mudamos para salvar diretamente em $_SESSION para o main.php ler
+        $_SESSION['flash_' . $type] = $message;
     }
-    
+
     public static function getFlash($type) {
-        if (isset($_SESSION['flash_' . $type])) {
-            $message = $_SESSION['flash_' . $type];
-            unset($_SESSION['flash_' . $type]); // Remove imediatamente
+        $key = 'flash_' . $type;
+        if (isset($_SESSION[$key])) {
+            $message = $_SESSION[$key];
+            unset($_SESSION[$key]); // Remove após o primeiro uso (Padrão Flash)
             return $message;
         }
         return null;

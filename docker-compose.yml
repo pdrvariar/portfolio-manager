@@ -1,47 +1,74 @@
 version: '3.8'
 
 services:
-  web:
+  # Serviço de Aplicação (PHP)
+  app:
     build:
       context: .
-      dockerfile: docker/php/Dockerfile
+      dockerfile: docker/php/Dockerfile # Ajustado para o caminho que você informou
+    container_name: portfolio-app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env # Carrega automaticamente as chaves do Brevo, Google e DB
+    depends_on:
+      - db
+    networks:
+      - portfolio-network
+
+  # Servidor Web (Nginx separado)
+  web:
+    image: nginx:alpine
+    container_name: portfolio-web
+    restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www/html # Mapeia a raiz do projeto para a raiz do servidor no container
+      - .:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - mysql
-    environment:
-      - DB_HOST=mysql
-      - DB_NAME=portfolio_db
-      - DB_USER=portfolio_user
-      - DB_PASS=123456
+      - app
+    networks:
+      - portfolio-network
 
-  mysql:
+  # Banco de Dados (MySQL)
+  db:
     image: mysql:8.0
+    container_name: portfolio-db
     ports:
-      - "3306:3306"
+      - "3307:3306"
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: portfolio_db
-      MYSQL_USER: portfolio_user
-      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - portfolio-network
 
+  # Interface de Gerenciamento de Banco
   phpmyadmin:
     image: phpmyadmin:latest
+    container_name: portfolio-pma
     restart: always
     ports:
       - "8081:80"
     environment:
-      - PMA_HOST=mysql
-      - PMA_USER=portfolio_user
-      - PMA_PASSWORD=123456
+      - PMA_HOST=db
+      - PMA_USER=${DB_USER}
+      - PMA_PASSWORD=${DB_PASS}
     depends_on:
-      - mysql
+      - db
+    networks:
+      - portfolio-network
+
+networks:
+  portfolio-network:
+    driver: bridge
 
 volumes:
   mysql_data:
-

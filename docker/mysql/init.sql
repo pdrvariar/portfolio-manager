@@ -1,30 +1,38 @@
--- Banco de dados
+-- 1. Definição do Ambiente
 CREATE DATABASE IF NOT EXISTS portfolio_db;
 USE portfolio_db;
 
--- Tabela de usuários
+-- 2. Tabela de Usuários (Com campos de Verificação e Recuperação)
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    birth_date DATE,
+    password VARCHAR(255) NULL,
     is_admin BOOLEAN DEFAULT FALSE,
+    status ENUM('pending', 'active', 'suspended') DEFAULT 'pending',
+    verification_token VARCHAR(100) NULL,
+    email_verified_at TIMESTAMP NULL,
+    reset_token VARCHAR(100) NULL,           -- Novo campo para recuperação
+    reset_expires_at DATETIME NULL,         -- Novo campo para expiração
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 
--- Tabela de ativos do sistema (padrão)
+-- 3. Tabela de Ativos do Sistema
 CREATE TABLE system_assets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
-    currency VARCHAR(3) NOT NULL,
-    asset_type VARCHAR(20) NOT NULL,
+    currency VARCHAR(3) NOT NULL, 
+    asset_type VARCHAR(20) NOT NULL, 
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 
--- Tabela de dados históricos dos ativos
+-- 4. Tabela de Dados Históricos
 CREATE TABLE asset_historical_data (
     id INT PRIMARY KEY AUTO_INCREMENT,
     asset_id INT NOT NULL,
@@ -32,9 +40,9 @@ CREATE TABLE asset_historical_data (
     price DECIMAL(20, 10) NOT NULL,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id) ON DELETE CASCADE,
     INDEX idx_asset_date (asset_id, reference_date)
-);
+) ENGINE=InnoDB;
 
--- Tabela de portfólios
+-- 5. Tabela de Portfólios
 CREATE TABLE portfolios (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
@@ -43,7 +51,7 @@ CREATE TABLE portfolios (
     initial_capital DECIMAL(15, 2) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE,
-    rebalance_frequency VARCHAR(10) DEFAULT 'monthly',
+    rebalance_frequency ENUM('never', 'monthly', 'quarterly', 'biannual', 'annual') DEFAULT 'monthly',
     output_currency VARCHAR(3) DEFAULT 'BRL',
     is_system_default BOOLEAN DEFAULT FALSE,
     cloned_from INT NULL,
@@ -51,9 +59,9 @@ CREATE TABLE portfolios (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (cloned_from) REFERENCES portfolios(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB;
 
--- Tabela de alocação dos ativos no portfólio
+-- 6. Tabela de Alocação
 CREATE TABLE portfolio_assets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
@@ -63,9 +71,9 @@ CREATE TABLE portfolio_assets (
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id),
     UNIQUE KEY unique_portfolio_asset (portfolio_id, asset_id)
-);
+) ENGINE=InnoDB;
 
--- Tabela de resultados de simulação
+-- 7. Tabela de Resultados de Simulação
 CREATE TABLE simulation_results (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
@@ -78,29 +86,30 @@ CREATE TABLE simulation_results (
     chart_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB;
 
--- Tabela de resultados detalhados por ativo
+-- 8. Tabela de Detalhes por Ativo
 CREATE TABLE simulation_asset_details (
     id INT PRIMARY KEY AUTO_INCREMENT,
     simulation_id INT NOT NULL,
     asset_id INT NOT NULL,
     year INT NOT NULL,
     annual_return DECIMAL(10, 4),
-    contribution DECIMAL(10, 4),
     FOREIGN KEY (simulation_id) REFERENCES simulation_results(id) ON DELETE CASCADE,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id)
-);
+) ENGINE=InnoDB;
 
--- Inserir usuário administrador padrão (senha: admin123)
-INSERT INTO users (username, email, password, is_admin) 
-VALUES ('admin', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE);
+-- 9. Seeders (Dados Iniciais)
+INSERT INTO users (username, full_name, email, password, is_admin, status) 
+VALUES ('admin', 'Administrador do Sistema', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE, 'active');
 
--- Inserir alguns ativos padrão
 INSERT INTO system_assets (code, name, currency, asset_type) VALUES
 ('BTC-USD', 'Bitcoin', 'USD', 'COTACAO'),
 ('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO'),
 ('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO'),
 ('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL'),
 ('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL'),
-('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO');
+('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO'),
+('SP500', 'S&P 500', 'USD', 'COTACAO'),
+('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO');
+

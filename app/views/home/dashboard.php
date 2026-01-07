@@ -66,6 +66,28 @@ ob_start();
 </div>
 <?php endif; ?>
 
+<div class="mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-stars text-warning me-2"></i>Estratégias Sugeridas</h5>
+    <div class="row g-3">
+        <?php foreach ($systemPortfolios as $sp): ?>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-gradient-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-bold mb-0"><?= htmlspecialchars($sp['name']) ?></h6>
+                        <span class="badge bg-primary rounded-pill small" style="font-size: 0.6rem;">OFICIAL</span>
+                    </div>
+                    <p class="text-muted small mb-3 text-truncate-2"><?= htmlspecialchars($sp['description']) ?></p>
+                    <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $sp['id']) ?>" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                        Ver Estratégia
+                    </a>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="card shadow-sm border-0">

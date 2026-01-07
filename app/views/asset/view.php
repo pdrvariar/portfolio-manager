@@ -13,7 +13,9 @@ ob_start();
             </p>
         </div>
         <div>
-            <a href="/assets" class="btn btn-secondary">Voltar</a>
+            <a href="/index.php?url=<?= obfuscateUrl('assets') ?>" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
+            </a>
         </div>
     </div>
     

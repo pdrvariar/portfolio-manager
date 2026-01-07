@@ -170,6 +170,27 @@ class Portfolio {
     public function getTotalCount() {
         $stmt = $this->db->query("SELECT COUNT(*) as total FROM portfolios");
         return $stmt->fetch()['total'];
+    }  
+    
+    /**
+     * Busca apenas os portfólios curados pelo sistema
+     */
+    public function getSystemPortfolios() {
+        $sql = "SELECT * FROM portfolios WHERE is_system_default = TRUE ORDER BY name ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Altera o status de um portfólio para Sistema (Apenas Admin)
+     */
+    public function toggleSystemStatus($id, $status) {
+        // Sênior: Garantimos que o status seja booleano (0 ou 1)
+        $status = $status ? 1 : 0;
+        $sql = "UPDATE portfolios SET is_system_default = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$status, $id]);
     }    
 }
 ?>

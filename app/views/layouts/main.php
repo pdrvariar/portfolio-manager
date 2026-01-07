@@ -80,6 +80,22 @@
             <?php echo renderBreadcrumbs($this->params); ?>
         <?php endif; ?>
 
+        <?php if ($error = Session::getFlash('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> 
+                <strong>Erro:</strong> <?= $error; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($success = Session::getFlash('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> 
+                <strong>Sucesso!</strong> <?= $success; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>        
+
         <?php echo $content; ?>
     </main>
 

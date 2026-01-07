@@ -191,10 +191,12 @@ class BacktestService {
         $values = array_column($results, 'total_value');
         $initial = $values[0];
         $final = end($values);
+        $numMonths = count($values);
         
-        // CORREÇÃO: Cálculo de Retorno Total Real
+        // 1. Retorno Total Absoluto
         $totalReturnDecimal = ($final - $initial) / $initial;
         
+        // 2. Cálculo de Retornos Mensais para Volatilidade
         $returns = [];
         for ($i = 1; $i < count($values); $i++) {
             if ($values[$i-1] > 0) {
@@ -202,24 +204,30 @@ class BacktestService {
             }
         }
 
-        $numMonths = count($values);
-        // CORREÇÃO: Retorno Anualizado (CAGR)
-        $annualReturn = (pow(1 + $totalReturnDecimal, 12 / $numMonths) - 1);
+        // 3. CAGR (Apenas anualizamos se o período for >= 12 meses)
+        // Se o período for curto, o CAGR é igual ao Retorno Total (Prática de Mercado)
+        if ($numMonths >= 12) {
+            $annualReturn = pow(1 + $totalReturnDecimal, 12 / $numMonths) - 1;
+        } else {
+            $annualReturn = $totalReturnDecimal; 
+        }
         
         $vol = $this->calculateVolatility($returns);
         
-        // CORREÇÃO: Sharpe Ratio (Considerando taxa livre de risco zero para simplificar)
-        // O Sharpe deve usar o retorno ANUAL / volatilidade ANUAL
-        $sharpe = ($vol > 0) ? ($annualReturn / $vol) : 0;
+        // 4. Sharpe Ratio Sênior (Exemplo com Selic fixa em 0.10 para ilustrar)
+        // O ideal é buscar o valor real da SELIC no seu banco de dados
+        $riskFreeRate = 0.10; 
+        $excessReturn = $annualReturn - $riskFreeRate;
+        $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
         
         return [
-            'total_return' => $totalReturnDecimal * 100, // Agora deve mostrar o valor real
+            'total_return'  => $totalReturnDecimal * 100,
             'annual_return' => $annualReturn * 100,
-            'volatility' => $vol * 100,
-            'max_drawdown' => $this->calculateMaxDrawdown($values) * 100,
-            'sharpe_ratio' => $sharpe,
+            'volatility'    => $vol * 100,
+            'sharpe_ratio'  => $sharpe,
+            'is_short_period' => ($numMonths < 12), // Flag para a View
             'initial_value' => $initial,
-            'final_value' => $final
+            'final_value'   => $final
         ];
     }
 

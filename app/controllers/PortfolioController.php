@@ -132,6 +132,12 @@ class PortfolioController {
         if ($latest && isset($latest['chart_data'])) {
             $chartData = json_decode($latest['chart_data'], true);
         }
+
+        $start = new DateTime($portfolio['start_date']);
+        $end   = new DateTime($portfolio['end_date'] ?? 'now');
+        $months = ($start->diff($end)->y * 12) + $start->diff($end)->m;
+
+        $metrics['is_short_period'] = ($months < 12);        
         
         require_once __DIR__ . '/../views/portfolio/view.php';
     }
@@ -195,23 +201,40 @@ class PortfolioController {
     }
 
     public function delete() {
-        // 1. Garante que o usuário está logado
         Auth::checkAuthentication();
-        
-        // 2. Recupera o ID enviado pela rota
         $id = $this->params['id'] ?? null;
         
-        if ($id) {
-            // 3. Tenta excluir no Model (a regra de negócio protege contra exclusão de portfólios de outros usuários)
+        $portfolio = $this->portfolioModel->findById($id);
+        if (!$portfolio || $portfolio['user_id'] != $_SESSION['user_id']) {
+            Session::setFlash('error', 'Acesso negado ou portfólio não encontrado.');
+        } else {
             if ($this->portfolioModel->delete($id)) {
-                Session::setFlash('success', 'Portfólio excluído com sucesso!');
-            } else {
-                Session::setFlash('error', 'Não foi possível excluir o portfólio. Verifique se ele é um padrão do sistema.');
+                Session::setFlash('success', 'Portfólio removido com sucesso!');
             }
         }
         
-        // 4. Redireciona de volta para a listagem principal
+        // UEX: Sempre redirecione após uma ação de alteração/exclusão
         header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+        exit;
+    }
+
+    public function toggleSystem() {
+        // SEGURANÇA SÊNIOR: Apenas administradores podem acessar esta rota
+        Auth::checkAdmin(); 
+
+        $id = $this->params['id'] ?? null;
+        $portfolio = $this->portfolioModel->findById($id);
+
+        if ($portfolio) {
+            // Inverte o status atual
+            $newStatus = $portfolio['is_system_default'] ? 0 : 1;
+            $this->portfolioModel->toggleSystemStatus($id, $newStatus);
+            
+            $msg = $newStatus ? "Portfólio promovido ao sistema!" : "Portfólio removido do sistema.";
+            Session::setFlash('success', $msg);
+        }
+        
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
         exit;
     }    
 }

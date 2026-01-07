@@ -18,9 +18,11 @@ class HomeController {
         
         // Dashboard do usuário logado
         $userId = Auth::getCurrentUserId();
+        // Buscamos os dois grupos separadamente para a UX
         $portfolios = $this->portfolioModel->getUserPortfolios($userId, false);
-        $stats = $this->simulationModel->getStatistics($userId);
-        
+        $systemPortfolios = $this->portfolioModel->getSystemPortfolios(); // NOVO
+        $stats = $this->simulationModel->getStatistics($userId);        
+
         // Últimas simulações
         $latestSimulations = [];
         foreach ($portfolios as $portfolio) {
