@@ -180,5 +180,83 @@ private $assetModel;
         }
     } 
 
+
+    public function getBenchmarkData() {
+        Auth::checkAuthentication();
+        $assetId = $this->params['id'] ?? null;
+        $startDate = $_GET['start'] ?? null;
+        $endDate = $_GET['end'] ?? null;
+        $baseValue = floatval($_GET['base'] ?? 100000);
+        $portfolioCurrency = $_GET['currency'] ?? 'BRL'; // Recebe a moeda de saída do portfólio
+
+        $asset = $this->assetModel->findById($assetId);
+        $historical = $this->assetModel->getHistoricalData($assetId, $startDate, $endDate);
+        
+        if (!$asset || empty($historical)) {
+            echo json_encode(['success' => false]);
+            exit;
+        }
+
+        $benchmarkCurrency = $asset['currency'];
+        $type = $asset['asset_type'];
+        
+        // Sênior: Carrega dados de câmbio apenas se houver mismatch de moedas
+        $fxData = [];
+        if ($portfolioCurrency !== $benchmarkCurrency) {
+            $fxAsset = $this->assetModel->findByCode('USD-BRL');
+            if ($fxAsset) {
+                $rawFx = $this->assetModel->getHistoricalData($fxAsset['id'], $startDate, $endDate);
+                foreach ($rawFx as $f) {
+                    $fxData[$f['reference_date']] = floatval($f['price']);
+                }
+            }
+        }
+
+        $normalizedValues = [];
+        $returns = [];
+        $accumulatedValue = $baseValue;
+        $prevPrice = floatval($historical[0]['price']);
+        $lastFxRate = !empty($fxData) ? ($fxData[$historical[0]['reference_date']] ?? null) : null;
+
+        foreach ($historical as $index => $row) {
+            $date = $row['reference_date'];
+            $currentPrice = floatval($row['price']);
+            $currentFxRate = $fxData[$date] ?? null;
+            
+            // 1. Cálculo do Retorno do Ativo (Taxa vs Cotação)
+            if ($type === 'TAXA_MENSAL') {
+                $monthlyReturn = $currentPrice / 100;
+            } else {
+                $monthlyReturn = ($index > 0 && $prevPrice > 0) ? ($currentPrice / $prevPrice) - 1 : 0;
+                $prevPrice = $currentPrice;
+            }
+
+            // 2. Aplicação do Câmbio (Lógica Sênior espelhada do BacktestService)
+            if ($lastFxRate > 0 && $currentFxRate > 0) {
+                if ($portfolioCurrency === 'BRL' && $benchmarkCurrency === 'USD') {
+                    $fxVar = ($currentFxRate / $lastFxRate) - 1;
+                    $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVar) - 1;
+                } elseif ($portfolioCurrency === 'USD' && $benchmarkCurrency === 'BRL') {
+                    $fxVar = ($lastFxRate / $currentFxRate) - 1;
+                    $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVar) - 1;
+                }
+            }
+            $lastFxRate = $currentFxRate;
+
+            // 3. Acúmulo do Valor e Retorno Final
+            $accumulatedValue *= (1 + $monthlyReturn);
+            $normalizedValues[] = round($accumulatedValue, 2);
+            $returns[] = $monthlyReturn;
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'values'  => $normalizedValues,
+            'returns' => $returns
+        ]);
+        exit;
+    }
+
 }
 ?>

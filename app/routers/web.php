@@ -33,6 +33,7 @@ function setupRoutes(Router $router) {
     $router->add('assets/import', ['controller' => 'asset', 'action' => 'import']);
     $router->add('api/assets/update', ['controller' => 'asset', 'action' => 'updateApi']);  
     $router->add('api/assets/{id:\d+}', ['controller' => 'asset', 'action' => 'getAssetApi']); 
+    $router->add('api/assets/benchmark/{id:\d+}', ['controller' => 'asset', 'action' => 'getBenchmarkData']);
     
     
     // --- Rotas de Perfil ---

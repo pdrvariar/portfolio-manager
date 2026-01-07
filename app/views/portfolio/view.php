@@ -121,7 +121,29 @@ ob_start();
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Evolução do Patrimônio</h5></div>
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Evolução do Patrimônio</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <div id="betaContainer" style="display: none;">
+                        <span class="badge bg-soft-dark text-dark border px-3 py-2 rounded-pill" title="Risco Relativo (Beta)">
+                            Beta: <span id="betaValue" class="fw-bold">--</span>
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2 border-start ps-3">
+                        <label class="smaller text-muted fw-bold">Comparar com:</label>
+                        <select class="form-select form-select-sm border-0 bg-light shadow-none" id="benchmarkSelector" style="width: 150px;">
+                            <option value="">Nenhum</option>
+                            <?php 
+                            $assetModel = new Asset();
+                            $benchmarks = $assetModel->getAll(); 
+                            foreach ($benchmarks as $b): ?>
+                                <option value="<?= $b['id'] ?>"><?= $b['name'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>            
+            </div>
             <div class="card-body"><div class="chart-container"><canvas id="valueChart"></canvas></div></div>
         </div>
     </div>
@@ -227,12 +249,22 @@ ob_start();
     const assetNames = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.htmlspecialchars($a['name']).'",'; ?>};
     const assetTargets = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": '.$a['allocation_percentage'].','; ?>};
 
-    // Renderização dos gráficos Chart.js
-    new Chart(document.getElementById('valueChart'), {
+    window.valueChart = new Chart(document.getElementById('valueChart'), {
         type: 'line',
         data: chartData.value_chart,
-        options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: (ctx) => `Valor: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(ctx.raw)}` } } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                tooltip: { 
+                    callbacks: { 
+                        label: (ctx) => `Valor: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(ctx.raw)}` 
+                    } 
+                } 
+            } 
+        }
     });
+
     new Chart(document.getElementById('compositionChart'), {
         type: 'bar',
         data: chartData.composition_chart,
@@ -291,6 +323,77 @@ ob_start();
         link.download = `Auditoria_<?php echo $portfolio['id']; ?>.csv`;
         link.click();
     }
+
+    // 1. Define o log de auditoria globalmente para o cálculo do Beta
+    window.simulationAuditLog = chartData.audit_log || {};
+
+    document.getElementById('benchmarkSelector').addEventListener('change', function() {
+        const assetId = this.value;
+        const chart = window.valueChart;
+        
+        if (!chart) return; // Segurança Sênior
+
+        // Remove benchmark anterior
+        if (chart.data.datasets.length > 1) {
+            chart.data.datasets.pop();
+            chart.update();
+            document.getElementById('betaContainer').style.display = 'none';
+        }
+
+        if (!assetId) return;
+
+        const start = "<?= $portfolio['start_date'] ?>";
+        const end = "<?= $portfolio['end_date'] ?? date('Y-m-d') ?>";
+        const base = <?= $portfolio['initial_capital'] ?>;
+
+        fetch(`/index.php?url=api/assets/benchmark/${assetId}&start=${start}&end=${end}&base=${base}&currency=${currency}`) 
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) return;
+
+                // Cálculo do Beta em tempo real
+                const portfolioReturns = Object.values(window.simulationAuditLog).map((m, i, arr) => {
+                    if (i === 0) return 0;
+                    return (m.total_value / arr[i-1].total_value) - 1;
+                });
+
+                const beta = calculateBeta(portfolioReturns, res.returns);
+                document.getElementById('betaValue').innerText = beta.toFixed(2);
+                document.getElementById('betaContainer').style.display = 'block';
+
+                // Adiciona a linha ao gráfico
+                chart.data.datasets.push({
+                    label: 'Benchmark: ' + this.options[this.selectedIndex].text,
+                    data: res.values,
+                    borderColor: '#6c757d',
+                    borderDash: [5, 5],
+                    backgroundColor: 'transparent',
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1
+                });
+                chart.update();
+            });
+    });
+
+    // Função auxiliar de estatística
+    function calculateBeta(pRet, bRet) {
+        const minLen = Math.min(pRet.length, bRet.length);
+        if (minLen < 2) return 1;
+        
+        const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+        const mP = mean(pRet.slice(0, minLen));
+        const mB = mean(bRet.slice(0, minLen));
+
+        let cov = 0, varB = 0;
+        for (let i = 0; i < minLen; i++) {
+            cov += (pRet[i] - mP) * (bRet[i] - mB);
+            varB += Math.pow(bRet[i] - mB, 2);
+        }
+        return varB === 0 ? 1 : cov / varB;
+    }
+    
 </script>
 
 <?php
