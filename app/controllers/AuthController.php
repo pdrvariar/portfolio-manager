@@ -215,20 +215,21 @@ class AuthController {
      * Ponto de Entrada para Login com Google
      */
     public function googleLogin() {
-        // Busca a URL base de forma robusta
+        // Busca a URL de forma robusta com fallback para o seu domínio real
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
         
         $client = new GoogleClient(); 
         $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
         $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
         
-        // Força a URL a ser absoluta e remove barras extras no final do domínio
+        // rtrim remove barras no final para evitar 'https://site.com//index.php'
         $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
         $client->setRedirectUri($redirectUri);
         
         $client->addScope("email");
         $client->addScope("profile");
 
+        // Linha 232: Agora a AuthUrl será gerada com uma URI absoluta válida
         $authUrl = $client->createAuthUrl();
         header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
         exit;
@@ -297,14 +298,15 @@ class AuthController {
         $client = new GoogleClient();
         $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
         $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
-        $client->setRedirectUri(rtrim($baseUrl, '/') . "/index.php?url=google/callback");
+        
+        $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
+        $client->setRedirectUri($redirectUri);
 
         if (isset($_GET['code'])) {
             try {
                 $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
                 $client->setAccessToken($token);
 
-                // Usa o alias correto definido no topo do seu arquivo
                 $googleService = new GoogleServiceOauth2($client);
                 $googleUser = $googleService->userinfo->get();
 
