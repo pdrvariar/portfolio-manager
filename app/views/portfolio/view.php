@@ -92,6 +92,20 @@ ob_start();
     </div>
 </div>
 
+<?php if ($latest && $portfolio['end_date'] && $latest['simulation_date'] < $portfolio['end_date']): ?>
+    <div class="alert alert-soft-warning border-0 rounded-4 d-flex align-items-center p-3 mb-4 shadow-sm" style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107 !important;">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 42px; height: 42px; flex-shrink: 0;">
+            <i class="bi bi-exclamation-triangle-fill text-white fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold mb-1 text-dark">Horizonte de Simulação Ajustado</h6>
+            <p class="text-muted smaller mb-0">
+                Esta simulação foi processada até **<?= date('m/Y', strtotime($latest['simulation_date'])) ?>** porque um ou mais ativos da sua carteira não possuem dados históricos disponíveis após este mês.
+            </p>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="row g-3 mb-4">
     <?php 
     $metricsList = [
@@ -138,11 +152,13 @@ ob_start();
                             $assetModel = new Asset();
                             $allAssets = $assetModel->getAllWithDetails(); 
                             
+                            // SÊNIOR: Se a simulação já rodou, usamos a data real de término dela.
+                            // Se não rodou, usamos a data do portfólio ou "hoje".
                             $pStart = $portfolio['start_date'];
-                            $pEnd   = $portfolio['end_date'] ?? date('Y-m-d');
+                            $pEnd = $latest ? $latest['simulation_date'] : ($portfolio['end_date'] ?? date('Y-m-d'));
 
                             foreach ($allAssets as $b): 
-                                // Validação: O benchmark deve cobrir todo o período do portfólio
+                                // O benchmark deve cobrir o período em que a simulação REALMENTE aconteceu
                                 $isValid = ($b['min_date'] <= $pStart && (empty($b['max_date']) || $b['max_date'] >= $pEnd));
                             ?>
                                 <option value="<?= $b['id'] ?>" <?= !$isValid ? 'disabled' : '' ?>>
@@ -353,10 +369,14 @@ ob_start();
         if (!assetId) return;
 
         const start = "<?= $portfolio['start_date'] ?>";
-        const end = "<?= $portfolio['end_date'] ?? date('Y-m-d') ?>";
+        
+        // SÊNIOR: Garante que o benchmark use a mesma data final da simulação salva
+        const end = "<?= $latest ? $latest['simulation_date'] : ($portfolio['end_date'] ?? date('Y-m-d')) ?>";
+        
         const base = <?= $portfolio['initial_capital'] ?>;
+        const currency = '<?= $portfolio['output_currency'] ?>';
 
-        fetch(`/index.php?url=api/assets/benchmark/${assetId}&start=${start}&end=${end}&base=${base}`)
+        fetch(`/index.php?url=api/assets/benchmark/${assetId}&start=${start}&end=${end}&base=${base}&currency=${currency}`) 
             .then(r => r.json())
             .then(res => {
                 if (!res.success) return;

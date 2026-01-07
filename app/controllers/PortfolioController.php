@@ -74,19 +74,15 @@ class PortfolioController {
     public function runSimulation() {
         Auth::checkAuthentication();
         $portfolioId = $this->params['id'] ?? null;
-        if (!$portfolioId) {
-            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
-            exit;
-        }
         
         $backtestService = new BacktestService();
         $result = $backtestService->runSimulation($portfolioId);
         
         if ($result['success']) {
-            Session::setFlash('success', 'Simulação executada com sucesso!');
+            $dateStr = date('m/Y', strtotime($result['effective_end']));
+            Session::setFlash('success', "Simulação concluída! Dados processados até $dateStr (limite dos ativos selecionados).");
         } else {
-            // Se a simulação falhar (ex: falta de dados), agora o erro aparecerá na tela
-            Session::setFlash('error', 'Erro na simulação: ' . $result['message']);
+            Session::setFlash('error', $result['message']);
         }
         
         header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));

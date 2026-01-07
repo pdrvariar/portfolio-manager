@@ -14,8 +14,15 @@ class BacktestService {
             return ['success' => false, 'message' => 'Dados do portfólio não encontrados.'];
         }
 
-        $historicalData = $this->loadHistoricalData($assets, $portfolio['start_date'], $portfolio['end_date']);
+        // SÊNIOR: Cálculo do horizonte comum de dados
+        $effectiveDates = $this->calculateEffectiveRange($assets, $portfolio['start_date'], $portfolio['end_date']);
         
+        if (!$effectiveDates['valid']) {
+            return ['success' => false, 'message' => 'Nenhum dos ativos possui dados em comum no período selecionado.'];
+        }
+
+        $historicalData = $this->loadHistoricalData($assets, $effectiveDates['start'], $effectiveDates['end']); 
+
         if (empty($historicalData)) {
             return ['success' => false, 'message' => 'Dados históricos insuficientes para o período.'];
         }
@@ -26,16 +33,44 @@ class BacktestService {
 
         $chartData['audit_log'] = $results;
 
-        $simulationId = $this->saveResults($portfolioId, $metrics, $chartData);
+        // Dentro do runSimulation, onde você chama o saveResults:
+        $simulationId = $this->saveResults($portfolioId, $metrics, $chartData, $effectiveDates['end']);
+
         $this->saveAssetDetails($simulationId, $results, $assets);
         
         return [
             'success' => true,
             'simulation_id' => $simulationId,
             'metrics' => $metrics,
-            'chart_data' => $chartData
+            'chart_data' => $chartData,
+            'effective_end' => $effectiveDates['end'] // Retornamos para informar o usuário
         ];
     }
+
+    private function calculateEffectiveRange($assets, $requestedStart, $requestedEnd) {
+        $maxStart = $requestedStart;
+        $minEnd = $requestedEnd ?: date('Y-m-d');
+
+        foreach ($assets as $asset) {
+            $sql = "SELECT MIN(reference_date) as min_d, MAX(reference_date) as max_d 
+                    FROM asset_historical_data WHERE asset_id = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$asset['asset_id']]);
+            $range = $stmt->fetch();
+
+            // O início da simulação deve ser o MAIOR dos inícios (quem começou por último)
+            if ($range['min_d'] > $maxStart) $maxStart = $range['min_d'];
+            
+            // O fim da simulação deve ser o MENOR dos fins (quem terminou primeiro)
+            if ($range['max_d'] < $minEnd) $minEnd = $range['max_d'];
+        }
+
+        return [
+            'valid' => ($maxStart <= $minEnd),
+            'start' => $maxStart,
+            'end'   => $minEnd
+        ];
+    }    
 
     private function getPortfolioData($id) {
         $sql = "SELECT * FROM portfolios WHERE id = ?";
@@ -257,11 +292,20 @@ class BacktestService {
         ];
     }
 
-    private function saveResults($portfolioId, $metrics, $chartData) {
+    private function saveResults($portfolioId, $metrics, $chartData, $endDate) {
         $sql = "INSERT INTO simulation_results (portfolio_id, simulation_date, total_value, annual_return, volatility, max_drawdown, sharpe_ratio, chart_data) 
-                VALUES (?, CURDATE(), ?, ?, ?, ?, ?, ?)";
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; // Trocamos CURDATE() por ?
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$portfolioId, $metrics['final_value'], $metrics['annual_return'], $metrics['volatility'], $metrics['max_drawdown'], $metrics['sharpe_ratio'], json_encode($chartData)]);
+        $stmt->execute([
+            $portfolioId, 
+            $endDate, // Agora salvamos a data final real da simulação
+            $metrics['final_value'], 
+            $metrics['annual_return'], 
+            $metrics['volatility'], 
+            $metrics['max_drawdown'], 
+            $metrics['sharpe_ratio'], 
+            json_encode($chartData)
+        ]);
         return $this->db->lastInsertId();
     }
 
