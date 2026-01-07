@@ -132,13 +132,23 @@ ob_start();
                     
                     <div class="d-flex align-items-center gap-2 border-start ps-3">
                         <label class="smaller text-muted fw-bold">Comparar com:</label>
-                        <select class="form-select form-select-sm border-0 bg-light shadow-none" id="benchmarkSelector" style="width: 150px;">
+                        <select class="form-select form-select-sm border-0 bg-light shadow-none" id="benchmarkSelector" style="width: 250px;">
                             <option value="">Nenhum</option>
                             <?php 
                             $assetModel = new Asset();
-                            $benchmarks = $assetModel->getAll(); 
-                            foreach ($benchmarks as $b): ?>
-                                <option value="<?= $b['id'] ?>"><?= $b['name'] ?></option>
+                            $allAssets = $assetModel->getAllWithDetails(); 
+                            
+                            $pStart = $portfolio['start_date'];
+                            $pEnd   = $portfolio['end_date'] ?? date('Y-m-d');
+
+                            foreach ($allAssets as $b): 
+                                // Validação: O benchmark deve cobrir todo o período do portfólio
+                                $isValid = ($b['min_date'] <= $pStart && (empty($b['max_date']) || $b['max_date'] >= $pEnd));
+                            ?>
+                                <option value="<?= $b['id'] ?>" <?= !$isValid ? 'disabled' : '' ?>>
+                                    <?= htmlspecialchars($b['name']) ?> 
+                                    <?= !$isValid ? ' (Histórico insuficiente)' : '' ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -346,7 +356,7 @@ ob_start();
         const end = "<?= $portfolio['end_date'] ?? date('Y-m-d') ?>";
         const base = <?= $portfolio['initial_capital'] ?>;
 
-        fetch(`/index.php?url=api/assets/benchmark/${assetId}&start=${start}&end=${end}&base=${base}&currency=${currency}`) 
+        fetch(`/index.php?url=api/assets/benchmark/${assetId}&start=${start}&end=${end}&base=${base}`)
             .then(r => r.json())
             .then(res => {
                 if (!res.success) return;
