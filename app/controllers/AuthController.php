@@ -215,14 +215,14 @@ class AuthController {
      * Ponto de Entrada para Login com Google
      */
     public function googleLogin() {
-        // Recupera a URL base usando getenv() que validamos ser mais estável na Hostinger
+        // Busca a URL base de forma robusta
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
         
         $client = new GoogleClient(); 
         $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
         $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
         
-        // Garante que a URL seja absoluta e sem barras duplicadas
+        // Força a URL a ser absoluta e remove barras extras no final do domínio
         $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
         $client->setRedirectUri($redirectUri);
         
@@ -297,8 +297,6 @@ class AuthController {
         $client = new GoogleClient();
         $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
         $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
-        
-        // Mantém a consistência da Redirect URI absoluta
         $client->setRedirectUri(rtrim($baseUrl, '/') . "/index.php?url=google/callback");
 
         if (isset($_GET['code'])) {
@@ -306,7 +304,7 @@ class AuthController {
                 $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
                 $client->setAccessToken($token);
 
-                // Corrigido para usar a classe importada no topo via alias (GoogleServiceOauth2)
+                // Usa o alias correto definido no topo do seu arquivo
                 $googleService = new GoogleServiceOauth2($client);
                 $googleUser = $googleService->userinfo->get();
 
