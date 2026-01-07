@@ -175,29 +175,37 @@ class AuthController {
         }
         exit;
     }
-    /**
-     * Integração SMTP Brevo (PHPMailer)
+/**
+     * Integração SMTP Brevo (PHPMailer) - Versão Sênior Hostinger
      */
     private function sendEmailVerification($email, $name, $token) {
         $mail = new PHPMailer(true);
         try {
+            // 1. Recupera e limpa as credenciais de forma robusta
+            $smtpUser = trim(getenv('BREVO_USER') ?: ($_ENV['BREVO_USER'] ?? ''), "\"' ");
+            $smtpPass = trim(getenv('BREVO_PASS') ?: ($_ENV['BREVO_PASS'] ?? ''), "\"' ");
+            $fromEmail = trim(getenv('MAIL_FROM_ADDRESS') ?: ($_ENV['MAIL_FROM_ADDRESS'] ?? ''), "\"' ");
+            $fromName  = trim(getenv('MAIL_FROM_NAME') ?: ($_ENV['MAIL_FROM_NAME'] ?? 'Portfolio Backtest'), "\"' ");
+            $appUrl    = trim(getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br'), "\"' ");
+
             // Configurações do servidor Brevo
             $mail->isSMTP();
             $mail->Host       = 'smtp-relay.brevo.com';
             $mail->SMTPAuth   = true;
-
-            $mail->Username   = $_ENV['BREVO_USER']; // Definir no seu .env
-            $mail->Password   = $_ENV['BREVO_PASS']; // Definir no seu .env
+            $mail->Username   = $smtpUser; 
+            $mail->Password   = $smtpPass; 
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
 
-            $mail->setFrom($_ENV['MAIL_FROM_ADDRESS'], $_ENV['MAIL_FROM_NAME']);
+            // Define o remetente e destinatário
+            $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($email, $name);
 
-            // Altere a linha do link no método sendEmailVerification:
-            $url = $_ENV['APP_URL'] . "/index.php?url=" . obfuscateUrl('verify') . "&token=" . $token;
+            // Monta a URL absoluta de verificação
+            $url = rtrim($appUrl, '/') . "/index.php?url=" . obfuscateUrl('verify') . "&token=" . $token;
 
             $mail->isHTML(true);
+            $mail->CharSet = 'UTF-8'; // Garante acentuação correta
             $mail->Subject = 'Confirme sua conta - Portfolio Backtest';
             $mail->Body    = "<h2>Olá, $name!</h2>
                               <p>Obrigado por se cadastrar. Clique no botão abaixo para ativar sua conta:</p>
@@ -205,9 +213,13 @@ class AuthController {
                               <p>Se o botão não funcionar, copie este link: $url</p>";
 
             $mail->send();
+            error_log("E-mail enviado com sucesso para: $email");
         } catch (Exception $e) {
-            // Em produção, logar o erro em vez de mostrar na tela
-            error_log("Erro ao enviar e-mail: {$mail->ErrorInfo}");
+            error_log("Erro Brevo/PHPMailer: {$mail->ErrorInfo}");
+            // Se estiver em modo dev, você pode ver o erro na tela temporariamente para debug
+            if (getenv('APP_ENV') === 'development') {
+                echo "Erro no envio: " . $mail->ErrorInfo;
+            }
         }
     }
 
