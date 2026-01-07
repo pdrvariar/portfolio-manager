@@ -1,48 +1,43 @@
 <?php
 
-/**
- * Classe Database - Padrão Singleton de Alta Performance
- * Responsável pela gestão da persistência e comunicação com o MySQL no Docker.
- */
 class Database {
     private static ?self $instance = null;
     private PDO $connection;
 
     private function __construct() {
-        // Recupera as configurações do .env (injetadas pelo Docker)
-        $host = $_ENV['DB_HOST'] ?? 'db';
-        $db   = $_ENV['DB_NAME'] ?? 'portfolio_db';
-        $user = $_ENV['DB_USER'] ?? 'root';
-        $pass = $_ENV['DB_PASS'] ?? '';
-        $port = $_ENV['DB_PORT'] ?? '3306';
+        // Lógica Sênior: Busca em getenv (carregado pelo seu Env::load) ou $_ENV
+        $host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? '127.0.0.1');
+        $db   = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'portfolio_db');
+        $user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
+        $pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
+        $port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
+
+        // Limpeza de aspas de segurança para o .env da Hostinger
+        $pass = trim($pass, "'\"");
 
         try {
             $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
             
-            // Opções de Conexão Sênior para Produção
             $options = [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Lança exceções em erros de SQL
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Retorna arrays associativos por padrão
-                PDO::ATTR_EMULATE_PREPARES   => false,                 // Usa prepared statements reais (Segurança)
-                PDO::ATTR_PERSISTENT         => true,                  // Mantém a conexão viva entre requisições
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"    // Garante suporte total a emojis e caracteres especiais
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+                PDO::ATTR_PERSISTENT         => false, // Desativado para evitar limites de conexão da Hostinger
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
             ];
 
             $this->connection = new PDO($dsn, $user, $pass, $options);
             
         } catch (PDOException $e) {
-            // Log de erro profissional para o Docker/Nginx capturarem
             error_log("Erro Crítico de Banco de Dados: " . $e->getMessage());
             
-            // Em ambiente de desenvolvimento, mostra o erro; em produção, uma mensagem genérica
-            $isDev = ($_ENV['APP_ENV'] ?? 'production') === 'development';
+            $appEnv = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'production');
+            $isDev = $appEnv === 'development';
+            
             die($isDev ? "Erro de Conexão: " . $e->getMessage() : "Erro crítico: O serviço de dados está temporariamente indisponível.");
         }
     }
 
-    /**
-     * Retorna a instância única da conexão (Singleton)
-     */
     public static function getInstance(): self {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -50,17 +45,12 @@ class Database {
         return self::$instance;
     }
 
-    /**
-     * Retorna o objeto PDO para operações complexas
-     */
     public function getConnection(): PDO {
         return $this->connection;
     }
 
     /**
-     * Atalho para Prepared Statements - Proteção contra SQL Injection
-     * @param string $sql A query SQL com placeholders (?)
-     * @param array $params Os valores para substituir os placeholders
+     * Mantida a sua lógica original de try/catch para logs de query
      */
     public function query(string $sql, array $params = []): PDOStatement {
         try {
@@ -69,18 +59,11 @@ class Database {
             return $stmt;
         } catch (PDOException $e) {
             error_log("Erro na Query: " . $e->getMessage() . " - SQL: " . $sql);
-            throw $e; // Re-lança para o Controller tratar se necessário
+            throw $e; 
         }
     }
 
-    /**
-     * Previne a clonagem da instância
-     */
     private function __clone() {}
-
-    /**
-     * Previne a desserialização da instância
-     */
     public function __wakeup() {
         throw new \Exception("Não é permitido desserializar um Singleton.");
     }
