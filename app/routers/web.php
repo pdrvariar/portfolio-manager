@@ -31,7 +31,9 @@ function setupRoutes(Router $router) {
     $router->add('assets/view/{id:\d+}', ['controller' => 'asset', 'action' => 'view']);
     $router->add('assets', ['controller' => 'asset', 'action' => 'index']);
     $router->add('assets/import', ['controller' => 'asset', 'action' => 'import']);
-    $router->add('api/assets/update', ['controller' => 'asset', 'action' => 'updateApi']);    
+    $router->add('api/assets/update', ['controller' => 'asset', 'action' => 'updateApi']);  
+    $router->add('api/assets/{id:\d+}', ['controller' => 'asset', 'action' => 'getAssetApi']); 
+    
     
     // --- Rotas de Perfil ---
     $router->add('profile', ['controller' => 'profile', 'action' => 'index']);
