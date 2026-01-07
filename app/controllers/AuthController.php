@@ -214,22 +214,26 @@ class AuthController {
     /**
      * Ponto de Entrada para Login com Google
      */
+/**
+     * Ponto de Entrada para Login com Google
+     */
     public function googleLogin() {
-        // Busca a URL de forma robusta com fallback para o seu domínio real
+        // 1. Busca a URL e LIMPA aspas e espaços (Essencial para Hostinger)
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
+        $baseUrl = trim($baseUrl, "\"' "); 
         
         $client = new GoogleClient(); 
-        $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
-        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setClientId(trim(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID'], "\"' "));
+        $client->setClientSecret(trim(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET'], "\"' "));
         
-        // rtrim remove barras no final para evitar 'https://site.com//index.php'
+        // 2. Monta a URI absoluta garantindo o formato correto
         $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
         $client->setRedirectUri($redirectUri);
         
         $client->addScope("email");
         $client->addScope("profile");
 
-        // Linha 232: Agora a AuthUrl será gerada com uma URI absoluta válida
+        // Agora a chamada na linha 233 (conforme seu log) será bem-sucedida
         $authUrl = $client->createAuthUrl();
         header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
         exit;
@@ -289,18 +293,19 @@ class AuthController {
         require_once __DIR__ . '/../views/auth/reset_form.php';
     }    
 
-    /**
-     * Callback do Google - Processa o retorno da autenticação social
+/**
+     * Callback do Google - Processa o retorno
      */
     public function googleCallback() {
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'https://smartreturns.com.br');
-        
+        $baseUrl = trim($baseUrl, "\"' ");
+
         $client = new GoogleClient();
-        $client->setClientId(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID']);
-        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setClientId(trim(getenv('GOOGLE_CLIENT_ID') ?: $_ENV['GOOGLE_CLIENT_ID'], "\"' "));
+        $client->setClientSecret(trim(getenv('GOOGLE_CLIENT_SECRET') ?: $_ENV['GOOGLE_CLIENT_SECRET'], "\"' "));
         
-        $redirectUri = rtrim($baseUrl, '/') . "/index.php?url=google/callback";
-        $client->setRedirectUri($redirectUri);
+        // A URI aqui deve ser IDÊNTICA à do googleLogin
+        $client->setRedirectUri(rtrim($baseUrl, '/') . "/index.php?url=google/callback");
 
         if (isset($_GET['code'])) {
             try {
