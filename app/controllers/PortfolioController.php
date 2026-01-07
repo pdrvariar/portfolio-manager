@@ -43,7 +43,7 @@ class PortfolioController {
                 if (isset($_POST['assets'])) {
                     $this->portfolioModel->updateAssets($portfolioId, $_POST['assets']);
                 }
-                // CORREÇÃO: Redirecionamento absoluto
+                // Garanta que o redirecionamento passe pelo index.php e seja ofuscado
                 header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
                 exit;
             }

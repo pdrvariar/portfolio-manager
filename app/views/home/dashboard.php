@@ -148,13 +148,13 @@ ob_start();
             <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-6">
-                        <a href="index.php?url=assets" class="btn btn-action-quick w-100 py-3 text-center rounded-4 h-100">
+                        <a href="/index.php?url=<?= obfuscateUrl('assets') ?>" class="btn btn-action-quick w-100 py-3 text-center rounded-4 h-100">
                             <i class="bi bi-search d-block mb-1 fs-3 text-primary"></i>
                             <span class="small fw-bold text-dark">Ativos</span>
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="index.php?url=profile" class="btn btn-action-quick w-100 py-3 text-center rounded-4 h-100">
+                        <a href="/index.php?url=<?= obfuscateUrl('profile') ?>" class="btn btn-action-quick w-100 py-3 text-center rounded-4 h-100">
                             <i class="bi bi-person-gear d-block mb-1 fs-3 text-secondary"></i>
                             <span class="small fw-bold text-dark">Meu Perfil</span>
                         </a>

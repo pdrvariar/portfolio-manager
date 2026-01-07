@@ -12,7 +12,7 @@ $assets = $assetModel->getAllWithDetails();
                 <h4 class="mb-0">Criar Novo Portfólio</h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="/portfolio/create" id="portfolioForm">
+                <form method="POST" action="/index.php?url=<?php echo obfuscateUrl('portfolio/create'); ?>" id="portfolioForm">
                     <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     <div class="row">
                         <div class="col-md-6">
@@ -128,7 +128,7 @@ $assets = $assetModel->getAllWithDetails();
                     </div>
                     
                     <div class="d-flex justify-content-between">
-                        <a href="/portfolio" class="btn btn-secondary">Cancelar</a>
+                        <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>" class="btn btn-secondary">Cancelar</a>
                         <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Criar Portfólio</button>
                     </div>
                 </form>
