@@ -26,10 +26,17 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto"> <?php if (Auth::isLoggedIn()): ?>
+                <ul class="navbar-nav mx-auto"> 
+                    <?php if (Auth::isLoggedIn()): ?>
                         <?php 
-                            $current_url = $_GET['url'] ?? ''; 
-                            $is_active = fn($path) => strpos($current_url, $path) !== false ? 'active' : '';
+                            // 1. Captura a URL ofuscada vinda do navegador
+                            $raw_url = $_GET['url'] ?? ''; 
+                            
+                            // 2. Converte o hash de volta para a rota legível (ex: 'Y29uZmln' -> 'dashboard')
+                            $clean_url = function_exists('deobfuscateUrl') ? deobfuscateUrl($raw_url) : $raw_url;
+                            
+                            // 3. A comparação agora funciona com a rota descriptografada
+                            $is_active = fn($path) => strpos($clean_url, $path) !== false ? 'active' : '';
                         ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo $is_active('dashboard'); ?>" href="/index.php?url=<?= obfuscateUrl('dashboard') ?>">

@@ -86,7 +86,8 @@ function logActivity($message, $userId = null) {
 function renderBreadcrumbs($params) {
     // Início sempre no Dashboard
     $breadcrumbs = [
-        ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=dashboard']
+        // Use obfuscateUrl aqui também para manter o padrão
+        ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')]
     ];
 
     $controller = strtolower(str_replace('Controller', '', $params['controller'] ?? ''));
@@ -101,7 +102,7 @@ function renderBreadcrumbs($params) {
     ];
 
     if (isset($labels[$controller])) {
-        $url = "/index.php?url=$controller";
+        $url = "/index.php?url=" . obfuscateUrl($controller); // Adicionado obfuscateUrl
         $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
     }
 
