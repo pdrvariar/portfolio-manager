@@ -177,4 +177,12 @@ function deobfuscateUrl($hash) {
     return $decrypted ?: $hash;
 }
 
+/**
+ * Converte datas para o formato internacional numérico: 10/2014
+ */
+function formatMonthYear($date) {
+    if (empty($date)) return '';
+    return date('m/Y', strtotime($date));
+}
+
 ?>

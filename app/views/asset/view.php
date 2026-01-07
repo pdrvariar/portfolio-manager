@@ -49,7 +49,7 @@ ob_start();
                                             (($currentPrice - $prevPrice) / $prevPrice) * 100 : null;
                                     ?>
                                     <tr>
-                                        <td><?php echo date('M/Y', strtotime($row['reference_date'])); ?></td>
+                                        <td><?php echo formatMonthYear($row['reference_date']); ?></td>
                                         <td>
                                             <?php if ($asset['currency'] === 'BRL'): ?>
                                                 R$ <?php echo number_format($currentPrice, 2, ',', '.'); ?>
@@ -77,8 +77,7 @@ ob_start();
                         <div class="mt-3">
                             <p class="text-muted">
                                 <small>
-                                    Período: <?php echo date('M/Y', strtotime($historicalData[0]['reference_date'])); ?> 
-                                    até <?php echo date('M/Y', strtotime(end($historicalData)['reference_date'])); ?> | 
+                                    Período: <?php echo formatMonthYear($historicalData[0]['reference_date']); ?> até <?php echo formatMonthYear(end($historicalData)['reference_date']); ?> | 
                                     Total: <?php echo count($historicalData); ?> registros
                                 </small>
                             </p>
