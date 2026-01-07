@@ -2,6 +2,20 @@
 $title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>
+<?php if ($portfolio['is_system_default']): ?>
+<div class="alert border-0 rounded-4 d-flex align-items-center p-3 mb-4 shadow-sm" style="background-color: rgba(13, 110, 253, 0.05); border-left: 4px solid var(--primary) !important;">
+    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 42px; height: 42px; flex-shrink: 0;">
+        <i class="bi bi-patch-check-fill text-white fs-5"></i>
+    </div>
+    <div class="flex-grow-1">
+        <h6 class="fw-bold mb-0 text-dark">Estratégia Oficial do Sistema</h6>
+        <p class="text-muted smaller mb-0">Este portfólio é um modelo curado para servir de benchmark e referência profissional.</p>
+    </div>
+    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 smaller fw-bold ms-3">
+        CURADORIA ATIVA
+    </span>
+</div>
+<?php endif; ?>
 
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
@@ -19,9 +33,24 @@ ob_start();
     </div>
     <div class="col-md-4 text-end">
         <div class="btn-group shadow-sm">
-            <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-primary"><i class="bi bi-play-fill"></i> Simular</a>
-            <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
-            <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar"><i class="bi bi-files"></i></a>
+            <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-primary">
+                <i class="bi bi-play-fill"></i> Simular
+            </a>
+            <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar">
+                <i class="bi bi-files"></i>
+            </a>
+
+            <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" 
+                class="btn btn-outline-danger" 
+                title="Excluir" 
+                onclick="return confirm('Tem certeza que deseja excluir esta estratégia?')">
+                    <i class="bi bi-trash"></i>
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </div>

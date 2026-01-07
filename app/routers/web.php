@@ -37,6 +37,7 @@ function setupRoutes(Router $router) {
     $router->add('profile', ['controller' => 'profile', 'action' => 'index']);
     $router->add('profile/update', ['controller' => 'profile', 'action' => 'update']);
     $router->add('profile/change-password', ['controller' => 'profile', 'action' => 'changePassword']);
+    $router->add('portfolio/toggle-system/{id:\d+}', ['controller' => 'portfolio', 'action' => 'toggleSystem']);    
 
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);

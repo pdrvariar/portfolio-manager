@@ -142,27 +142,31 @@ class PortfolioController {
         require_once __DIR__ . '/../views/portfolio/view.php';
     }
     
+    /**
+     * GET: Exibe o formulário de edição com trava de segurança
+     */
     public function edit() {
         Auth::checkAuthentication();
-        
         $id = $this->params['id'] ?? null;
-        if (!$id) {
-            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
-            exit;
-        }
-        
         $portfolio = $this->portfolioModel->findById($id);
-        
-        if (!$portfolio || $portfolio['user_id'] != $_SESSION['user_id']) {
+
+        // SEGURANÇA SÊNIOR: Bloqueia edição de portfólio de sistema por não-admins
+        if ($portfolio['is_system_default'] && !Auth::isAdmin()) {
+            Session::setFlash('error', 'Estratégias oficiais do sistema não podem ser editadas.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        // Validação de propriedade (apenas o dono ou admin edita)
+        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+            Session::setFlash('error', 'Acesso negado.');
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
-        
-        // --- CORREÇÃO: Busque os dados que a View precisa aqui ---
+
         $assetModel = new Asset();
         $allAssets = $assetModel->getAllWithDetails();
         $portfolioAssets = $this->portfolioModel->getPortfolioAssets($id);
-        // ---------------------------------------------------------
         
         require_once __DIR__ . '/../views/portfolio/edit.php';
     }
@@ -200,20 +204,36 @@ class PortfolioController {
         }
     }
 
+    /**
+     * POST: Processa a exclusão com lógica de permissão Admin
+     */
     public function delete() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
-        
         $portfolio = $this->portfolioModel->findById($id);
-        if (!$portfolio || $portfolio['user_id'] != $_SESSION['user_id']) {
-            Session::setFlash('error', 'Acesso negado ou portfólio não encontrado.');
-        } else {
-            if ($this->portfolioModel->delete($id)) {
-                Session::setFlash('success', 'Portfólio removido com sucesso!');
-            }
+
+        if (!$portfolio) {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
         }
-        
-        // UEX: Sempre redirecione após uma ação de alteração/exclusão
+
+        // Lógica de Permissão Sênior:
+        // 1. Se for sistema: Só Admin deleta.
+        // 2. Se for pessoal: Só o dono (ou Admin) deleta.
+        $canDelete = false;
+        if ($portfolio['is_system_default']) {
+            $canDelete = Auth::isAdmin();
+        } else {
+            $canDelete = ($portfolio['user_id'] == $_SESSION['user_id'] || Auth::isAdmin());
+        }
+
+        if ($canDelete) {
+            $this->portfolioModel->delete($id);
+            Session::setFlash('success', 'Portfólio removido com sucesso.');
+        } else {
+            Session::setFlash('error', 'Você não tem permissão para excluir este portfólio.');
+        }
+
         header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
         exit;
     }

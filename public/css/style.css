@@ -99,3 +99,7 @@ body {
     height: 500px; 
     width: 100%;
 }
+
+.transition { transition: all 0.3s ease-in-out; }
+.hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+.bg-gradient-light { background: linear-gradient(180deg, #ffffff 0%, #fcfdfe 100%); }
