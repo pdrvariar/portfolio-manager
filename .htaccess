@@ -1,0 +1,12 @@
+# Impede a listagem de pastas e protege o .env
+Options -Indexes
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Redireciona tudo para a pasta public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
