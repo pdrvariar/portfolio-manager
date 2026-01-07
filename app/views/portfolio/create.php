@@ -3,7 +3,7 @@ $title = 'Criar Portfólio';
 ob_start();
 
 $assetModel = new Asset();
-$assets = $assetModel->getAll();
+$assets = $assetModel->getAllWithDetails();
 ?>
 <div class="row">
     <div class="col-md-8 mx-auto">
@@ -89,10 +89,17 @@ $assets = $assetModel->getAll();
                                 <tr>
                                     <td>
                                         <select class="form-select" id="assetSelect">
-                                            <option value="">Selecione um ativo</option>
-                                            <?php foreach ($assets as $asset): ?>
-                                                <option value="<?php echo $asset['id']; ?>" data-name="<?php echo htmlspecialchars($asset['name']); ?>">
-                                                    <?php echo htmlspecialchars($asset['name']); ?> (<?php echo $asset['currency']; ?>)
+                                            <option value="">+ Adicionar novo ativo...</option>
+                                            <?php foreach ($assets as $asset): 
+                                                $start = !empty($asset['min_date']) ? date('m/Y', strtotime($asset['min_date'])) : 'Início';
+                                                $end = !empty($asset['max_date']) ? date('m/Y', strtotime($asset['max_date'])) : 'Hoje';
+                                            ?>
+                                                <option value="<?php echo $asset['id']; ?>" 
+                                                        data-name="<?php echo htmlspecialchars($asset['name']); ?>"
+                                                        data-min="<?php echo $asset['min_date']; ?>"
+                                                        data-max="<?php echo $asset['max_date']; ?>">
+                                                    <?php echo htmlspecialchars($asset['name']); ?> 
+                                                    (<?php echo $start; ?> a <?php echo $end; ?>)
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
@@ -139,28 +146,28 @@ function addAsset() {
     const allocationInput = document.getElementById('assetAllocation');
     const factorInput = document.getElementById('assetFactor');
     
-    const assetId = assetSelect.value;
-    const assetName = assetSelect.options[assetSelect.selectedIndex].getAttribute('data-name');
-    const allocation = parseFloat(allocationInput.value) || 0;
-    const factor = parseFloat(factorInput.value) || 1.0;
-    
-    if (!assetId || allocation <= 0) {
+    if (!assetSelect.value || parseFloat(allocationInput.value) <= 0) {
         alert('Selecione um ativo e informe a alocação.');
         return;
     }
     
     // Verificar se ativo já foi adicionado
-    if (assets.some(a => a.asset_id == assetId)) {
+    if (assets.some(a => a.asset_id == assetSelect.value)) {
         alert('Este ativo já foi adicionado ao portfólio.');
         return;
     }
     
+    const opt = assetSelect.options[assetSelect.selectedIndex];
+    
     const asset = {
         id: nextId++,
-        asset_id: assetId,
-        name: assetName,
-        allocation: allocation,
-        factor: factor
+        asset_id: assetSelect.value,
+        name: opt.getAttribute('data-name'),
+        allocation: parseFloat(allocationInput.value) || 0,
+        factor: parseFloat(factorInput.value) || 1.0,
+        // Sênior: Metadados para validação de UEX
+        min_date: opt.getAttribute('data-min'),
+        max_date: opt.getAttribute('data-max')
     };
     
     assets.push(asset);
@@ -184,22 +191,35 @@ function updateAssetsTable() {
     tbody.innerHTML = '';
     
     assets.forEach(asset => {
+        // Formatação sênior de data (AAAA-MM-DD -> MM/AAAA)
+        const formatDate = (dateStr) => {
+            if (!dateStr) return "-";
+            const parts = dateStr.split('-');
+            return parts.length >= 2 ? `${parts[1]}/${parts[0]}` : dateStr;
+        };
+
         const row = tbody.insertRow();
         row.innerHTML = `
-            <td>${asset.name}</td>
             <td>
-                <input type="number" class="form-control allocation-input" 
+                <div class="fw-bold text-dark">${asset.name}</div>
+                <div class="text-muted smaller" style="font-size: 0.7rem;">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    Histórico: ${formatDate(asset.min_date)} a ${formatDate(asset.max_date)}
+                </div>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm allocation-input" 
                        value="${asset.allocation}" step="any" 
                        onchange="updateAssetAllocation(${asset.id}, this.value)">
             </td>
             <td>
-                <input type="number" class="form-control" 
+                <input type="number" class="form-control form-control-sm" 
                        value="${asset.factor}" step="0.01"
                        onchange="updateAssetFactor(${asset.id}, this.value)">
             </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger" 
-                        onclick="removeAsset(${asset.id})">×</button>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger border-0" 
+                        onclick="removeAsset(${asset.id})"><i class="bi bi-trash"></i></button>
             </td>
         `;
     });
