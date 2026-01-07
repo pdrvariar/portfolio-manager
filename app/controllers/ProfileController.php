@@ -33,7 +33,8 @@ class ProfileController {
             'birth_date' => $userData['birth_date'] ?? '',
             'role'       => $userData['is_admin'] ? 'Administrador' : 'Investidor',
             'status'     => $userData['status'] ?? 'pending',
-            'verified'   => !empty($userData['email_verified_at'])
+            'verified'   => !empty($userData['email_verified_at']),
+            'created_at' => $userData['created_at'] // ADICIONE ESTA LINHA
         ];
         
         require_once __DIR__ . '/../views/profile/index.php';

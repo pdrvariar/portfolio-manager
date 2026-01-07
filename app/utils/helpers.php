@@ -185,4 +185,20 @@ function formatMonthYear($date) {
     return date('m/Y', strtotime($date));
 }
 
+function formatFullDate($date) {
+    if (empty($date)) return '';
+    
+    $months = [
+        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+    ];
+    
+    $timestamp = strtotime($date);
+    $month = (int)date('n', $timestamp);
+    $year = date('Y', $timestamp);
+    
+    return $months[$month] . ' de ' . $year;
+}
+
 ?>

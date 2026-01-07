@@ -37,7 +37,10 @@ ob_start();
                 <p class="text-dark fw-medium"><?= htmlspecialchars($user['email']) ?></p>
                 
                 <label class="small text-muted text-uppercase fw-bold">Membro desde</label>
-                <p class="text-dark fw-medium mb-0">Janeiro de 2024</p> </div>
+                <p class="text-dark fw-medium mb-0">
+                    <?= !empty($user['created_at']) ? formatFullDate($user['created_at']) : 'N/A' ?>
+                </p>
+            </div>    
         </div>
     </div>
 
