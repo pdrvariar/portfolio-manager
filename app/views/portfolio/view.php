@@ -149,7 +149,7 @@ ob_start();
                         <select class="form-select form-select-sm border-0 bg-light shadow-none" id="benchmarkSelector" style="width: 250px;">
                             <option value="">Nenhum</option>
                             <?php 
-                            $assetModel = new Asset();
+                            $assetModel = new \App\Models\Asset();
                             $allAssets = $assetModel->getAllWithDetails(); 
                             
                             // SÊNIOR: Se a simulação já rodou, usamos a data real de término dela.

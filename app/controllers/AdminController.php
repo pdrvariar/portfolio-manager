@@ -8,7 +8,7 @@ use App\Entities\User;
 use App\Entities\Asset;
 use App\Entities\Portfolio;
 use App\Entities\PortfolioAsset;
-use SimulationResult;
+use App\Models\SimulationResult;
 
 class AdminController {
     

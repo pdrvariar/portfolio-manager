@@ -6,6 +6,7 @@ use App\Core\Auth;
 use App\Core\Session;
 use App\Entities\Portfolio;
 use App\Entities\User;
+use App\Models\SimulationResult;
 
 class PortfolioController {
     private $entityManager;

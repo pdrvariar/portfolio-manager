@@ -1,4 +1,7 @@
 <?php
+namespace App\Models;
+
+use App\Core\Database;
 
 /**
  * Classe User - Modelo de Gestão de Identidade e Segurança

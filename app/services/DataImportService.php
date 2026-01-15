@@ -1,4 +1,10 @@
 <?php
+namespace App\Services;
+
+use App\Core\Database;
+use App\Models\Asset;
+use Exception;
+
 class DataImportService {
     private $db;
     

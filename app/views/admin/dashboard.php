@@ -71,7 +71,7 @@ ob_start();
             <div class="card-header">Últimas Atividades</div>
             <div class="card-body">
                 <?php
-                $db = Database::getInstance()->getConnection();
+                $db = \App\Core\Database::getInstance()->getConnection();
                 $stmt = $db->query("
                     SELECT 'Simulação' as type, sr.created_at as date, p.name as name, u.username as user
                     FROM simulation_results sr

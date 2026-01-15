@@ -2,7 +2,7 @@
 $title = 'Criar Portfólio';
 ob_start();
 
-$assetModel = new Asset();
+$assetModel = new \App\Models\Asset();
 $assets = $assetModel->getAllWithDetails();
 ?>
 <div class="row">

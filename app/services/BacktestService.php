@@ -1,4 +1,9 @@
 <?php
+namespace App\Services;
+
+use App\Core\Database;
+use DateTime;
+
 class BacktestService {
     private $db;
     

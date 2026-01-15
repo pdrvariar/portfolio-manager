@@ -5,6 +5,7 @@ use App\Core\EntityManagerFactory;
 use App\Core\Auth;
 use App\Core\Session;
 use App\Entities\Asset;
+use App\Models\Asset as AssetModel;
 use Exception;
 
 class AssetController {
@@ -85,7 +86,7 @@ class AssetController {
             if (!empty($historicalData)) {
                 // Manter o modelo legado para inserção em massa por enquanto
                 // Já que Doctrine não é o ideal para mass insert de milhares de linhas sem cuidado
-                $assetModel = new \Asset();
+                $assetModel = new AssetModel();
                 $count = $assetModel->importHistoricalData($asset->getId(), $historicalData);
                 return ['success' => true, 'message' => "Importados $count registros para $assetCode"];
             }

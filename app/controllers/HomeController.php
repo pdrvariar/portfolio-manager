@@ -6,6 +6,7 @@ use App\Core\Auth;
 use App\Core\Session;
 use App\Entities\Portfolio;
 use App\Entities\User;
+use App\Models\SimulationResult;
 
 class HomeController {
     
@@ -57,8 +58,8 @@ class HomeController {
             ];
         }, $systemEntities);
 
-        $simulationModel = new \SimulationResult();
-        $stats = $simulationModel->getStatistics($userId);        
+        $simulationModel = new SimulationResult();
+        $stats = $simulationModel->getStatistics($userId);
 
         // Últimas simulações
         $latestSimulations = [];

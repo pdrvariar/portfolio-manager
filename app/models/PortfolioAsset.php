@@ -1,4 +1,8 @@
 <?php
+namespace App\Models;
+
+use App\Core\Database;
+
 class PortfolioAsset {
     private $db;
     
