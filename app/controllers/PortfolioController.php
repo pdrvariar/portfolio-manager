@@ -270,8 +270,11 @@ class PortfolioController {
 
         $portfolioAssets = array_map(function($pa) {
             return [
+                'id' => $pa->getId(),
                 'asset_id' => $pa->getAsset()->getId(),
-                'allocation_percentage' => $pa->getAllocationPercentage()
+                'name' => $pa->getAsset()->getName(),
+                'allocation_percentage' => $pa->getAllocationPercentage(),
+                'performance_factor' => $pa->getPerformanceFactor()
             ];
         }, $portfolioEntity->getAssets()->toArray());
 
@@ -327,7 +330,8 @@ class PortfolioController {
                         $pa = new \App\Entities\PortfolioAsset();
                         $pa->setPortfolio($portfolio)
                            ->setAsset($asset)
-                           ->setAllocationPercentage($assetData['allocation']);
+                           ->setAllocationPercentage($assetData['allocation'])
+                           ->setPerformanceFactor($assetData['performance_factor'] ?? 1.0);
                         $this->entityManager->persist($pa);
                     }
                 }

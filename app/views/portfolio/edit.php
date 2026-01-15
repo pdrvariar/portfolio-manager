@@ -238,7 +238,7 @@ function updateTable() {
                 <td>
                     <div class="input-group input-group-sm">
                         <input type="number" name="assets[${asset.asset_id}][allocation]" 
-                            value="${asset.allocation.toFixed(2)}" step="any" class="form-control fw-bold text-primary"
+                            value="${parseFloat(asset.allocation).toFixed(2)}" step="any" class="form-control fw-bold text-primary"
                             oninput="updateAssetData(${asset.asset_id}, 'allocation', this.value)">
                         <span class="input-group-text">%</span>
                     </div>
@@ -256,7 +256,7 @@ function updateTable() {
         `;
     });
 
-    totalSpan.innerText = total.toFixed(2);
+    totalSpan.innerText = parseFloat(total).toFixed(2);
     checkTotal(total);
     validatePortfolioRange(); // Valida as datas após qualquer mudança na lista
 }
@@ -268,7 +268,7 @@ function updateAssetData(assetId, field, value) {
         else if (field === 'factor') asset.factor = parseFloat(value) || 0;
         
         let total = assets.reduce((sum, a) => sum + a.allocation, 0);
-        document.getElementById('totalAllocation').innerText = total.toFixed(2);
+        document.getElementById('totalAllocation').innerText = parseFloat(total).toFixed(2);
         checkTotal(total);
     }
 }
