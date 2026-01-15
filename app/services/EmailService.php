@@ -30,7 +30,7 @@ class EmailService {
         $mail = new PHPMailer(true);
 
         try {
-            self::configurePhpMailer($mail); // RESOLVE O ERRO: Método agora definido
+            self::configurePhpMailer($mail);
 
             $mail->addAddress($email, $name);
             

@@ -94,10 +94,14 @@ ob_start();
                                             <?php foreach ($allAssets as $asset): ?>
                                                 <option value="<?php echo $asset['id']; ?>" 
                                                         data-name="<?php echo htmlspecialchars($asset['name']); ?>"
-                                                        data-min="<?php echo $asset['min_date']; ?>"
-                                                        data-max="<?php echo $asset['max_date']; ?>">
+                                                        data-min="<?php echo $asset['min_date'] ?? ''; ?>"
+                                                        data-max="<?php echo $asset['max_date'] ?? ''; ?>">
                                                     <?php echo htmlspecialchars($asset['name']); ?> 
-                                                    (<?php echo date('m/Y', strtotime($asset['min_date'])); ?> a <?php echo date('m/Y', strtotime($asset['max_date'])); ?>)
+                                                    <?php if (!empty($asset['min_date']) && !empty($asset['max_date'])): ?>
+                                                        (<?php echo date('m/Y', strtotime($asset['min_date'])); ?> a <?php echo date('m/Y', strtotime($asset['max_date'])); ?>)
+                                                    <?php else: ?>
+                                                        (Sem dados históricos)
+                                                    <?php endif; ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>                                    
@@ -148,7 +152,11 @@ let assets = [
     <?php foreach ($portfolioAssets as $pa): 
         // Busca as datas limites na lista global de ativos para popular o JS
         $min = ""; $max = "";
-        foreach($allAssets as $aa) if($aa['id'] == $pa['asset_id']) { $min = $aa['min_date']; $max = $aa['max_date']; break; }
+        foreach($allAssets as $aa) if($aa['id'] == $pa['asset_id']) { 
+            $min = $aa['min_date'] ?? ""; 
+            $max = $aa['max_date'] ?? ""; 
+            break; 
+        }
     ?>
     {
         id: <?php echo $pa['id']; ?>, 

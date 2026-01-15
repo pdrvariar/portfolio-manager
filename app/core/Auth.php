@@ -33,15 +33,20 @@ class Auth {
         // SEGURANÇA: Regenera o ID da sessão para evitar Session Fixation
         session_regenerate_id(true);
         
-        // Usando a classe Session para padronização
-        Session::set('user_id', $user['id']);
-        Session::set('username', $user['username']);
-        Session::set('user_email', $user['email']);
-        Session::set('is_admin', (bool)$user['is_admin']);
+        // Suporte tanto para array (legado) quanto para Entidade
+        if ($user instanceof \App\Entities\User) {
+            Session::set('user_id', $user->getId());
+            Session::set('username', $user->getUsername());
+            Session::set('user_email', $user->getEmail());
+            Session::set('is_admin', $user->isAdmin());
+        } else {
+            Session::set('user_id', $user['id']);
+            Session::set('username', $user['username']);
+            Session::set('user_email', $user['email']);
+            Session::set('is_admin', (bool)$user['is_admin']);
+        }
         
-        // Opcional: Registrar data do último login no banco aqui
-        
-        Session::setFlash('success', 'Bem-vindo de volta, ' . $user['username'] . '!');
+        Session::setFlash('success', 'Bem-vindo de volta, ' . Session::get('username') . '!');
     }
     
     public static function logout() {

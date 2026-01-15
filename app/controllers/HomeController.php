@@ -1,11 +1,11 @@
 <?php
+use App\Core\EntityManagerFactory;
+use App\Entities\Portfolio;
+use App\Entities\User;
+
 class HomeController {
-    private $portfolioModel;
-    private $simulationModel;
     
     public function __construct() {
-        $this->portfolioModel = new Portfolio();
-        $this->simulationModel = new SimulationResult();
         Session::start();
     }
     
@@ -16,17 +16,50 @@ class HomeController {
             return;
         }
         
+        $entityManager = EntityManagerFactory::createEntityManager();
+        $portfolioRepository = $entityManager->getRepository(Portfolio::class);
+
         // Dashboard do usuário logado
         $userId = Auth::getCurrentUserId();
+        $user = $entityManager->find(User::class, $userId);
+
         // Buscamos os dois grupos separadamente para a UX
-        $portfolios = $this->portfolioModel->getUserPortfolios($userId, false);
-        $systemPortfolios = $this->portfolioModel->getSystemPortfolios(); // NOVO
-        $stats = $this->simulationModel->getStatistics($userId);        
+        $portfolioEntities = $portfolioRepository->findByUser($user);
+        $portfolios = array_map(function($p) {
+            return [
+                'id' => $p->getId(),
+                'name' => $p->getName(),
+                'initial_capital' => $p->getInitialCapital(),
+                'start_date' => $p->getStartDate()->format('Y-m-d'),
+                'rebalance_frequency' => $p->getRebalanceFrequency(),
+                'output_currency' => $p->getOutputCurrency(),
+                'is_system_default' => $p->isSystemDefault(),
+                'created_at' => $p->getCreatedAt() ? $p->getCreatedAt()->format('Y-m-d H:i:s') : date('Y-m-d H:i:s')
+            ];
+        }, $portfolioEntities);
+
+        $systemEntities = $portfolioRepository->findBy(['isSystemDefault' => true]);
+        $systemPortfolios = array_map(function($p) {
+            return [
+                'id' => $p->getId(),
+                'name' => $p->getName(),
+                'description' => $p->getDescription(),
+                'initial_capital' => $p->getInitialCapital(),
+                'start_date' => $p->getStartDate()->format('Y-m-d'),
+                'rebalance_frequency' => $p->getRebalanceFrequency(),
+                'output_currency' => $p->getOutputCurrency(),
+                'is_system_default' => $p->isSystemDefault(),
+                'created_at' => $p->getCreatedAt() ? $p->getCreatedAt()->format('Y-m-d H:i:s') : date('Y-m-d H:i:s')
+            ];
+        }, $systemEntities);
+
+        $simulationModel = new \SimulationResult();
+        $stats = $simulationModel->getStatistics($userId);        
 
         // Últimas simulações
         $latestSimulations = [];
         foreach ($portfolios as $portfolio) {
-            $simulation = $this->simulationModel->getLatest($portfolio['id']);
+            $simulation = $simulationModel->getLatest($portfolio['id']);
             if ($simulation) {
                 $latestSimulations[] = [
                     'portfolio' => $portfolio,

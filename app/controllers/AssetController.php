@@ -1,25 +1,23 @@
 <?php
-class AssetController {
-private $assetModel;
-    private $params; // Adicione esta propriedade
+use App\Core\EntityManagerFactory;
+use App\Entities\Asset;
 
-    public function __construct($params = []) { // Receba os parâmetros aqui
+class AssetController {
+    private $entityManager;
+    private $assetRepository;
+    private $params;
+
+    public function __construct($params = []) {
+        $this->entityManager = EntityManagerFactory::createEntityManager();
+        $this->assetRepository = $this->entityManager->getRepository(Asset::class);
         $this->params = $params;
-        Session::start();
-        $this->assetModel = new Asset();
     }
     
     public function index() {
         Auth::checkAuthentication();
         
-        $isAdmin = $_SESSION['is_admin'] ?? false;
-        
-        if ($isAdmin) {
-            // CORREÇÃO: Altere de getAssetsWithData() para getAllWithDetails()
-            $assets = $this->assetModel->getAllWithDetails();
-        } else {
-            $assets = $this->assetModel->getAll();
-        }
+        $isAdmin = Auth::isAdmin();
+        $assets = $this->assetRepository->findAllWithHistoricalBoundaries(!$isAdmin);
         
         require_once __DIR__ . '/../views/asset/index.php';
     }
@@ -56,11 +54,16 @@ private $assetModel;
             fgetcsv($handle); // Pula cabeçalho
 
             $assetCode = strtoupper(str_replace('.csv', '', $originalName));
-            $asset = $this->assetModel->findByCode($assetCode);
+            $asset = $this->assetRepository->findByCode($assetCode);
             
             if (!$asset) {
-                $this->assetModel->create(['code' => $assetCode, 'name' => $assetCode]);
-                $asset = $this->assetModel->findByCode($assetCode);
+                $asset = new Asset();
+                $asset->setCode($assetCode)
+                      ->setName($assetCode)
+                      ->setCurrency('BRL') // Default
+                      ->setAssetType('COTACAO'); // Default
+                $this->entityManager->persist($asset);
+                $this->entityManager->flush();
             }
 
             $historicalData = [];
@@ -75,7 +78,10 @@ private $assetModel;
             fclose($handle);
 
             if (!empty($historicalData)) {
-                $count = $this->assetModel->importHistoricalData($asset['id'], $historicalData);
+                // Manter o modelo legado para inserção em massa por enquanto
+                // Já que Doctrine não é o ideal para mass insert de milhares de linhas sem cuidado
+                $assetModel = new \Asset();
+                $count = $assetModel->importHistoricalData($asset->getId(), $historicalData);
                 return ['success' => true, 'message' => "Importados $count registros para $assetCode"];
             }
             return ['success' => false, 'message' => 'Nenhum dado válido no CSV.'];
@@ -95,14 +101,26 @@ private $assetModel;
             exit;
         }
 
-        $asset = $this->assetModel->findById($id);
+        $asset = $this->entityManager->find(Asset::class, $id);
         if (!$asset) {
             Session::setFlash('error', 'Ativo não encontrado.');
             header('Location: /index.php?url=' . obfuscateUrl('assets'));
             exit;
         }
         
-        $historicalData = $this->assetModel->getHistoricalData($id);
+        // Dados históricos ainda via modelo legado para manter compatibilidade com a view/chart
+        $assetModel = new \Asset();
+        $historicalData = $assetModel->getHistoricalData($id);
+
+        // Converter objeto asset para array para a view
+        $asset = [
+            'id' => $asset->getId(),
+            'code' => $asset->getCode(),
+            'name' => $asset->getName(),
+            'currency' => $asset->getCurrency(),
+            'asset_type' => $asset->getAssetType()
+        ];
+        
         require_once __DIR__ . '/../views/asset/view.php';
     }
 
@@ -115,7 +133,8 @@ private $assetModel;
             exit;
         }
         
-        $data = $this->assetModel->getHistoricalData($assetId);
+        $assetModel = new \Asset();
+        $data = $assetModel->getHistoricalData($assetId);
         
         header('Content-Type: application/json');
         echo json_encode($data);
@@ -125,9 +144,11 @@ private $assetModel;
         Auth::checkAdmin();
         
         $id = $this->params['id'] ?? null;
-        $result = $this->assetModel->delete($id);
+        $asset = $this->entityManager->find(Asset::class, $id);
         
-        if ($result['success']) {
+        if ($asset) {
+            $this->entityManager->remove($asset);
+            $this->entityManager->flush();
             Session::setFlash('success', 'Ativo removido com sucesso.');
         } else {
             Session::setFlash('error', 'Erro ao remover ativo.');
@@ -141,7 +162,8 @@ private $assetModel;
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
         
-        $asset = $this->assetModel->findById($id);
+        $assetModel = new \Asset();
+        $asset = $assetModel->findById($id);
         
         header('Content-Type: application/json');
         if ($asset) {
@@ -173,12 +195,13 @@ private $assetModel;
                 'is_active' => 1
             ];
             
-            $result = $this->assetModel->update($id, $data);
+            $assetModel = new \Asset();
+            $result = $assetModel->update($id, $data);
             header('Content-Type: application/json');
             echo json_encode($result);
             exit;
         }
-    } 
+    }
 
 
     public function getBenchmarkData() {
@@ -189,8 +212,9 @@ private $assetModel;
         $baseValue = floatval($_GET['base'] ?? 100000);
         $portfolioCurrency = $_GET['currency'] ?? 'BRL';
 
-        $asset = $this->assetModel->findById($assetId);
-        $historical = $this->assetModel->getHistoricalData($assetId, $startDate, $endDate);
+        $assetModel = new \Asset();
+        $asset = $assetModel->findById($assetId);
+        $historical = $assetModel->getHistoricalData($assetId, $startDate, $endDate);
         
         if (!$asset || empty($historical)) {
             echo json_encode(['success' => false]); exit;
@@ -199,9 +223,9 @@ private $assetModel;
         // Lógica de Câmbio: Só carrega se as moedas forem diferentes
         $fxData = [];
         if ($portfolioCurrency !== $asset['currency']) {
-            $fxAsset = $this->assetModel->findByCode('USD-BRL');
+            $fxAsset = $assetModel->findByCode('USD-BRL');
             if ($fxAsset) {
-                $rawFx = $this->assetModel->getHistoricalData($fxAsset['id'], $startDate, $endDate);
+                $rawFx = $assetModel->getHistoricalData($fxAsset['id'], $startDate, $endDate);
                 foreach ($rawFx as $f) $fxData[$f['reference_date']] = floatval($f['price']);
             }
         }

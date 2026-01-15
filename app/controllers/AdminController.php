@@ -1,11 +1,14 @@
 <?php
+use App\Core\EntityManagerFactory;
+use App\Entities\User;
+use App\Entities\Asset;
+use App\Entities\Portfolio;
+use App\Entities\PortfolioAsset;
+use SimulationResult;
+
 class AdminController {
-    private $userModel;
-    private $assetModel;
     
     public function __construct() {
-        $this->userModel = new User();
-        $this->assetModel = new Asset();
         Session::start();
     }
     
@@ -21,7 +24,21 @@ class AdminController {
     public function users() {
         Auth::checkAdmin();
         
-        $users = $this->userModel->getAllUsers();
+        $entityManager = EntityManagerFactory::createEntityManager();
+        $userRepository = $entityManager->getRepository(User::class);
+        $entities = $userRepository->findAll();
+
+        $users = array_map(function($u) {
+            return [
+                'id' => $u->getId(),
+                'username' => $u->getUsername(),
+                'full_name' => $u->getFullName(),
+                'email' => $u->getEmail(),
+                'status' => $u->getStatus(),
+                'is_admin' => $u->isAdmin(),
+                'created_at' => $u->getCreatedAt()->format('Y-m-d H:i:s')
+            ];
+        }, $entities);
         
         require_once __DIR__ . '/../views/admin/users.php';
     }
@@ -29,7 +46,23 @@ class AdminController {
     public function assets() {
         Auth::checkAdmin();
         
-        $assets = $this->assetModel->getAllWithDetails();
+        $entityManager = EntityManagerFactory::createEntityManager();
+        $assetRepository = $entityManager->getRepository(Asset::class);
+        $entities = $assetRepository->findAll();
+
+        $assets = array_map(function($a) {
+            return [
+                'id' => $a->getId(),
+                'code' => $a->getCode(),
+                'name' => $a->getName(),
+                'currency' => $a->getCurrency(),
+                'asset_type' => $a->getAssetType(),
+                'is_active' => $a->isActive(),
+                'data_count' => 0, // Simplificado para admin view se necessário
+                'min_date' => null,
+                'max_date' => null
+            ];
+        }, $entities);
         
         require_once __DIR__ . '/../views/admin/assets.php';
     }
@@ -37,33 +70,33 @@ class AdminController {
     public function createDefaultPortfolios() {
         Auth::checkAdmin();
         
-        $portfolioModel = new Portfolio();
-        
+        $entityManager = EntityManagerFactory::createEntityManager();
         // Portfólio Permanente
-        $permanentId = $portfolioModel->create([
-            'user_id' => 0, // Sistema
-            'name' => 'Portfólio Permanente',
-            'description' => 'Portfólio diversificado com ações, títulos, ouro e caixa',
-            'initial_capital' => 100000,
-            'start_date' => '2023-01-01',
-            'end_date' => null,
-            'rebalance_frequency' => 'monthly',
-            'output_currency' => 'USD',
-            'is_system_default' => true
-        ]);
+        $portfolio = new Portfolio();
+        $portfolio->setUser($entityManager->find(User::class, Auth::getCurrentUserId()))
+                  ->setName('Portfólio Permanente')
+                  ->setDescription('Portfólio diversificado com ações, títulos, ouro e caixa')
+                  ->setInitialCapital('100000.00')
+                  ->setStartDate(new \DateTime('2023-01-01'))
+                  ->setRebalanceFrequency('monthly')
+                  ->setOutputCurrency('USD')
+                  ->setIsSystemDefault(true);
+        
+        $entityManager->persist($portfolio);
         
         // Portfólio Conservador
-        $conservativeId = $portfolioModel->create([
-            'user_id' => 0,
-            'name' => 'Portfólio Conservador',
-            'description' => 'Foco em renda fixa e ativos defensivos',
-            'initial_capital' => 100000,
-            'start_date' => '2020-01-01',
-            'end_date' => null,
-            'rebalance_frequency' => 'quarterly',
-            'output_currency' => 'BRL',
-            'is_system_default' => true
-        ]);
+        $portfolio2 = new Portfolio();
+        $portfolio2->setUser($entityManager->find(User::class, Auth::getCurrentUserId()))
+                   ->setName('Portfólio Conservador')
+                   ->setDescription('Foco em renda fixa e ativos defensivos')
+                   ->setInitialCapital('100000.00')
+                   ->setStartDate(new \DateTime('2020-01-01'))
+                   ->setRebalanceFrequency('quarterly')
+                   ->setOutputCurrency('BRL')
+                   ->setIsSystemDefault(true);
+        
+        $entityManager->persist($portfolio2);
+        $entityManager->flush();
         
         Session::setFlash('success', 'Portfólios padrão criados com sucesso!');
         header('Location: /index.php?url=' . obfuscateUrl('admin/dashboard'));
@@ -71,22 +104,14 @@ class AdminController {
     }
     
     private function getStats() {
-        $db = Database::getInstance()->getConnection();
-        $tables = [
-            'users' => 'users',
-            'portfolios' => 'portfolios',
-            'simulations' => 'simulation_results',
-            'assets' => 'system_assets'
+        $entityManager = EntityManagerFactory::createEntityManager();
+        
+        return [
+            'users' => $entityManager->getRepository(User::class)->countAll(),
+            'portfolios' => $entityManager->getRepository(Portfolio::class)->countAll(),
+            'simulations' => (new SimulationResult())->countAll(),
+            'assets' => $entityManager->getRepository(Asset::class)->countAll()
         ];
-        $stats = [];
-        
-        foreach ($tables as $key => $table) {
-            // TODO: Mover esta lógica para os respectivos Models (ex: User::count())
-            $stmt = $db->query("SELECT COUNT(*) as total FROM {$table}");
-            $stats[$key] = $stmt->fetch()['total'];
-        }
-        
-        return $stats;
     }
 }
 ?>

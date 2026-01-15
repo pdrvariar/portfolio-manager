@@ -46,6 +46,16 @@ foreach ($coreFiles as $file) {
 
 // 6. Autoloader para Classes da Aplicação (PSR-4 Simplificado)
 spl_autoload_register(function ($class) use ($baseDir) {
+    // Primeiro tenta resolver via namespace App (se o composer não pegou por algum motivo ou se estiver em dev)
+    if (strpos($class, 'App\\') === 0) {
+        $relativeClass = substr($class, 4);
+        $file = $baseDir . '/' . str_replace('\\', '/', $relativeClass) . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
+
     $folders = ['models', 'services', 'controllers'];
     foreach ($folders as $folder) {
         $file = "$baseDir/$folder/$class.php";

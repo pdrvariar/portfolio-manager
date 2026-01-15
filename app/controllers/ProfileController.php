@@ -1,12 +1,13 @@
 <?php
 
+use App\Core\EntityManagerFactory;
+use App\Entities\User;
+
 class ProfileController {
-    private $userModel;
     private $params;
 
     public function __construct($params = []) {
         $this->params = $params;
-        $this->userModel = new User();
         Session::start();
     }
 
@@ -16,25 +17,26 @@ class ProfileController {
     public function index() {
         Auth::checkAuthentication();
         
+        $entityManager = EntityManagerFactory::createEntityManager();
         $userId = Auth::getCurrentUserId();
-        $userData = $this->userModel->findById($userId);
+        $userEntity = $entityManager->find(User::class, $userId);
 
-        if (!$userData) {
+        if (!$userEntity) {
             Session::setFlash('error', 'Utilizador não encontrado.');
             header('Location: /');
             exit;
         }
 
         $user = [
-            'name'       => $userData['full_name'] ?? $userData['username'],
-            'username'   => $userData['username'],
-            'email'      => $userData['email'],
-            'phone'      => $userData['phone'] ?? '',
-            'birth_date' => $userData['birth_date'] ?? '',
-            'role'       => $userData['is_admin'] ? 'Administrador' : 'Investidor',
-            'status'     => $userData['status'] ?? 'pending',
-            'verified'   => !empty($userData['email_verified_at']),
-            'created_at' => $userData['created_at'] // ADICIONE ESTA LINHA
+            'name'       => $userEntity->getFullName() ?: $userEntity->getUsername(),
+            'username'   => $userEntity->getUsername(),
+            'email'      => $userEntity->getEmail(),
+            'phone'      => $userEntity->getPhone() ?? '',
+            'birth_date' => $userEntity->getBirthDate() ? $userEntity->getBirthDate()->format('Y-m-d') : '',
+            'role'       => $userEntity->isAdmin() ? 'Administrador' : 'Investidor',
+            'status'     => $userEntity->getStatus() ?? 'pending',
+            'verified'   => $userEntity->getEmailVerifiedAt() !== null,
+            'created_at' => $userEntity->getCreatedAt() ? $userEntity->getCreatedAt()->format('Y-m-d H:i:s') : null
         ];
         
         require_once __DIR__ . '/../views/profile/index.php';
@@ -52,26 +54,34 @@ class ProfileController {
                 redirectBack('/index.php?url=profile');
             }            
 
+            $entityManager = EntityManagerFactory::createEntityManager();
             $userId = Auth::getCurrentUserId();
-            $data = [
-                'full_name'  => sanitize($_POST['full_name']),
-                'phone'      => sanitize($_POST['phone']),
-                'birth_date' => $_POST['birth_date']
-            ];
+            $userEntity = $entityManager->find(User::class, $userId);
 
-            $age = date_diff(date_create($data['birth_date']), date_create('today'))->y;
+            if (!$userEntity) {
+                Session::setFlash('error', 'Utilizador não encontrado.');
+                header('Location: /index.php?url=' . obfuscateUrl('profile'));
+                exit;
+            }
+
+            $fullName = sanitize($_POST['full_name']);
+            $phone = sanitize($_POST['phone']);
+            $birthDate = $_POST['birth_date'];
+
+            $age = date_diff(date_create($birthDate), date_create('today'))->y;
             if ($age < 18) {
                 Session::setFlash('error', 'A data de nascimento indica que você é menor de idade.');
                 header('Location: /index.php?url=' . obfuscateUrl('profile'));
                 exit;
             }
 
-            if ($this->userModel->update($userId, $data)) {
-                Session::set('user_name', $data['full_name']);
-                Session::setFlash('success', 'Perfil atualizado com sucesso!');
-            } else {
-                Session::setFlash('error', 'Erro ao atualizar os dados.');
-            }
+            $userEntity->setFullName($fullName)
+                       ->setPhone($phone)
+                       ->setBirthDate(new \DateTime($birthDate));
+
+            $entityManager->flush();
+            Session::set('user_name', $fullName);
+            Session::setFlash('success', 'Perfil atualizado com sucesso!');
             
             header('Location: /index.php?url=' . obfuscateUrl('profile'));
             exit;
@@ -92,16 +102,16 @@ class ProfileController {
                 exit;
             }
 
+            $entityManager = EntityManagerFactory::createEntityManager();
             $userId = Auth::getCurrentUserId();
+            $userEntity = $entityManager->find(User::class, $userId);
+
             $currentPassword = $_POST['current_password'] ?? '';
             $newPassword = $_POST['new_password'] ?? '';
             $confirmPassword = $_POST['confirm_password'] ?? '';
 
-            // 2. Busca o usuário atual no banco para validar a senha antiga
-            $user = $this->userModel->findById($userId);
-
             // 3. Validações Sênior de Segurança
-            if (!password_verify($currentPassword, $user['password'])) {
+            if (!$userEntity->verifyPassword($currentPassword)) {
                 Session::setFlash('error', 'A senha atual informada está incorreta.');
             } 
             elseif ($newPassword !== $confirmPassword) {
@@ -111,12 +121,9 @@ class ProfileController {
                 Session::setFlash('error', 'A nova senha deve ter pelo menos 6 caracteres.');
             } 
             else {
-                // 4. Se tudo OK, faz o update usando o método que já existe no seu User.php
-                if ($this->userModel->updatePassword($userId, $newPassword)) {
-                    Session::setFlash('success', 'Sua senha foi alterada com sucesso!');
-                } else {
-                    Session::setFlash('error', 'Ocorreu um erro técnico ao tentar atualizar a senha.');
-                }
+                $userEntity->setPassword($newPassword);
+                $entityManager->flush();
+                Session::setFlash('success', 'Sua senha foi alterada com sucesso!');
             }
 
             header('Location: /index.php?url=' . obfuscateUrl('profile'));

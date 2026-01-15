@@ -1,20 +1,39 @@
 <?php
+use App\Core\EntityManagerFactory;
+use App\Entities\Portfolio;
+use App\Entities\User;
+
 class PortfolioController {
-    private $portfolioModel;
-    private $params; // Adicione esta propriedade
-    
+    private $entityManager;
+    private $portfolioRepository;
+    private $params;
+
     public function __construct($params = []) {
-        $this->portfolioModel = new Portfolio();
+        $this->entityManager = EntityManagerFactory::createEntityManager();
+        $this->portfolioRepository = $this->entityManager->getRepository(Portfolio::class);
         $this->params = $params;
-        // ADICIONE ESTA LINHA:
-        Session::start(); 
     }
 
     public function index() {
         Auth::checkAuthentication();
         
-        $userId = Auth::getCurrentUserId();
-        $portfolios = $this->portfolioModel->getUserPortfolios($userId, true);
+        $user = $this->entityManager->find(User::class, Auth::getCurrentUserId());
+        $entities = $this->portfolioRepository->findByUser($user);
+        
+        // Conversão para array para manter compatibilidade com a view legado
+        $portfolios = array_map(function($p) {
+            return [
+                'id' => $p->getId(),
+                'name' => $p->getName(),
+                'initial_capital' => $p->getInitialCapital(),
+                'start_date' => $p->getStartDate()->format('Y-m-d'),
+                'end_date' => $p->getEndDate() ? $p->getEndDate()->format('Y-m-d') : null,
+                'rebalance_frequency' => $p->getRebalanceFrequency(),
+                'output_currency' => $p->getOutputCurrency(),
+                'is_system_default' => $p->isSystemDefault(),
+                'created_at' => $p->getCreatedAt() ? $p->getCreatedAt()->format('Y-m-d H:i:s') : null
+            ];
+        }, $entities);
         
         require_once __DIR__ . '/../views/portfolio/index.php';
     }
@@ -27,23 +46,38 @@ class PortfolioController {
                 Session::setFlash('error', 'Segurança: Token inválido.');
                 redirectBack('/index.php?url=' . obfuscateUrl('portfolio/create'));
             }           
-            $data = [
-                'user_id' => $_SESSION['user_id'],
-                'name' => $_POST['name'],
-                'description' => $_POST['description'],
-                'initial_capital' => $_POST['initial_capital'],
-                'start_date' => $_POST['start_date'],
-                'end_date' => $_POST['end_date'] ?: null,
-                'rebalance_frequency' => $_POST['rebalance_frequency'],
-                'output_currency' => $_POST['output_currency']
-            ];
             
-            $portfolioId = $this->portfolioModel->create($data);
+            $user = $this->entityManager->find(User::class, Auth::getCurrentUserId());
+            
+            $portfolio = new Portfolio();
+            $portfolio->setUser($user)
+                      ->setName($_POST['name'])
+                      ->setDescription($_POST['description'])
+                      ->setInitialCapital($_POST['initial_capital'])
+                      ->setStartDate(new \DateTime($_POST['start_date']))
+                      ->setEndDate($_POST['end_date'] ? new \DateTime($_POST['end_date']) : null)
+                      ->setRebalanceFrequency($_POST['rebalance_frequency'])
+                      ->setOutputCurrency($_POST['output_currency']);
+            
+            $this->entityManager->persist($portfolio);
+            $this->entityManager->flush();
+            
+            $portfolioId = $portfolio->getId();
+            
             if ($portfolioId) {
                 if (isset($_POST['assets'])) {
-                    $this->portfolioModel->updateAssets($portfolioId, $_POST['assets']);
+                    foreach ($_POST['assets'] as $assetData) {
+                        $asset = $this->entityManager->find(\App\Entities\Asset::class, $assetData['asset_id']);
+                        if ($asset) {
+                            $pa = new \App\Entities\PortfolioAsset();
+                            $pa->setPortfolio($portfolio)
+                               ->setAsset($asset)
+                               ->setAllocationPercentage($assetData['allocation']);
+                            $this->entityManager->persist($pa);
+                        }
+                    }
+                    $this->entityManager->flush();
                 }
-                // Garanta que o redirecionamento passe pelo index.php e seja ofuscado
                 header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
                 exit;
             }
@@ -61,13 +95,39 @@ class PortfolioController {
             exit;
         }
         
-        $newPortfolioId = $this->portfolioModel->clone($portfolioId, $_SESSION['user_id']);
+        $original = $this->portfolioRepository->find($portfolioId);
         
-        if ($newPortfolioId) {
-            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $newPortfolioId));
-        } else {
+        if (!$original) {
+            Session::setFlash('error', 'Portfólio original não encontrado.');
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
         }
+
+        $user = $this->entityManager->find(User::class, Auth::getCurrentUserId());
+        
+        $newPortfolio = new Portfolio();
+        $newPortfolio->setUser($user)
+                     ->setName($original->getName() . ' (Cópia)')
+                     ->setDescription($original->getDescription())
+                     ->setInitialCapital($original->getInitialCapital())
+                     ->setStartDate($original->getStartDate())
+                     ->setEndDate($original->getEndDate())
+                     ->setRebalanceFrequency($original->getRebalanceFrequency())
+                     ->setOutputCurrency($original->getOutputCurrency());
+        
+        $this->entityManager->persist($newPortfolio);
+        
+        foreach ($original->getAssets() as $originalAsset) {
+            $newAsset = new \App\Entities\PortfolioAsset();
+            $newAsset->setPortfolio($newPortfolio)
+                     ->setAsset($originalAsset->getAsset())
+                     ->setAllocationPercentage($originalAsset->getAllocationPercentage());
+            $this->entityManager->persist($newAsset);
+        }
+
+        $this->entityManager->flush();
+        
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $newPortfolio->getId()));
         exit;
     }
     
@@ -98,8 +158,35 @@ class PortfolioController {
             exit;
         }
         
-        $portfolio = $this->portfolioModel->findById($id);
-        $assets = $this->portfolioModel->getPortfolioAssets($id);
+        $portfolioEntity = $this->portfolioRepository->findWithAssets($id);
+        if (!$portfolioEntity) {
+            Session::setFlash('error', 'Portfólio não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        // Conversão para array para compatibilidade com a view
+        $portfolio = [
+            'id' => $portfolioEntity->getId(),
+            'name' => $portfolioEntity->getName(),
+            'initial_capital' => $portfolioEntity->getInitialCapital(),
+            'start_date' => $portfolioEntity->getStartDate()->format('Y-m-d'),
+            'end_date' => $portfolioEntity->getEndDate() ? $portfolioEntity->getEndDate()->format('Y-m-d') : null,
+            'output_currency' => $portfolioEntity->getOutputCurrency(),
+            'user_id' => $portfolioEntity->getUser()->getId(),
+            'is_system_default' => $portfolioEntity->isSystemDefault()
+        ];
+
+        $assets = array_map(function($pa) {
+            return [
+                'id' => $pa->getId(),
+                'asset_id' => $pa->getAsset()->getId(),
+                'name' => $pa->getAsset()->getName(),
+                'currency' => $pa->getAsset()->getCurrency(),
+                'allocation_percentage' => $pa->getAllocationPercentage(),
+                'performance_factor' => '1.0' // Placeholder para compatibilidade
+            ];
+        }, $portfolioEntity->getAssets()->toArray());
 
         $simulationModel = new SimulationResult();
         $latest = $simulationModel->getLatest($id);
@@ -129,9 +216,10 @@ class PortfolioController {
             $chartData = json_decode($latest['chart_data'], true);
         }
 
-        $start = new DateTime($portfolio['start_date']);
-        $end   = new DateTime($portfolio['end_date'] ?? 'now');
-        $months = ($start->diff($end)->y * 12) + $start->diff($end)->m;
+        $start = $portfolioEntity->getStartDate();
+        $end   = $portfolioEntity->getEndDate() ?: new \DateTime();
+        $interval = $start->diff($end);
+        $months = ($interval->y * 12) + $interval->m;
 
         $metrics['is_short_period'] = ($months < 12);        
         
@@ -144,25 +232,51 @@ class PortfolioController {
     public function edit() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
-        $portfolio = $this->portfolioModel->findById($id);
+        
+        $portfolioEntity = $this->portfolioRepository->findWithAssets($id);
+
+        if (!$portfolioEntity) {
+            Session::setFlash('error', 'Portfólio não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
 
         // SEGURANÇA SÊNIOR: Bloqueia edição de portfólio de sistema por não-admins
-        if ($portfolio['is_system_default'] && !Auth::isAdmin()) {
+        if ($portfolioEntity->isSystemDefault() && !Auth::isAdmin()) {
             Session::setFlash('error', 'Estratégias oficiais do sistema não podem ser editadas.');
             header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
             exit;
         }
 
         // Validação de propriedade (apenas o dono ou admin edita)
-        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+        if ($portfolioEntity->getUser()->getId() != Auth::getCurrentUserId() && !Auth::isAdmin()) {
             Session::setFlash('error', 'Acesso negado.');
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
 
-        $assetModel = new Asset();
-        $allAssets = $assetModel->getAllWithDetails();
-        $portfolioAssets = $this->portfolioModel->getPortfolioAssets($id);
+        // Conversão para array para compatibilidade com a view
+        $portfolio = [
+            'id' => $portfolioEntity->getId(),
+            'name' => $portfolioEntity->getName(),
+            'description' => $portfolioEntity->getDescription(),
+            'initial_capital' => $portfolioEntity->getInitialCapital(),
+            'start_date' => $portfolioEntity->getStartDate()->format('Y-m-d'),
+            'end_date' => $portfolioEntity->getEndDate() ? $portfolioEntity->getEndDate()->format('Y-m-d') : null,
+            'rebalance_frequency' => $portfolioEntity->getRebalanceFrequency(),
+            'output_currency' => $portfolioEntity->getOutputCurrency(),
+            'is_system_default' => $portfolioEntity->isSystemDefault()
+        ];
+
+        $portfolioAssets = array_map(function($pa) {
+            return [
+                'asset_id' => $pa->getAsset()->getId(),
+                'allocation_percentage' => $pa->getAllocationPercentage()
+            ];
+        }, $portfolioEntity->getAssets()->toArray());
+
+        $assetRepository = $this->entityManager->getRepository(\App\Entities\Asset::class);
+        $allAssets = $assetRepository->findAllWithHistoricalBoundaries();
         
         require_once __DIR__ . '/../views/portfolio/edit.php';
     }
@@ -177,24 +291,51 @@ class PortfolioController {
                 redirectBack('/index.php?url=' . obfuscateUrl('portfolio/edit/' . $id));
             }
 
-            $data = [
-                'id' => $id,
-                'name' => $_POST['name'],
-                'description' => $_POST['description'],
-                'initial_capital' => $_POST['initial_capital'],
-                'start_date' => $_POST['start_date'],
-                'end_date' => $_POST['end_date'] ?: null,
-                'rebalance_frequency' => $_POST['rebalance_frequency'],
-                'output_currency' => $_POST['output_currency']
-            ];
-            
-            // 1. Atualiza os metadados (Nome, Capital, etc)
-            $this->portfolioModel->update($data);
-            if (isset($_POST['assets'])) {
-                $this->portfolioModel->updateAssets($id, $_POST['assets']);
-                // CORREÇÃO: Use Session::setFlash para o main.php mostrar o alerta
-                Session::setFlash('success', 'Portfólio atualizado com sucesso!');
+            $portfolio = $this->portfolioRepository->find($id);
+            if (!$portfolio) {
+                Session::setFlash('error', 'Portfólio não encontrado.');
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+                exit;
             }
+
+            // Validação de propriedade
+            if ($portfolio->getUser()->getId() != Auth::getCurrentUserId() && !Auth::isAdmin()) {
+                Session::setFlash('error', 'Acesso negado.');
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+                exit;
+            }
+
+            $portfolio->setName($_POST['name'])
+                      ->setDescription($_POST['description'])
+                      ->setInitialCapital($_POST['initial_capital'])
+                      ->setStartDate(new \DateTime($_POST['start_date']))
+                      ->setEndDate($_POST['end_date'] ? new \DateTime($_POST['end_date']) : null)
+                      ->setRebalanceFrequency($_POST['rebalance_frequency'])
+                      ->setOutputCurrency($_POST['output_currency']);
+            
+            if (isset($_POST['assets'])) {
+                // Remove assets antigos
+                foreach ($portfolio->getAssets() as $pa) {
+                    $this->entityManager->remove($pa);
+                }
+                $this->entityManager->flush();
+
+                // Adiciona novos
+                foreach ($_POST['assets'] as $assetData) {
+                    $asset = $this->entityManager->find(\App\Entities\Asset::class, $assetData['asset_id']);
+                    if ($asset) {
+                        $pa = new \App\Entities\PortfolioAsset();
+                        $pa->setPortfolio($portfolio)
+                           ->setAsset($asset)
+                           ->setAllocationPercentage($assetData['allocation']);
+                        $this->entityManager->persist($pa);
+                    }
+                }
+            }
+
+            $this->entityManager->flush();
+            Session::setFlash('success', 'Portfólio atualizado com sucesso!');
+            
             header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
             exit;
         }
@@ -206,7 +347,8 @@ class PortfolioController {
     public function delete() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
-        $portfolio = $this->portfolioModel->findById($id);
+        
+        $portfolio = $this->entityManager->find(Portfolio::class, $id);
 
         if (!$portfolio) {
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
@@ -217,14 +359,15 @@ class PortfolioController {
         // 1. Se for sistema: Só Admin deleta.
         // 2. Se for pessoal: Só o dono (ou Admin) deleta.
         $canDelete = false;
-        if ($portfolio['is_system_default']) {
+        if ($portfolio->isSystemDefault()) {
             $canDelete = Auth::isAdmin();
         } else {
-            $canDelete = ($portfolio['user_id'] == $_SESSION['user_id'] || Auth::isAdmin());
+            $canDelete = ($portfolio->getUser()->getId() == Auth::getCurrentUserId() || Auth::isAdmin());
         }
 
         if ($canDelete) {
-            $this->portfolioModel->delete($id);
+            $this->entityManager->remove($portfolio);
+            $this->entityManager->flush();
             Session::setFlash('success', 'Portfólio removido com sucesso.');
         } else {
             Session::setFlash('error', 'Você não tem permissão para excluir este portfólio.');
@@ -239,12 +382,13 @@ class PortfolioController {
         Auth::checkAdmin(); 
 
         $id = $this->params['id'] ?? null;
-        $portfolio = $this->portfolioModel->findById($id);
+        $portfolio = $this->entityManager->find(Portfolio::class, $id);
 
         if ($portfolio) {
             // Inverte o status atual
-            $newStatus = $portfolio['is_system_default'] ? 0 : 1;
-            $this->portfolioModel->toggleSystemStatus($id, $newStatus);
+            $newStatus = !$portfolio->isSystemDefault();
+            $portfolio->setIsSystemDefault($newStatus);
+            $this->entityManager->flush();
             
             $msg = $newStatus ? "Portfólio promovido ao sistema!" : "Portfólio removido do sistema.";
             Session::setFlash('success', $msg);
@@ -252,6 +396,6 @@ class PortfolioController {
         
         header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
         exit;
-    }    
+    }
 }
 ?>

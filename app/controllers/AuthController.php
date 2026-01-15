@@ -4,13 +4,17 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2 as GoogleServiceOauth2;
+use App\Core\EntityManagerFactory;
+use App\Entities\User;
 
 class AuthController {
-    private $userModel;
+    private $entityManager;
+    private $userRepository;
     private $params;
 
     public function __construct($params = []) {
-        $this->userModel = new User();
+        $this->entityManager = EntityManagerFactory::createEntityManager();
+        $this->userRepository = $this->entityManager->getRepository(User::class);
         $this->params = $params;
     }
 
@@ -29,15 +33,14 @@ class AuthController {
                 redirectBack('/index.php?url=login');
             }            
             
-            $username = sanitize($_POST['username'] ?? '');
+            $login = sanitize($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
             
-            $user = $this->userModel->findByCredentials($username);
+            $user = $this->userRepository->findByCredentials($login);
             
-            if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
+            if ($user && $user->verifyPassword($password)) {
                 // Bloqueia login se o e-mail não estiver verificado
-                if ($user['status'] === 'pending') {
-                    // Esta mensagem só aparece se a Session::start() e o main.php estiverem 100%
+                if ($user->getStatus() === 'pending') {
                     Session::setFlash('warning', 'Sua conta ainda não foi ativada. Verifique seu e-mail.');
                     header('Location: /index.php?url=' . obfuscateUrl('login'));
                     exit;
@@ -112,17 +115,27 @@ class AuthController {
             }
 
             // 4. Verificação de Duplicidade de Usuário
-            if ($this->userModel->findByUsername($data['username'])) {
+            if ($this->userRepository->findByUsername($data['username'])) {
                 Session::setFlash('error', 'Este nome de usuário já existe.');
                 redirectBack('/index.php?url=' . obfuscateUrl('register'));
             }
 
             // 5. Criação do Usuário no Banco de Dados
-            // O método create() agora retorna o token gerado internamente ou false
-            $verificationToken = $this->userModel->create($data);
+            $user = new User();
+            $user->setFullName($data['full_name'])
+                 ->setUsername($data['username'])
+                 ->setEmail($data['email'])
+                 ->setPhone($data['phone'])
+                 ->setBirthDate(new \DateTime($data['birth_date']))
+                 ->setPassword($data['password']);
 
-            if ($verificationToken) {
-                // 6. Envio de E-mail de Verificação usando o token correto retornado pelo banco
+            $verificationToken = bin2hex(random_bytes(32));
+            $user->setVerificationToken($verificationToken);
+
+            $this->userRepository->save($user);
+
+            if ($user->getId()) {
+                // 6. Envio de E-mail de Verificação usando o token correto
                 $this->sendEmailVerification($data['email'], $data['full_name'], $verificationToken);
                 
                 // Exibe a view informando que o e-mail foi enviado
@@ -156,18 +169,18 @@ class AuthController {
         }
 
         // 1. Primeiro buscamos se o token existe no banco
-        $user = $this->userModel->findByToken($token);
+        $user = $this->userRepository->findByToken($token);
         
         if ($user) {
             // 2. Se o usuário existe, tentamos ativar a conta
-            if ($this->userModel->activate($user['id'])) {
-                Session::setFlash('success', 'E-mail confirmado com sucesso! Você já pode entrar.');
-                header('Location: /index.php?url=' . obfuscateUrl('login'));
-            } else {
-                // Caso o banco falhe no UPDATE
-                Session::setFlash('error', 'Erro ao processar ativação no banco de dados.');
-                header('Location: /index.php?url=' . obfuscateUrl('register'));
-            }
+            $user->setStatus('active')
+                 ->setVerificationToken(null)
+                 ->setEmailVerifiedAt(new \DateTime());
+            
+            $this->entityManager->flush();
+            
+            Session::setFlash('success', 'E-mail confirmado com sucesso! Você já pode entrar.');
+            header('Location: /index.php?url=' . obfuscateUrl('login'));
         } else {
             // Token não encontrado ou já expirado/removido
             Session::setFlash('error', 'Link de confirmação inválido ou já utilizado.');
@@ -261,12 +274,16 @@ class AuthController {
     public function forgotPassword() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = sanitize($_POST['email']);
-            $user = $this->userModel->findByEmail($email);
+            $user = $this->userRepository->findByEmail($email);
 
             if ($user) {
                 $token = bin2hex(random_bytes(32));
-                $this->userModel->setResetToken($email, $token);
-                EmailService::sendPasswordReset($email, $user['full_name'], $token);
+                $user->setResetToken($token);
+                $user->setResetExpiresAt((new \DateTime())->modify('+1 hour'));
+                $this->entityManager->flush();
+                
+                // EmailService não foi refatorado ainda, mas podemos passar os dados
+                EmailService::sendPasswordReset($email, $user->getFullName(), $token);
             }
             
             // Prática Sênior: Sempre mostramos sucesso para evitar "Enumeração de E-mail" por hackers
@@ -282,7 +299,7 @@ class AuthController {
      */
     public function resetPassword() {
         $token = $_GET['token'] ?? $_POST['token'] ?? '';
-        $user = $this->userModel->validateResetToken($token);
+        $user = $this->userRepository->validateResetToken($token);
 
         if (!$user) {
             Session::setFlash('error', 'O link de recuperação é inválido ou expirou.');
@@ -295,7 +312,11 @@ class AuthController {
             $confirm = $_POST['confirm_password'];
 
             if ($password === $confirm && strlen($password) >= 6) {
-                $this->userModel->updatePassword($user['id'], $password);
+                $user->setPassword($password);
+                $user->setResetToken(null);
+                $user->setResetExpiresAt(null);
+                $this->entityManager->flush();
+                
                 Session::setFlash('success', 'Senha alterada com sucesso! Faça login.');
                 header('Location: /index.php?url=' . obfuscateUrl('login'));
                 exit;
@@ -303,7 +324,7 @@ class AuthController {
             Session::setFlash('error', 'As senhas devem coincidir e ter no mínimo 6 caracteres.');
         }
         require_once __DIR__ . '/../views/auth/reset_form.php';
-    }    
+    }
 
 /**
      * Callback do Google - Processa o retorno
@@ -333,11 +354,28 @@ class AuthController {
                     'google_id' => $googleUser->id 
                 ];
 
-                $user = $this->userModel->findOrCreateGoogleUser($data);
+                // Busca o usuário pelo e-mail
+                $user = $this->userRepository->findOneBy(['email' => $data['email']]);
+
+                if (!$user) {
+                    // Se não existe, cria um novo
+                    $user = new User();
+                    $user->setFullName($data['name'])
+                         ->setUsername($data['email']) // Use email as username for google users
+                         ->setEmail($data['email'])
+                         ->setStatus('active')
+                         ->setEmailVerifiedAt(new \DateTime());
+                    
+                    // Note: No password for Google users by default, 
+                    // or handle it according to your needs
+                    
+                    $this->entityManager->persist($user);
+                    $this->entityManager->flush();
+                }
 
                 if ($user) {
                     Auth::login($user); 
-                    Session::setFlash('success', "Bem-vindo, " . $user['full_name']);
+                    Session::setFlash('success', "Bem-vindo, " . $user->getFullName());
                     header('Location: /index.php?url=' . obfuscateUrl('dashboard'));
                     exit;
                 }

@@ -121,8 +121,8 @@ ob_start();
                                     <div class="col">
                                         <h6 class="mb-1 fw-bold text-dark"><?php echo htmlspecialchars($portfolio['name']); ?></h6>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-light text-muted border px-2"><?php echo ucfirst($portfolio['rebalance_frequency']); ?></span>
-                                            <span class="smaller text-muted">Criado em <?php echo date('d/m/Y', strtotime($portfolio['created_at'])); ?></span>
+                                            <span class="badge bg-light text-muted border px-2"><?php echo ucfirst($portfolio['rebalance_frequency'] ?? 'n/a'); ?></span>
+                                            <span class="smaller text-muted">Criado em <?php echo date('d/m/Y', strtotime($portfolio['created_at'] ?? 'now')); ?></span>
                                         </div>
                                     </div>
                                     <div class="col-auto text-end">

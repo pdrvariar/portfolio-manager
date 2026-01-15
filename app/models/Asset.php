@@ -8,26 +8,16 @@ class Asset {
     
     // Retorna todos os ativos ativos
     public function getAll() {
-        $sql = "SELECT * FROM system_assets WHERE is_active = TRUE ORDER BY name";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return (new \App\Core\EntityManagerFactory())->createEntityManager()
+            ->getRepository(\App\Entities\Asset::class)
+            ->findAllActive();
     }
     
     // Retorna todos os ativos com detalhes adicionais
     public function getAllWithDetails() {
-        $sql = "SELECT sa.*, 
-                COUNT(ahd.id) as data_count, -- Alias alterado para coincidir com a View
-                MIN(ahd.reference_date) as min_date, -- Usando novo nome de coluna e alias da View
-                MAX(ahd.reference_date) as max_date  -- Usando novo nome de coluna e alias da View
-                FROM system_assets sa
-                LEFT JOIN asset_historical_data ahd ON sa.id = ahd.asset_id
-                WHERE sa.is_active = TRUE
-                GROUP BY sa.id
-                ORDER BY sa.name";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return (new \App\Core\EntityManagerFactory())->createEntityManager()
+            ->getRepository(\App\Entities\Asset::class)
+            ->findAllWithHistoricalBoundaries(true);
     }
     
     // Busca ativo por ID

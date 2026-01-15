@@ -64,6 +64,12 @@ class SimulationResult {
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$id]);
     }
+
+    public function countAll() {
+        $sql = "SELECT COUNT(*) as total FROM simulation_results";
+        $stmt = $this->db->query($sql);
+        return (int) $stmt->fetch()['total'];
+    }
     
     public function getStatistics($userId = null) {
         $sql = "SELECT 

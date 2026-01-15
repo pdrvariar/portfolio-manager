@@ -21,6 +21,7 @@ ob_start();
                         <th class="ps-3 py-3" style="width: 25%">Estratégia</th>
                         <th style="width: 20%">Capital</th>
                         <th style="width: 25%">Período Histórico</th>
+                        <th style="width: 15%">Criado em</th>
                         <th class="text-center" style="width: 10%">Status</th>
                         <th class="text-end pe-3" style="width: 20%">Ações</th>
                     </tr>
@@ -49,6 +50,11 @@ ob_start();
                                 <?php echo date('d/m/y', strtotime($portfolio['start_date'])); ?> 
                                 <span class="mx-1 text-muted">→</span> 
                                 <?php echo $portfolio['end_date'] ? date('d/m/y', strtotime($portfolio['end_date'])) : 'Hoje'; ?>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small text-muted">
+                                <?php echo $portfolio['created_at'] ? date('d/m/y H:i', strtotime($portfolio['created_at'])) : '---'; ?>
                             </div>
                         </td>
                         <td class="text-center">
@@ -85,7 +91,7 @@ $additional_js = '
             order: [[0, "asc"]],
             pageLength: 10,
             autoWidth: false, // UEX: Impede que o DataTables calcule larguras que forçam o scroll
-            columnDefs: [{ orderable: false, targets: 4 }],
+            columnDefs: [{ orderable: false, targets: 5 }],
             dom: "<\'row mb-2\'<\'col-sm-6\'l><\'col-sm-6 text-end\'f>>" +
                  "<\'row\'<\'col-sm-12\'tr>>" +
                  "<\'row mt-3\'<\'col-sm-5\'i><\'col-sm-7\'p>>"
