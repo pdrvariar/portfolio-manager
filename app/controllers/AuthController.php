@@ -1,11 +1,16 @@
 <?php
+namespace App\Controllers;
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\Exception as MailerException;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2 as GoogleServiceOauth2;
 use App\Core\EntityManagerFactory;
+use App\Core\Auth;
+use App\Core\Session;
 use App\Entities\User;
+use DateTime;
+use Exception;
 
 class AuthController {
     private $entityManager;

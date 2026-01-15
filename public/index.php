@@ -24,7 +24,7 @@ ini_set('display_errors', $isDev ? 1 : 0);
 // 4. Segurança de Sessão Profissional
 // Em vez de session_start() puro, usamos a nossa classe Core para aplicar headers de segurança
 require_once __DIR__ . '/../app/core/Session.php';
-Session::start(); 
+\App\Core\Session::start(); 
 
 // Headers para evitar cache de dados sensíveis (SaaS Financeiro)
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -37,6 +37,7 @@ $coreFiles = [
     'core/Database.php',
     'core/Auth.php',
     'core/Router.php',
+    'core/EntityManagerFactory.php', // Adicionado para garantir carregamento em produção
     'utils/helpers.php' 
 ];
 
@@ -44,9 +45,16 @@ foreach ($coreFiles as $file) {
     require_once "$baseDir/$file";
 }
 
+// Aliases para manter compatibilidade com código legado e views
+class_alias(\App\Core\Auth::class, 'Auth');
+class_alias(\App\Core\Session::class, 'Session');
+
 // 6. Autoloader para Classes da Aplicação (PSR-4 Simplificado)
 spl_autoload_register(function ($class) use ($baseDir) {
-    // Primeiro tenta resolver via namespace App (se o composer não pegou por algum motivo ou se estiver em dev)
+    // SÊNIOR: Normaliza o nome da classe para PSR-4 real
+    $class = ltrim($class, '\\');
+
+    // Primeiro tenta resolver via namespace App
     if (strpos($class, 'App\\') === 0) {
         $relativeClass = substr($class, 4);
         $file = $baseDir . '/' . str_replace('\\', '/', $relativeClass) . '.php';
@@ -56,7 +64,8 @@ spl_autoload_register(function ($class) use ($baseDir) {
         }
     }
 
-    $folders = ['models', 'services', 'controllers'];
+    // Fallback para modelos legados ou controllers sem namespace carregados pelo Router
+    $folders = ['models', 'services', 'controllers', 'Entities', 'core'];
     foreach ($folders as $folder) {
         $file = "$baseDir/$folder/$class.php";
         if (file_exists($file)) {
@@ -67,7 +76,7 @@ spl_autoload_register(function ($class) use ($baseDir) {
 });
 
 // 7. Sistema de Rotas
-$router = new Router();
+$router = new \App\Core\Router();
 $routesPath = $baseDir . '/routers/web.php';
 
 if (file_exists($routesPath)) {

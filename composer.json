@@ -1,5 +1,6 @@
 {
     "require": {
+        "php": ">=8.2",
         "phpmailer/phpmailer": "^7.0",
         "google/apiclient": "^2.18",
         "doctrine/orm": "^3.3",

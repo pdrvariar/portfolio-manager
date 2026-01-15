@@ -1,5 +1,9 @@
 <?php
+namespace App\Controllers;
+
 use App\Core\EntityManagerFactory;
+use App\Core\Auth;
+use App\Core\Session;
 use App\Entities\Portfolio;
 use App\Entities\User;
 

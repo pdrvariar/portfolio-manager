@@ -1,7 +1,7 @@
 <?php
 // app/routers/web.php
 
-function setupRoutes(Router $router) {
+function setupRoutes(\App\Core\Router $router) {
     // --- Rotas Públicas ---
     $router->add('', ['controller' => 'home', 'action' => 'index']);
     $router->add('login', ['controller' => 'auth', 'action' => 'login']);

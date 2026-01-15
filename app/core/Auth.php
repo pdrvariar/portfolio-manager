@@ -1,5 +1,7 @@
 <?php
-// app/core/Auth.php
+namespace App\Core;
+
+use App\Core\Session;
 
 class Auth {
     /**
