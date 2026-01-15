@@ -1,0 +1,129 @@
+name: ? Deploy to Hostinger
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Permite deploy manual
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Baixar código
+      - name: ? Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Configurar PHP 8.2 (igual ao seu Docker)
+      - name: ?? Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, gd, pdo_mysql, bcmath, zip
+          tools: composer:v2
+
+      # 3. Cache das dependências (acelera builds futuros)
+      - name: ? Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+
+      # 4. Instalar dependências PRODUÇÃO
+      - name: ? Install dependencies
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
+          composer dump-autoload --optimize
+
+      # 5. Criar arquivos necessários (se não existirem)
+      - name: ? Create required files
+        run: |
+          if [ ! -f ".env" ]; then
+            cp .env.example .env 2>/dev/null || echo ".env.example not found"
+          fi
+
+      # 6. Deploy via SSH (MÉTODO PROFISSIONAL)
+      - name: ? Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            # ========= CONFIGURAÇÃO =========
+            SITE_PATH="/home/${{ secrets.HOSTINGER_USERNAME }}/domains/smartreturns.com.br/public_html"
+            BACKUP_DIR="/home/${{ secrets.HOSTINGER_USERNAME }}/backups"
+            
+            # ========= PREPARAÇÃO =========
+            echo "? Acessando diretório do site..."
+            cd $SITE_PATH
+            
+            # Criar backup se necessário
+            echo "? Criando backup rápido..."
+            mkdir -p $BACKUP_DIR
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            tar -czf $BACKUP_DIR/backup_$TIMESTAMP.tar.gz --exclude="vendor" --exclude="node_modules" .
+            
+            # ========= MANTER ARQUIVOS PERSISTENTES =========
+            echo "? Mantendo arquivos persistentes..."
+            if [ -f ".env" ]; then
+              cp .env /tmp/.env_backup
+            fi
+            
+            if [ -d "uploads" ]; then
+              cp -r uploads /tmp/uploads_backup 2>/dev/null || true
+            fi
+            
+            # ========= LIMPAR DIRETÓRIO =========
+            echo "? Limpando diretório (exceto vendor se existir)..."
+            find . -maxdepth 1 ! -name 'vendor' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
+            
+            # ========= ESPERAR SYNC DO GITHUB =========
+            echo "? Aguardando sincronização dos arquivos..."
+            sleep 5
+            
+            # ========= RESTAURAR ARQUIVOS PERSISTENTES =========
+            if [ -f "/tmp/.env_backup" ]; then
+              echo "? Restaurando .env..."
+              mv /tmp/.env_backup .env
+            fi
+            
+            if [ -d "/tmp/uploads_backup" ]; then
+              echo "? Restaurando uploads..."
+              mv /tmp/uploads_backup uploads 2>/dev/null || true
+            fi
+            
+            # ========= INSTALAR/ATUALIZAR DEPENDÊNCIAS =========
+            echo "? Verificando dependências PHP..."
+            if [ -f "composer.json" ]; then
+              if [ -d "vendor" ]; then
+                echo "? Atualizando dependências existentes..."
+                composer install --no-dev --optimize-autoloader --no-progress
+              else
+                echo "? Instalando dependências..."
+                composer install --no-dev --optimize-autoloader --no-progress
+              fi
+            fi
+            
+            # ========= AJUSTAR PERMISSÕES =========
+            echo "? Ajustando permissões..."
+            find . -type f -exec chmod 644 {} \;
+            find . -type d -exec chmod 755 {} \;
+            
+            # Permissões especiais
+            chmod -R 755 storage/ 2>/dev/null || true
+            chmod -R 755 cache/ 2>/dev/null || true
+            chmod -R 755 var/ 2>/dev/null || true
+            
+            # ========= LIMPAR CACHE =========
+            echo "? Limpando caches..."
+            if [ -f "vendor/bin/doctrine" ]; then
+              php vendor/bin/doctrine orm:clear-cache:metadata
+              php vendor/bin/doctrine orm:clear-cache:query
+              php vendor/bin/doctrine orm:clear-cache:result
+            fi
+            
+            # ========= FINALIZAR =========
+            echo "? Deploy concluído com sucesso!"
+            echo "? Espaço em disco:"
+            df -h .
