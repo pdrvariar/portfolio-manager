@@ -112,7 +112,7 @@ ob_start();
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="saveAsset()">
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="saveAsset(this)">
                         <i class="bi bi-check-lg me-1"></i>Salvar Alterações
                     </button>
                 </div>
@@ -152,7 +152,12 @@ $additional_js = <<<JS
         });
     }
 
-    function saveAsset() {
+    function saveAsset(btn) {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
+        }
+
         const form = document.getElementById('editAssetForm');
         const formData = new FormData(form);
         const data = {};
@@ -170,6 +175,10 @@ $additional_js = <<<JS
                 }
             },
             error: function(xhr) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Salvar Alterações';
+                }
                 if(xhr.status === 403) {
                     alert('Erro de Segurança: Sessão expirada ou Token inválido.');
                 } else {

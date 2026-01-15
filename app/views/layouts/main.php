@@ -149,14 +149,40 @@
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
 
-        // 3. Spinner nos botões ao enviar formulários
+        // 3. Prevenir cliques duplos em todos os formulários e botões de ação
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function() {
                 const btn = this.querySelector('button[type="submit"]');
-                if (btn && !btn.classList.contains('no-spinner')) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+                if (btn && !btn.classList.contains('no-disable')) {
+                    setTimeout(() => {
+                        btn.disabled = true;
+                        if (!btn.classList.contains('no-spinner')) {
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+                        }
+                    }, 0);
                 }
+            });
+        });
+
+        // Botões que levam a ações que podem demorar ou não devem ser clicadas duas vezes
+        document.querySelectorAll('a.btn:not([href^="#"]):not([data-bs-toggle])').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (this.classList.contains('disabled') || this.getAttribute('aria-disabled') === 'true') {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Para links que abrem em nova aba, não desabilita
+                if (this.target === '_blank') return;
+
+                // Atraso para permitir que o clique seja processado
+                setTimeout(() => {
+                    this.classList.add('disabled');
+                    this.setAttribute('aria-disabled', 'true');
+                    if (!this.classList.contains('no-spinner') && this.innerText.trim().length > 0) {
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> ' + this.innerHTML;
+                    }
+                }, 0);
             });
         });
     });
