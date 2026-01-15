@@ -7,6 +7,7 @@ use App\Core\Session;
 use App\Entities\Portfolio;
 use App\Entities\User;
 use App\Models\SimulationResult;
+use App\Services\BacktestService;
 
 class PortfolioController {
     private $entityManager;

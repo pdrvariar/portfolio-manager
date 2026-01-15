@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use App\Core\Database;
+use App\Services\ChartService;
 use DateTime;
 
 class BacktestService {
