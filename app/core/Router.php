@@ -44,6 +44,8 @@ class Router {
                     throw new \Exception("Method $action not found in controller $fullController");
                 }
             } else {
+                // SÊNIOR: Adicionamos um log para debugar se a classe não for encontrada
+                error_log("Router Error: Class $fullController not found. Check PSR-4 and file naming.");
                 throw new \Exception("Controller class $fullController not found");
             }
         } else {
