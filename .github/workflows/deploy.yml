@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixar código
+      # 1. Baixar codigo
       - name: "Checkout code"
         uses: actions/checkout@v3
 
@@ -22,14 +22,14 @@ jobs:
           extensions: mbstring, intl, gd, pdo_mysql, bcmath, zip
           tools: composer:v2
 
-      # 3. Cache das dependências
+      # 3. Cache das dependencias
       - name: "Cache Composer dependencies"
         uses: actions/cache@v3
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
 
-      # 4. Instalar dependências PRODUÇÃO
+      # 4. Instalar dependencias PRODUCAO
       - name: "Install dependencies"
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
@@ -44,16 +44,16 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           port: ${{ secrets.HOSTINGER_PORT }}
           script: |
-            # CONFIGURAÇÃO
+            # CONFIGURACAO
             SITE_PATH="/home/${{ secrets.HOSTINGER_USERNAME }}/domains/smartreturns.com.br/public_html"
             BACKUP_DIR="/home/${{ secrets.HOSTINGER_USERNAME }}/backups"
             
-            # PREPARAÇÃO
-            echo "Acessando diretório do site..."
+            # PREPARACAO
+            echo "Acessando diretorio do site..."
             cd $SITE_PATH
             
-            # Criar backup se necessário
-            echo "Criando backup rápido..."
+            # Criar backup se necessario
+            echo "Criando backup rapido..."
             mkdir -p $BACKUP_DIR
             TIMESTAMP=$(date +%Y%m%d_%H%M%S)
             tar -czf $BACKUP_DIR/backup_$TIMESTAMP.tar.gz --exclude="vendor" --exclude="node_modules" .
@@ -68,12 +68,12 @@ jobs:
               cp -r uploads /tmp/uploads_backup 2>/dev/null || true
             fi
             
-            # LIMPAR DIRETÓRIO
-            echo "Limpando diretório (exceto vendor se existir)..."
+            # LIMPAR DIREToRIO
+            echo "Limpando diretorio (exceto vendor se existir)..."
             find . -maxdepth 1 ! -name 'vendor' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
             
             # ESPERAR SYNC
-            echo "Aguardando sincronização dos arquivos..."
+            echo "Aguardando sincronizacao dos arquivos..."
             sleep 5
             
             # RESTAURAR ARQUIVOS
@@ -87,24 +87,24 @@ jobs:
               mv /tmp/uploads_backup uploads 2>/dev/null || true
             fi
             
-            # INSTALAR/ATUALIZAR DEPENDÊNCIAS
-            echo "Verificando dependências PHP..."
+            # INSTALAR/ATUALIZAR DEPENDENCIAS
+            echo "Verificando dependencias PHP..."
             if [ -f "composer.json" ]; then
               if [ -d "vendor" ]; then
-                echo "Atualizando dependências existentes..."
+                echo "Atualizando dependencias existentes..."
                 composer install --no-dev --optimize-autoloader --no-progress
               else
-                echo "Instalando dependências..."
+                echo "Instalando dependencias..."
                 composer install --no-dev --optimize-autoloader --no-progress
               fi
             fi
             
-            # AJUSTAR PERMISSÕES
-            echo "Ajustando permissões..."
+            # AJUSTAR PERMISSOES
+            echo "Ajustando permissoes..."
             find . -type f -exec chmod 644 {} \;
             find . -type d -exec chmod 755 {} \;
             
-            # Permissões especiais
+            # Permissoes especiais
             chmod -R 755 storage/ 2>/dev/null || true
             chmod -R 755 cache/ 2>/dev/null || true
             chmod -R 755 var/ 2>/dev/null || true
@@ -118,6 +118,6 @@ jobs:
             fi
             
             # FINALIZAR d
-            echo "Deploy concluído com sucesso!"
-            echo "Espaço em disco:"
+            echo "Deploy concluido com sucesso!"
+            echo "Espaco em disco:"
             df -h .

@@ -113,3 +113,9 @@ INSERT INTO system_assets (code, name, currency, asset_type) VALUES
 ('SP500', 'S&P 500', 'USD', 'COTACAO'),
 ('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO');
 
+ALTER TABLE portfolios 
+ADD COLUMN simulation_type ENUM('CLASSIC', 'FIXED_CONTRIBUTION', 'DROP_MATCHING', 'DROP_THRESHOLD') DEFAULT 'CLASSIC',
+ADD COLUMN contribution_amount DECIMAL(15,2) DEFAULT 0.00,
+ADD COLUMN contribution_frequency ENUM('monthly', 'annual') DEFAULT 'monthly',
+ADD COLUMN drop_threshold DECIMAL(5,2) DEFAULT 0.00; -- Ex: 10.00 para 10%
+
