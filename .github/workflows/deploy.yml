@@ -117,7 +117,7 @@ jobs:
               php vendor/bin/doctrine orm:clear-cache:result
             fi
             
-            # FINALIZAR
+            # FINALIZAR d
             echo "Deploy concluído com sucesso!"
             echo "Espaço em disco:"
             df -h .
