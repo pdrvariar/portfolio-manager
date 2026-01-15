@@ -115,7 +115,7 @@ class AssetController {
         }
         
         // Dados históricos ainda via modelo legado para manter compatibilidade com a view/chart
-        $assetModel = new \Asset();
+        $assetModel = new AssetModel();
         $historicalData = $assetModel->getHistoricalData($id);
 
         // Converter objeto asset para array para a view
@@ -139,7 +139,7 @@ class AssetController {
             exit;
         }
         
-        $assetModel = new \Asset();
+        $assetModel = new AssetModel();
         $data = $assetModel->getHistoricalData($assetId);
         
         header('Content-Type: application/json');
@@ -168,7 +168,7 @@ class AssetController {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
         
-        $assetModel = new \Asset();
+        $assetModel = new AssetModel();
         $asset = $assetModel->findById($id);
         
         header('Content-Type: application/json');
@@ -201,7 +201,7 @@ class AssetController {
                 'is_active' => 1
             ];
             
-            $assetModel = new \Asset();
+            $assetModel = new AssetModel();
             $result = $assetModel->update($id, $data);
             header('Content-Type: application/json');
             echo json_encode($result);
@@ -218,7 +218,7 @@ class AssetController {
         $baseValue = floatval($_GET['base'] ?? 100000);
         $portfolioCurrency = $_GET['currency'] ?? 'BRL';
 
-        $assetModel = new \Asset();
+        $assetModel = new AssetModel();
         $asset = $assetModel->findById($assetId);
         $historical = $assetModel->getHistoricalData($assetId, $startDate, $endDate);
         
