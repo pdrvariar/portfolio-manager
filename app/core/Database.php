@@ -5,12 +5,12 @@ class Database {
     private PDO $connection;
 
     private function __construct() {
-        // Lógica Sênior: Busca em getenv (carregado pelo seu Env::load) ou $_ENV
-        $host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? '127.0.0.1');
-        $db   = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'portfolio_db');
-        $user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
-        $pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
-        $port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
+        // Lógica Sênior: Prioriza $_ENV (carregado pelo seu Env::load) depois getenv
+        $host = $_ENV['DB_HOST'] ?? (getenv('DB_HOST') ?: '127.0.0.1');
+        $db   = $_ENV['DB_NAME'] ?? (getenv('DB_NAME') ?: 'portfolio_db');
+        $user = $_ENV['DB_USER'] ?? (getenv('DB_USER') ?: 'root');
+        $pass = $_ENV['DB_PASS'] ?? (getenv('DB_PASS') ?: '');
+        $port = $_ENV['DB_PORT'] ?? (getenv('DB_PORT') ?: '3306');
 
         // Limpeza de aspas de segurança para o .env da Hostinger
         $pass = trim($pass, "'\"");

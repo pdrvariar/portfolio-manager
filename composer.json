@@ -2,5 +2,8 @@
     "require": {
         "phpmailer/phpmailer": "^7.0",
         "google/apiclient": "^2.18"
+    },
+    "config": {
+        "process-timeout": 9000
     }
 }
