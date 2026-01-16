@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     volumes:
       - .:/var/www/html
+      - /var/www/html/vendor
     env_file:
       - .env # Carrega automaticamente as chaves do Brevo, Google e DB
     depends_on:
@@ -26,6 +27,7 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
+      - /var/www/html/vendor
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app

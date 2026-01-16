@@ -351,6 +351,52 @@ class PortfolioController {
         }
     }
 
+    public function updateComposition() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id) {
+            $portfolio = $this->portfolioRepository->find($id);
+            if (!$portfolio) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Portfólio não encontrado.']);
+                exit;
+            }
+
+            // Validação de propriedade
+            if ($portfolio->getUser()->getId() != Auth::getCurrentUserId() && !Auth::isAdmin()) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Acesso negado.']);
+                exit;
+            }
+
+            $assetsData = $_POST['assets'] ?? [];
+            $totalAllocation = 0;
+            foreach ($assetsData as $data) {
+                $totalAllocation += (float)$data['allocation'];
+            }
+
+            // Tolerância para ponto flutuante
+            if (abs($totalAllocation - 100) > 0.001) {
+                http_response_code(400);
+                echo json_encode(['error' => 'A soma das alocações deve ser 100%.']);
+                exit;
+            }
+
+            foreach ($assetsData as $assetId => $data) {
+                foreach ($portfolio->getAssets() as $pa) {
+                    if ($pa->getAsset()->getId() == $assetId) {
+                        $pa->setAllocationPercentage($data['allocation']);
+                    }
+                }
+            }
+
+            $this->entityManager->flush();
+            echo json_encode(['success' => true]);
+            exit;
+        }
+    }
+
     /**
      * POST: Processa a exclusão com lógica de permissão Admin
      */

@@ -19,7 +19,7 @@ class EntityManagerFactory
 
         $isDevMode = ($_ENV['APP_ENV'] ?? 'production') === 'development';
 
-        $config = \Doctrine\ORM\ORMSetup::createAttributeMetadataConfiguration(
+        $config = ORMSetup::createAttributeMetadataConfiguration(
             [dirname(__DIR__) . '/Entities'],
             $isDevMode,
             null,

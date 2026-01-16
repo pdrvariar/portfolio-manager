@@ -257,12 +257,21 @@ ob_start();
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
-                <table class="table mb-0">
-                    <thead class="table-light"><tr><th class="ps-4">Ativo</th><th class="text-end">Operação</th><th class="text-end pe-4">Saldo Final</th></tr></thead>
-                    <tbody id="modalAssetsBody"></tbody>
-                </table>
+                <form id="compositionForm">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th class="ps-4">Ativo</th><th class="text-end">Percentual (%)</th><th class="text-end pe-4">Saldo Final</th></tr></thead>
+                        <tbody id="modalAssetsBody"></tbody>
+                    </table>
+                </form>
             </div>
-            <div class="modal-footer bg-light"><div class="w-100 d-flex justify-content-between"><strong>Total:</strong><strong class="text-primary" id="modalTotal"></strong></div></div>
+            <div class="modal-footer bg-light">
+                <div class="w-100 d-flex justify-content-between align-items-center">
+                    <div><strong>Total:</strong> <strong class="text-primary" id="modalTotal"></strong></div>
+                    <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveComposition" onclick="saveComposition()">Salvar Alterações</button>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -308,17 +317,29 @@ ob_start();
         const body = document.getElementById('modalAssetsBody');
         body.innerHTML = '';
         const isRebalanceMonth = Object.keys(trades).length > 0;
+        const canEdit = <?php echo (!$portfolio['is_system_default'] || Auth::isAdmin()) ? 'true' : 'false'; ?>;
         
         for (const [id, value] of Object.entries(assetValues)) {
             const name = assetNames[id] || id;
             const target = assetTargets[id] || 0;
             let finalVal = value;
-            let actionHtml = `<div class="text-muted small">${((value/totalValue)*100).toFixed(2)}%</div>`;
+            let percentage = ((value/totalValue)*100).toFixed(2);
+            let actionHtml = '';
+
+            if (canEdit) {
+                actionHtml = `<input type="number" step="0.01" class="form-control form-control-sm text-end composition-input" 
+                                name="assets[${id}][allocation]" value="${target}" style="width: 80px; display: inline-block;"
+                                onchange="validateCompositionSum()">`;
+            } else {
+                actionHtml = `<div class="text-muted small">${percentage}%</div>`;
+            }
 
             if (isRebalanceMonth && trades[id]) {
                 finalVal = trades[id].post_value;
                 const delta = trades[id].delta;
-                actionHtml = `<div class="${delta >= 0 ? 'text-success' : 'text-danger'} small">${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
+                if (!canEdit) {
+                    actionHtml = `<div class="${delta >= 0 ? 'text-success' : 'text-danger'} small">${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
+                }
             }
 
             body.innerHTML += `<tr>
@@ -328,7 +349,62 @@ ob_start();
             </tr>`;
         }
         document.getElementById('modalTotal').innerText = new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(totalValue);
+        
+        if (canEdit) validateCompositionSum();
+        
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+
+    function validateCompositionSum() {
+        const inputs = document.querySelectorAll('.composition-input');
+        let sum = 0;
+        inputs.forEach(input => sum += parseFloat(input.value || 0));
+        
+        const btnSave = document.getElementById('btnSaveComposition');
+        if (btnSave) {
+            // Tolerância para ponto flutuante
+            if (Math.abs(sum - 100) < 0.01) {
+                btnSave.disabled = false;
+                btnSave.classList.remove('btn-danger');
+                btnSave.classList.add('btn-primary');
+                btnSave.innerText = 'Salvar Alterações';
+            } else {
+                btnSave.disabled = true;
+                btnSave.classList.remove('btn-primary');
+                btnSave.classList.add('btn-danger');
+                btnSave.innerText = `Soma: ${sum.toFixed(2)}% (Deve ser 100%)`;
+            }
+        }
+    }
+
+    function saveComposition() {
+        const formData = new FormData(document.getElementById('compositionForm'));
+        const btnSave = document.getElementById('btnSaveComposition');
+        const originalText = btnSave.innerText;
+        
+        btnSave.disabled = true;
+        btnSave.innerText = 'Salvando...';
+
+        fetch('/index.php?url=<?= obfuscateUrl('portfolio/updateComposition/' . $portfolio['id']) ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro: ' + (data.error || 'Erro desconhecido ao salvar.'));
+                btnSave.disabled = false;
+                btnSave.innerText = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro de rede ao salvar composição.');
+            btnSave.disabled = false;
+            btnSave.innerText = originalText;
+        });
     }
 
     document.getElementById('auditSearch').addEventListener('keyup', function() {
