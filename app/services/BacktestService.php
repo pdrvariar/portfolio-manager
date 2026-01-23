@@ -127,17 +127,29 @@ class BacktestService {
 
     private function executeBacktest($portfolio, $assets, $historicalData) {
         $initialCapital = (float)$portfolio['initial_capital'];
-        $portfolioCurrency = $portfolio['output_currency']; // BRL ou USD
+        $portfolioCurrency = $portfolio['output_currency'];
         $rebalanceFreq = $this->parseRebalanceFrequency($portfolio['rebalance_frequency']);
-        
-        // Carrega dados de câmbio se houver mistura de moedas
+
+        // NOVOS PARÂMETROS
+        $simulationType = $portfolio['simulation_type'] ?? 'standard';
+        $depositAmount = (float)($portfolio['deposit_amount'] ?? 0);
+        $depositCurrency = $portfolio['deposit_currency'] ?? 'BRL';
+        $depositFrequency = $portfolio['deposit_frequency'] ?? 'monthly';
+        $strategicThreshold = (float)($portfolio['strategic_threshold'] ?? 0) / 100;
+        $strategicDepositPercent = (float)($portfolio['strategic_deposit_percentage'] ?? 0) / 100;
+
+        // Carrega dados de câmbio
         $fxData = $this->getExchangeRateData($portfolio['start_date'], $portfolio['end_date']);
-        
+
         $results = [];
         $currentBalances = [];
         $dates = array_keys($historicalData);
         $lastPrices = [];
         $lastFxRate = null;
+
+        // Variáveis para controle de aportes
+        $previousMonthValue = $initialCapital;
+        $totalDeposits = 0;
 
         // Inicialização do saldo
         foreach ($assets as $asset) {
@@ -149,14 +161,13 @@ class BacktestService {
             $currentFxRate = $fxData[$date] ?? null;
             $totalMonthValue = 0;
             $assetValues = [];
-            
+
             foreach ($assets as $asset) {
                 $assetId = $asset['asset_id'];
                 $dbValue = (float)($monthData[$assetId] ?? 0);
                 $factor = (float)($asset['performance_factor'] ?? 1.0);
                 $monthlyReturn = 0;
 
-                // 1. Calcula o retorno na moeda original do ativo
                 if ($asset['asset_type'] === 'TAXA_MENSAL') {
                     $monthlyReturn = ($dbValue * $factor) / 100;
                 } else {
@@ -166,15 +177,11 @@ class BacktestService {
                     $lastPrices[$assetId] = $dbValue;
                 }
 
-                // 2. APLICA O CÂMBIO (Se Moedas forem diferentes)
-                // Se Portfólio é BRL e Ativo é USD: aplica a variação do Dólar
+                // Aplica câmbio se necessário
                 if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $lastFxRate > 0 && $currentFxRate > 0) {
                     $fxVariation = ($currentFxRate / $lastFxRate) - 1;
-                    // Retorno Total = (1 + retorno_ativo) * (1 + variação_cambio) - 1
                     $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVariation) - 1;
-                }
-                // Se Portfólio é USD e Ativo é BRL: inverte o câmbio
-                elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $lastFxRate > 0 && $currentFxRate > 0) {
+                } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $lastFxRate > 0 && $currentFxRate > 0) {
                     $fxVariation = ($lastFxRate / $currentFxRate) - 1;
                     $monthlyReturn = (1 + $monthlyReturn) * (1 + $fxVariation) - 1;
                 }
@@ -183,10 +190,72 @@ class BacktestService {
                 $assetValues[$assetId] = $currentBalances[$assetId];
                 $totalMonthValue += $currentBalances[$assetId];
             }
-            
+
             $lastFxRate = $currentFxRate;
 
-            // 3. Lógica de Rebalanceamento
+            // ============================================
+            // LÓGICA DE APORTES MENSAL (Tipo 1)
+            // ============================================
+            $depositThisMonth = 0;
+            if ($simulationType === 'monthly_deposit' && $depositAmount > 0) {
+                if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
+                    // Converte o aporte para a moeda do portfólio se necessário
+                    $depositInPortfolioCurrency = $depositAmount;
+
+                    if ($depositCurrency !== $portfolioCurrency) {
+                        if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                        } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                        }
+                    }
+
+                    $depositThisMonth = $depositInPortfolioCurrency;
+                    $totalDeposits += $depositThisMonth;
+
+                    // Distribui o aporte proporcionalmente às alocações atuais
+                    foreach ($assets as $asset) {
+                        $assetId = $asset['asset_id'];
+                        $currentAllocation = $currentBalances[$assetId] / max($totalMonthValue, 0.001);
+                        $currentBalances[$assetId] += $depositThisMonth * $currentAllocation;
+                        $assetValues[$assetId] = $currentBalances[$assetId];
+                    }
+
+                    $totalMonthValue += $depositThisMonth;
+                }
+            }
+
+            // ============================================
+            // LÓGICA DE APORTE ESTRATÉGICO (Tipo 2)
+            // ============================================
+            $strategicDepositThisMonth = 0;
+            if ($simulationType === 'strategic_deposit' && $strategicThreshold > 0 && $strategicDepositPercent > 0) {
+                if ($index > 0) {
+                    // Calcula variação desde o mês anterior
+                    $variation = ($totalMonthValue - $previousMonthValue) / max($previousMonthValue, 0.001);
+
+                    // Se cair mais que o threshold, faz aporte
+                    if ($variation <= -$strategicThreshold) {
+                        $strategicDepositThisMonth = $totalMonthValue * $strategicDepositPercent;
+                        $totalDeposits += $strategicDepositThisMonth;
+
+                        // Distribui o aporte estratégico
+                        foreach ($assets as $asset) {
+                            $assetId = $asset['asset_id'];
+                            $currentAllocation = $currentBalances[$assetId] / max($totalMonthValue, 0.001);
+                            $currentBalances[$assetId] += $strategicDepositThisMonth * $currentAllocation;
+                            $assetValues[$assetId] = $currentBalances[$assetId];
+                        }
+
+                        $totalMonthValue += $strategicDepositThisMonth;
+                    }
+                }
+            }
+
+            // Atualiza para próximo mês
+            $previousMonthValue = $totalMonthValue;
+
+            // Lógica de Rebalanceamento (exisitente)
             $wasRebalanced = false;
             $trades = [];
 
@@ -194,44 +263,60 @@ class BacktestService {
                 $wasRebalanced = true;
                 foreach ($assets as $asset) {
                     $assetId = $asset['asset_id'];
-                    $preValue = $currentBalances[$assetId]; 
+                    $preValue = $currentBalances[$assetId];
                     $targetAllocation = (float)$asset['allocation_percentage'] / 100;
                     $postValue = $totalMonthValue * $targetAllocation;
-                    
+
                     $trades[$assetId] = [
                         'pre_value' => $preValue,
                         'post_value' => $postValue,
                         'delta' => $postValue - $preValue
                     ];
-                    
-                    // ATUALIZAÇÃO CRUCIAL:
+
                     $currentBalances[$assetId] = $postValue;
-                    
-                    // CORREÇÃO: Atualiza o assetValues para refletir o saldo PÓS-rebalanceamento
-                    $assetValues[$assetId] = $postValue; 
+                    $assetValues[$assetId] = $postValue;
                 }
             }
 
             $results[$date] = [
-                'total_value' => $totalMonthValue, 
-                'asset_values' => $assetValues, // Agora levará o valor corrigido
+                'total_value' => $totalMonthValue,
+                'asset_values' => $assetValues,
                 'rebalanced' => $wasRebalanced,
-                'trades' => $trades
+                'trades' => $trades,
+                'deposit_made' => $depositThisMonth + $strategicDepositThisMonth,
+                'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
+                'total_deposits_to_date' => $totalDeposits
             ];
         }
+
+        // Adiciona informação de total de aportes ao resultado
+        $results['_metadata'] = [
+            'simulation_type' => $simulationType,
+            'total_deposits' => $totalDeposits,
+            'initial_capital' => $initialCapital
+        ];
+
         return $results;
     }
-
     private function calculateMetrics($results) {
         $values = array_column($results, 'total_value');
         $initial = $values[0];
         $final = end($values);
         $numMonths = count($values);
-        
-        // 1. Retorno Total Absoluto
-        $totalReturnDecimal = ($final - $initial) / $initial;
-        
-        // 2. Cálculo de Retornos Mensais para Volatilidade
+
+        // Extrai metadados dos aportes
+        $metadata = $results['_metadata'] ?? [];
+        $totalDeposits = $metadata['total_deposits'] ?? 0;
+
+        // Calcula ROI considerando aportes
+        $totalInvested = $initial + $totalDeposits;
+        $netProfit = $final - $totalInvested;
+        $roi = $totalInvested > 0 ? ($netProfit / $totalInvested) * 100 : 0;
+
+        // Retorno Total Absoluto (sem considerar aportes)
+        $totalReturnDecimal = $initial > 0 ? ($final - $initial) / $initial : 0;
+
+        // Cálculo de Retornos Mensais para Volatilidade
         $returns = [];
         for ($i = 1; $i < count($values); $i++) {
             if ($values[$i-1] > 0) {
@@ -239,33 +324,34 @@ class BacktestService {
             }
         }
 
-        // 3. CAGR (Apenas anualizamos se o período for >= 12 meses)
-        // Se o período for curto, o CAGR é igual ao Retorno Total (Prática de Mercado)
+        // CAGR (considerando tempo)
         if ($numMonths >= 12) {
             $annualReturn = pow(1 + $totalReturnDecimal, 12 / $numMonths) - 1;
         } else {
-            $annualReturn = $totalReturnDecimal; 
+            $annualReturn = $totalReturnDecimal;
         }
-        
+
         $vol = $this->calculateVolatility($returns);
-        
-        // 4. Sharpe Ratio Sênior (Exemplo com Selic fixa em 0.10 para ilustrar)
-        // O ideal é buscar o valor real da SELIC no seu banco de dados
-        $riskFreeRate = 0.10; 
+        $riskFreeRate = 0.10;
         $excessReturn = $annualReturn - $riskFreeRate;
         $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
-        
+
         return [
             'total_return'  => $totalReturnDecimal * 100,
             'annual_return' => $annualReturn * 100,
             'volatility'    => $vol * 100,
             'sharpe_ratio'  => $sharpe,
-            'is_short_period' => ($numMonths < 12), // Flag para a View
+            'is_short_period' => ($numMonths < 12),
             'initial_value' => $initial,
-            'final_value'   => $final
+            'final_value'   => $final,
+            // Novas métricas de aportes
+            'total_deposits' => $totalDeposits,
+            'total_invested' => $totalInvested,
+            'net_profit' => $netProfit,
+            'roi' => $roi,
+            'simulation_type' => $metadata['simulation_type'] ?? 'standard'
         ];
     }
-
     private function calculateVolatility($returns) {
         if (empty($returns)) return 0;
         $mean = array_sum($returns) / count($returns);
@@ -321,5 +407,28 @@ class BacktestService {
     private function parseRebalanceFrequency($freq) {
         $map = ['never' => 0, 'monthly' => 1, 'quarterly' => 3, 'biannual' => 6, 'annual' => 12];
         return $map[strtolower($freq)] ?? 0;
+    }
+
+    private function shouldMakeDeposit($date, $portfolioStartDate, $frequency, $currentMonthIndex) {
+        $startDate = new DateTime($portfolioStartDate);
+        $currentDate = new DateTime($date);
+
+        // Calcula diferença em meses
+        $interval = $startDate->diff($currentDate);
+        $monthsDiff = ($interval->y * 12) + $interval->m;
+
+        // Mapeia frequência para número de meses
+        $frequencyMap = [
+            'monthly' => 1,
+            'bimonthly' => 2,
+            'quarterly' => 3,
+            'biannual' => 6,
+            'annual' => 12
+        ];
+
+        $freqMonths = $frequencyMap[$frequency] ?? 1;
+
+        // Verifica se é um mês de aporte
+        return $monthsDiff % $freqMonths == 0;
     }
 }

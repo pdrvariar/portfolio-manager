@@ -22,12 +22,14 @@ class Portfolio {
         }
         return $stmt->fetchAll();
     }
-    
+
     public function create($data) {
         $sql = "INSERT INTO portfolios (user_id, name, description, initial_capital, 
-                start_date, end_date, rebalance_frequency, output_currency, cloned_from) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
+            start_date, end_date, rebalance_frequency, output_currency, cloned_from,
+            simulation_type, deposit_amount, deposit_currency, deposit_frequency,
+            strategic_threshold, strategic_deposit_percentage) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             $data['user_id'],
@@ -38,21 +40,27 @@ class Portfolio {
             $data['end_date'],
             $data['rebalance_frequency'],
             $data['output_currency'],
-            $data['cloned_from'] ?? null
+            $data['cloned_from'] ?? null,
+            $data['simulation_type'] ?? 'standard',
+            $data['deposit_amount'] ?? null,
+            $data['deposit_currency'] ?? null,
+            $data['deposit_frequency'] ?? null,
+            $data['strategic_threshold'] ?? null,
+            $data['strategic_deposit_percentage'] ?? null
         ]);
-        
+
         return $this->db->lastInsertId();
     }
-    
+
     public function clone($portfolioId, $userId, $newName = null) {
         // Buscar portfólio original
         $original = $this->findById($portfolioId);
-        
+
         if (!$original) {
             return false;
         }
-        
-        // Criar novo portfólio como cópia
+
+        // Criar novo portfólio como cópia (INCLUINDO OS NOVOS CAMPOS)
         $newPortfolioId = $this->create([
             'user_id' => $userId,
             'name' => $newName ?? $original['name'] . ' (Cópia)',
@@ -62,15 +70,21 @@ class Portfolio {
             'end_date' => $original['end_date'],
             'rebalance_frequency' => $original['rebalance_frequency'],
             'output_currency' => $original['output_currency'],
-            'cloned_from' => $portfolioId
+            'cloned_from' => $portfolioId,
+            'simulation_type' => $original['simulation_type'],
+            'deposit_amount' => $original['deposit_amount'],
+            'deposit_currency' => $original['deposit_currency'],
+            'deposit_frequency' => $original['deposit_frequency'],
+            'strategic_threshold' => $original['strategic_threshold'],
+            'strategic_deposit_percentage' => $original['strategic_deposit_percentage']
         ]);
-        
+
         // Copiar alocações de ativos
         $this->cloneAssets($portfolioId, $newPortfolioId);
-        
+
         return $newPortfolioId;
     }
-    
+
     private function cloneAssets($sourcePortfolioId, $targetPortfolioId) {
         $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
                 SELECT ?, asset_id, allocation_percentage, performance_factor
@@ -87,18 +101,24 @@ class Portfolio {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
-        
+
     public function update($data) {
         $sql = "UPDATE portfolios SET 
-                name = ?, 
-                description = ?, 
-                initial_capital = ?, 
-                start_date = ?, 
-                end_date = ?, 
-                rebalance_frequency = ?, 
-                output_currency = ? 
-                WHERE id = ? AND user_id = ?";
-                
+            name = ?, 
+            description = ?, 
+            initial_capital = ?, 
+            start_date = ?, 
+            end_date = ?, 
+            rebalance_frequency = ?, 
+            output_currency = ?,
+            simulation_type = ?,
+            deposit_amount = ?,
+            deposit_currency = ?,
+            deposit_frequency = ?,
+            strategic_threshold = ?,
+            strategic_deposit_percentage = ?
+            WHERE id = ?";
+
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             $data['name'],
@@ -108,8 +128,13 @@ class Portfolio {
             $data['end_date'],
             $data['rebalance_frequency'],
             $data['output_currency'],
-            $data['id'],
-            $_SESSION['user_id']
+            $data['simulation_type'] ?? 'standard',
+            $data['deposit_amount'] ?? null,
+            $data['deposit_currency'] ?? null,
+            $data['deposit_frequency'] ?? null,
+            $data['strategic_threshold'] ?? null,
+            $data['strategic_deposit_percentage'] ?? null,
+            $data['id']
         ]);
     }
 

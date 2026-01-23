@@ -188,5 +188,41 @@ class ChartService {
         
         return array_slice($colors, 0, $count);
     }
+
+    public function createDepositChart($results) {
+        $dates = [];
+        $values = [];
+        $deposits = [];
+
+        foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue;
+
+            $dates[] = date('M Y', strtotime($date));
+            $values[] = $data['total_value'];
+            $deposits[] = $data['deposit_made'] ?? 0;
+        }
+
+        return [
+            'labels' => $dates,
+            'datasets' => [
+                [
+                    'label' => 'Valor do Portfólio',
+                    'data' => $values,
+                    'borderColor' => '#007bff',
+                    'backgroundColor' => 'rgba(0, 123, 255, 0.1)',
+                    'fill' => true,
+                    'tension' => 0.1
+                ],
+                [
+                    'label' => 'Aportes Realizados',
+                    'data' => $deposits,
+                    'type' => 'bar',
+                    'backgroundColor' => 'rgba(40, 167, 69, 0.3)',
+                    'borderColor' => '#28a745',
+                    'borderWidth' => 1
+                ]
+            ]
+        ];
+    }
 }
 ?>

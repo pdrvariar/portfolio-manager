@@ -70,6 +70,104 @@ $assets = $assetModel->getAllWithDetails();
                     </div>
                     
                     <hr>
+
+                    <h5 class="mb-3">Tipo de Simulação</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="simulation_type" class="form-label">Tipo de Simulação *</label>
+                                <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
+                                    <option value="standard">Padrão (sem aportes)</option>
+                                    <option value="monthly_deposit">Com Aportes Periódicos</option>
+                                    <option value="strategic_deposit">Com Aportes Estratégicos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para Aportes Periódicos -->
+                    <div id="monthly_deposit_fields" class="simulation-fields" style="display: none;">
+                        <div class="card border-primary mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="deposit_amount" class="form-label">Valor do Aporte</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="deposit_currency_label">BRL</span>
+                                                <input type="number" class="form-control" id="deposit_amount" name="deposit_amount" step="0.01" min="0" placeholder="Ex: 5000.00">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="deposit_currency" class="form-label">Moeda do Aporte</label>
+                                            <select class="form-select" id="deposit_currency" name="deposit_currency" onchange="document.getElementById('deposit_currency_label').innerText = this.value">
+                                                <option value="BRL">BRL (Real)</option>
+                                                <option value="USD">USD (Dólar)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="deposit_frequency" class="form-label">Frequência</label>
+                                            <select class="form-select" id="deposit_frequency" name="deposit_frequency">
+                                                <option value="monthly">Mensal</option>
+                                                <option value="bimonthly">Bimestral</option>
+                                                <option value="quarterly">Trimestral</option>
+                                                <option value="biannual">Semestral</option>
+                                                <option value="annual">Anual</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info py-2 small mb-0">
+                                    <i class="bi bi-info-circle me-1"></i> Os aportes serão realizados automaticamente na data de início de cada período.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para Aportes Estratégicos -->
+                    <div id="strategic_deposit_fields" class="simulation-fields" style="display: none;">
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="bi bi-graph-down me-2"></i>Configuração de Aportes Estratégicos</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="strategic_threshold" class="form-label">Limiar de Queda para Aporte</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="strategic_threshold" name="strategic_threshold" step="0.1" min="0" max="100" placeholder="Ex: 10.0">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <div class="form-text">Aporte será feito se o portfólio cair este percentual em um mês</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="strategic_deposit_percentage" class="form-label">Percentual do Aporte</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="strategic_deposit_percentage" name="strategic_deposit_percentage" step="0.1" min="0" max="100" placeholder="Ex: 10.0">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <div class="form-text">Percentual do valor atual do portfólio a ser aportado</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning py-2 small mb-0">
+                                    <i class="bi bi-lightbulb me-1"></i> Exemplo: Se cair 10% em um mês, será aportado 10% do valor atual do portfólio.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
                     
                     <h5 class="mb-3">Alocação de Ativos</h5>
                     <div class="table-responsive mb-3">
@@ -284,6 +382,41 @@ document.getElementById('portfolioForm').addEventListener('submit', function(e) 
 const today = new Date();
 const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 document.getElementById('start_date').valueAsDate = firstDay;
+
+
+// Controle dos campos de simulação
+function toggleSimulationFields() {
+    const type = document.getElementById('simulation_type').value;
+
+    // Esconde todos os campos primeiro
+    document.querySelectorAll('.simulation-fields').forEach(field => {
+        field.style.display = 'none';
+    });
+
+    // Mostra os campos específicos
+    if (type === 'monthly_deposit') {
+        document.getElementById('monthly_deposit_fields').style.display = 'block';
+        // Define valores padrão
+        if (!document.getElementById('deposit_amount').value) {
+            document.getElementById('deposit_amount').value = '1000.00';
+        }
+    } else if (type === 'strategic_deposit') {
+        document.getElementById('strategic_deposit_fields').style.display = 'block';
+        // Define valores padrão
+        if (!document.getElementById('strategic_threshold').value) {
+            document.getElementById('strategic_threshold').value = '10.0';
+        }
+        if (!document.getElementById('strategic_deposit_percentage').value) {
+            document.getElementById('strategic_deposit_percentage').value = '10.0';
+        }
+    }
+}
+
+// Inicializa ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    toggleSimulationFields();
+});
+
 </script>
 <?php
 $content = ob_get_clean();

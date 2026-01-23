@@ -113,3 +113,21 @@ INSERT INTO system_assets (code, name, currency, asset_type) VALUES
 ('SP500', 'S&P 500', 'USD', 'COTACAO'),
 ('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO');
 
+ALTER TABLE portfolios
+    ADD COLUMN simulation_type ENUM('standard', 'monthly_deposit', 'strategic_deposit') DEFAULT 'standard',
+ADD COLUMN deposit_amount DECIMAL(15, 2) NULL,
+ADD COLUMN deposit_currency VARCHAR(3) NULL,
+ADD COLUMN deposit_frequency VARCHAR(20) NULL,
+ADD COLUMN strategic_threshold DECIMAL(10, 4) NULL,
+ADD COLUMN strategic_deposit_percentage DECIMAL(10, 4) NULL;
+
+-- Atualize o INSERT existente para incluir valores padrão para os novos campos
+-- (Opcional, se quiser que portfolios existentes tenham valores padrão)
+UPDATE portfolios
+SET simulation_type = 'standard',
+    deposit_amount = NULL,
+    deposit_currency = NULL,
+    deposit_frequency = NULL,
+    strategic_threshold = NULL,
+    strategic_deposit_percentage = NULL
+WHERE simulation_type IS NULL;

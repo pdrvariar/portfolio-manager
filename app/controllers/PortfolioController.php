@@ -35,7 +35,13 @@ class PortfolioController {
                 'start_date' => $_POST['start_date'],
                 'end_date' => $_POST['end_date'] ?: null,
                 'rebalance_frequency' => $_POST['rebalance_frequency'],
-                'output_currency' => $_POST['output_currency']
+                'output_currency' => $_POST['output_currency'],
+                'simulation_type' => $_POST['simulation_type'] ?? 'standard',
+                'deposit_amount' => !empty($_POST['deposit_amount']) ? $_POST['deposit_amount'] : null,
+                'deposit_currency' => $_POST['deposit_currency'] ?? null,
+                'deposit_frequency' => $_POST['deposit_frequency'] ?? null,
+                'strategic_threshold' => !empty($_POST['strategic_threshold']) ? $_POST['strategic_threshold'] : null,
+                'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null
             ];
             
             $portfolioId = $this->portfolioModel->create($data);
@@ -185,7 +191,13 @@ class PortfolioController {
                 'start_date' => $_POST['start_date'],
                 'end_date' => $_POST['end_date'] ?: null,
                 'rebalance_frequency' => $_POST['rebalance_frequency'],
-                'output_currency' => $_POST['output_currency']
+                'output_currency' => $_POST['output_currency'],
+                'simulation_type' => $_POST['simulation_type'] ?? 'standard',
+                'deposit_amount' => !empty($_POST['deposit_amount']) ? $_POST['deposit_amount'] : null,
+                'deposit_currency' => $_POST['deposit_currency'] ?? null,
+                'deposit_frequency' => $_POST['deposit_frequency'] ?? null,
+                'strategic_threshold' => !empty($_POST['strategic_threshold']) ? $_POST['strategic_threshold'] : null,
+                'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null
             ];
             
             // 1. Atualiza os metadados (Nome, Capital, etc)
