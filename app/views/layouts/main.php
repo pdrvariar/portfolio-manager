@@ -77,7 +77,7 @@
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>
                                 <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('profile') ?>"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
                                 <?php if (Auth::isAdmin()): ?>
-                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin') ?>"><i class="bi bi-shield-lock me-2"></i>Admin</a><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
+                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin') ?>"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/index.php?url=<?= obfuscateUrl('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>

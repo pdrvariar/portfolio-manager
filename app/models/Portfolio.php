@@ -27,8 +27,8 @@ class Portfolio {
         $sql = "INSERT INTO portfolios (user_id, name, description, initial_capital, 
             start_date, end_date, rebalance_frequency, output_currency, cloned_from,
             simulation_type, deposit_amount, deposit_currency, deposit_frequency,
-            strategic_threshold, strategic_deposit_percentage) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            strategic_threshold, strategic_deposit_percentage, is_system_default) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -46,7 +46,8 @@ class Portfolio {
             $data['deposit_currency'] ?? null,
             $data['deposit_frequency'] ?? null,
             $data['strategic_threshold'] ?? null,
-            $data['strategic_deposit_percentage'] ?? null
+            $data['strategic_deposit_percentage'] ?? null,
+            $data['is_system_default'] ?? 0
         ]);
 
         return $this->db->lastInsertId();
@@ -241,12 +242,17 @@ class Portfolio {
                 VALUES (?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
 
-            foreach ($assets as $assetData) {
+            foreach ($assets as $key => $assetData) {
+                // SÊNIOR: Suporta dois formatos de entrada:
+                // 1. [asset_id => ['allocation' => X, ...]] (Usado em update() e quickUpdate())
+                // 2. [['asset_id' => ID, 'allocation' => X, ...], ...] (Antigo formato de quickUpdate())
+                
+                $assetId = isset($assetData['asset_id']) ? $assetData['asset_id'] : $key;
                 $allocation = floatval($assetData['allocation']);
 
                 $stmt->execute([
                     $portfolioId,
-                    $assetData['asset_id'],
+                    $assetId,
                     $allocation,
                     $assetData['performance_factor'] ?? 1.0
                 ]);

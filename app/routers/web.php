@@ -47,6 +47,15 @@ function setupRoutes(Router $router) {
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);
     $router->add('reset-password', ['controller' => 'auth', 'action' => 'resetPassword']);
     
+    // --- Admin ---
+    $router->add('admin', ['controller' => 'admin', 'action' => 'dashboard']);
+    $router->add('admin/dashboard', ['controller' => 'admin', 'action' => 'dashboard']);
+    $router->add('admin/users', ['controller' => 'admin', 'action' => 'users']);
+    $router->add('admin/users/edit/{id:\d+}', ['controller' => 'admin', 'action' => 'editUser']);
+    $router->add('admin/users/update/{id:\d+}', ['controller' => 'admin', 'action' => 'updateUser']);
+    $router->add('admin/assets', ['controller' => 'admin', 'action' => 'assets']);
+    $router->add('admin/create-default-portfolios', ['controller' => 'admin', 'action' => 'createDefaultPortfolios']);
+
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);
 }

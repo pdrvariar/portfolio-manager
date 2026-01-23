@@ -159,6 +159,21 @@ class User {
     }
 
     /**
+     * Atualização administrativa completa de um usuário.
+     */
+    public function adminUpdate($id, $data) {
+        $sql = "UPDATE users SET full_name = ?, email = ?, status = ?, is_admin = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            $data['full_name'],
+            $data['email'],
+            $data['status'],
+            $data['is_admin'],
+            $id
+        ]);
+    }
+
+    /**
      * Abstração de verificação de senha para garantir compatibilidade futura.
      */
     public function verifyPassword($password, $hashedPassword) {

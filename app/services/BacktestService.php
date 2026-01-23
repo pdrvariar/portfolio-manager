@@ -139,7 +139,8 @@ class BacktestService {
         $strategicDepositPercent = (float)($portfolio['strategic_deposit_percentage'] ?? 0) / 100;
 
         // Carrega dados de câmbio
-        $fxData = $this->getExchangeRateData($portfolio['start_date'], $portfolio['end_date']);
+        $fxEndDate = $portfolio['end_date'] ?? date('Y-m-d');
+        $fxData = $this->getExchangeRateData($portfolio['start_date'], $fxEndDate);
 
         $results = [];
         $currentBalances = [];

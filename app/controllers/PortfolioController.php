@@ -332,15 +332,13 @@ class PortfolioController {
         }
 
         $total = 0;
-        $assets = [];
-
+        $assetsToUpdate = [];
         foreach ($_POST['assets'] as $assetId => $allocation) {
             $allocation = floatval($allocation);
             $total += $allocation;
-            $assets[] = [
-                'asset_id' => $assetId,
+            $assetsToUpdate[$assetId] = [
                 'allocation' => $allocation,
-                'performance_factor' => 1.0 // Mantém o fator atual
+                'performance_factor' => 1.0 // Mantém o fator padrão na edição rápida
             ];
         }
 
@@ -360,7 +358,7 @@ class PortfolioController {
         try {
             logActivity("Iniciando quickUpdate para portfólio $id", $_SESSION['user_id'] ?? null);
             
-            $this->portfolioModel->updateAssets($id, $assets);
+            $this->portfolioModel->updateAssets($id, $assetsToUpdate);
             
             logActivity("Alocações atualizadas para portfólio $id. Iniciando simulação.", $_SESSION['user_id'] ?? null);
             
