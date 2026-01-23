@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var array $portfolio Dados do portfólio (id, name, start_date, etc.)
+ * @var array $assets Lista de ativos vinculados
+ * @var array|null $latest Último resultado de simulação
+ * @var array $metrics Métricas calculadas (total_return, volatility, etc.)
+ * @var array $chartData Dados formatados para os gráficos JS
+ */
+
 $title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>

@@ -1,4 +1,8 @@
 <?php
+/**
+ * @var array $portfolios Lista de portfólios do usuário
+ */
+
 $title = 'Meus Portfólios';
 ob_start();
 ?>
