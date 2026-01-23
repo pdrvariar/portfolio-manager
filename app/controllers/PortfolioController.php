@@ -264,6 +264,152 @@ class PortfolioController {
         
         header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
         exit;
-    }    
+    }
+
+    public function quickUpdate() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+
+        if (!$id || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Requisição inválida']);
+                exit;
+            }
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Token de segurança inválido']);
+                exit;
+            }
+            Session::setFlash('error', 'Token de segurança inválido');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        $portfolio = $this->portfolioModel->findById($id);
+
+        // Verifica permissões
+        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Acesso negado']);
+                exit;
+            }
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        // Verifica se é portfólio do sistema (apenas admin pode editar)
+        if ($portfolio['is_system_default'] && !Auth::isAdmin()) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Portfólios do sistema só podem ser editados por administradores']);
+                exit;
+            }
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        // Valida as alocações
+        if (!isset($_POST['assets']) || !is_array($_POST['assets'])) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Dados de alocação inválidos']);
+                exit;
+            }
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        $total = 0;
+        $assets = [];
+
+        foreach ($_POST['assets'] as $assetId => $allocation) {
+            $allocation = floatval($allocation);
+            $total += $allocation;
+            $assets[] = [
+                'asset_id' => $assetId,
+                'allocation' => $allocation,
+                'performance_factor' => 1.0 // Mantém o fator atual
+            ];
+        }
+
+        // Valida se a soma é 100%
+        if (abs($total - 100) > 0.01) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'A soma das alocações deve ser 100%']);
+                exit;
+            }
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        // Atualiza as alocações
+        try {
+            logActivity("Iniciando quickUpdate para portfólio $id", $_SESSION['user_id'] ?? null);
+            
+            $this->portfolioModel->updateAssets($id, $assets);
+            
+            logActivity("Alocações atualizadas para portfólio $id. Iniciando simulação.", $_SESSION['user_id'] ?? null);
+            
+            if (class_exists('BacktestService')) {
+                logActivity("BacktestService encontrado. Instanciando...", $_SESSION['user_id'] ?? null);
+                $backtestService = new BacktestService();
+                logActivity("Executando simulação para portfólio $id...", $_SESSION['user_id'] ?? null);
+                $result = $backtestService->runSimulation($id);
+                logActivity("Simulação concluída. Resultado: " . ($result['success'] ? 'Sucesso' : 'Falha - ' . ($result['message'] ?? 'sem mensagem')), $_SESSION['user_id'] ?? null);
+                $successMsg = 'Alocações atualizadas e simulação executada!';
+                $errorMsg = 'Alocações atualizadas, mas a simulação não pôde ser executada: ';
+            } else {
+                logActivity("BacktestService NÃO encontrado!", $_SESSION['user_id'] ?? null);
+                $result = ['success' => false, 'message' => 'Serviço de simulação indisponível'];
+                $successMsg = 'Alocações atualizadas!';
+                $errorMsg = 'Alocações atualizadas, mas a simulação não pôde ser executada: ';
+            }
+
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                if ($result['success']) {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $successMsg,
+                        'simulation_date' => $result['effective_end'] ?? null
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $errorMsg . ($result['message'] ?? ''),
+                        'warning' => true
+                    ]);
+                }
+            } else {
+                Session::setFlash('success', $result['success'] ? $successMsg : $errorMsg . ($result['message'] ?? ''));
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            }
+        } catch (Exception $e) {
+            if (isAjax()) {
+                if (ob_get_length()) ob_clean();
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Erro ao atualizar: ' . $e->getMessage()]);
+            } else {
+                Session::setFlash('error', 'Erro ao atualizar: ' . $e->getMessage());
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            }
+        }
+        exit;
+    }
 }
 ?>

@@ -20,6 +20,7 @@ function setupRoutes(Router $router) {
     $router->add('portfolio/create', ['controller' => 'portfolio', 'action' => 'create']);
     $router->add('portfolio/view/{id:\d+}', ['controller' => 'portfolio', 'action' => 'view']);
     $router->add('portfolio/run/{id:\d+}', ['controller' => 'portfolio', 'action' => 'runSimulation']);
+    $router->add('portfolio/quick-update/{id:\d+}', ['controller' => 'portfolio', 'action' => 'quickUpdate']);
     
     // NOVAS ROTAS OBRIGATÓRIAS:
     $router->add('portfolio/edit/{id:\d+}', ['controller' => 'portfolio', 'action' => 'edit']);

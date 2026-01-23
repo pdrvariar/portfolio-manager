@@ -155,30 +155,6 @@ class Portfolio {
         return $stmt->fetchAll();
     }
 
-    public function updateAssets($portfolioId, $assets) {
-        // 1. Limpa as alocações antigas
-        $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
-        $this->db->prepare($sqlDelete)->execute([$portfolioId]);
-        
-        // 2. Insere as novas alocações
-        foreach ($assets as $assetData) {
-            $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
-                    VALUES (?, ?, ?, ?)";
-            $stmt = $this->db->prepare($sql);
-            
-            // CORREÇÃO: Salvar o valor real (ex: 50) sem dividir por 100
-            $allocation = floatval($assetData['allocation']); 
-            
-            $stmt->execute([
-                $portfolioId,
-                $assetData['asset_id'],
-                $allocation,
-                $assetData['performance_factor'] ?? 1.0
-            ]);
-        }
-        return true;
-    }
-
     public function getAll($userId = null) {
         if ($userId) {
             $sql = "SELECT * FROM portfolios WHERE user_id = ? OR is_system_default = TRUE ORDER BY created_at DESC";
@@ -216,6 +192,72 @@ class Portfolio {
         $sql = "UPDATE portfolios SET is_system_default = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$status, $id]);
-    }    
+    }
+
+// Adicione este método à classe Portfolio:
+
+    public function quickUpdateAssets($portfolioId, $assets) {
+        try {
+            $this->db->beginTransaction();
+
+            // Remove alocações existentes
+            $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
+            $this->db->prepare($sqlDelete)->execute([$portfolioId]);
+
+            // Insere novas alocações
+            $sqlInsert = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor) 
+                      VALUES (?, ?, ?, ?)";
+            $stmt = $this->db->prepare($sqlInsert);
+
+            foreach ($assets as $asset) {
+                $stmt->execute([
+                    $portfolioId,
+                    $asset['asset_id'],
+                    $asset['allocation'],
+                    $asset['performance_factor'] ?? 1.0
+                ]);
+            }
+
+            // Atualiza a data de modificação do portfólio
+            $sqlUpdate = "UPDATE portfolios SET updated_at = NOW() WHERE id = ?";
+            $this->db->prepare($sqlUpdate)->execute([$portfolioId]);
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function updateAssets($portfolioId, $assets) {
+        try {
+            $this->db->beginTransaction();
+
+            $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
+            $this->db->prepare($sqlDelete)->execute([$portfolioId]);
+
+            $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
+                VALUES (?, ?, ?, ?)";
+            $stmt = $this->db->prepare($sql);
+
+            foreach ($assets as $assetData) {
+                $allocation = floatval($assetData['allocation']);
+
+                $stmt->execute([
+                    $portfolioId,
+                    $assetData['asset_id'],
+                    $allocation,
+                    $assetData['performance_factor'] ?? 1.0
+                ]);
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
 }
 ?>
