@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $stats Estatísticas globais (users, portfolios, simulations, assets)
+ */
 $title = 'Dashboard Administrativo';
 ob_start();
 ?>

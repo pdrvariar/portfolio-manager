@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $user Dados formatados do utilizador para exibição no perfil
+ */
 $title = 'Meu Perfil';
 ob_start();
 ?>

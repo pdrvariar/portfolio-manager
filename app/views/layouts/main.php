@@ -1,3 +1,11 @@
+<?php
+/**
+ * @var string $title Título da página
+ * @var string $content Conteúdo principal injetado na layout
+ * @var string|null $additional_css CSS extra para a página
+ * @var string|null $additional_js JS extra para a página
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-100">
 <head>

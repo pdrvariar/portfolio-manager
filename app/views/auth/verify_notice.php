@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $data Dados do usuário para verificação (email, full_name)
+ */
 $title = 'Verifique seu e-mail';
 ob_start();
 ?>

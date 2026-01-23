@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $assets Lista de ativos disponíveis
+ */
 $title = 'Criar Portfólio';
 ob_start();
 
