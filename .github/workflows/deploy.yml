@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixar o código do repositório
+      # 1. Baixar o codigo do repositorio
       - name: "Checkout code"
         uses: actions/checkout@v3
 
@@ -22,20 +22,20 @@ jobs:
           extensions: pdo_mysql, mbstring, exif, pcntl, bcmath, gd, zip, intl, opcache
           tools: composer:v2
 
-      # 3. Cache das dependências para acelerar o processo
+      # 3. Cache das dependencias para acelerar o processo
       - name: "Cache Composer dependencies"
         uses: actions/cache@v3
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
 
-      # 4. Instalar as dependências de PRODUÇÃO no GitHub Actions
+      # 4. Instalar as dependencias de PRODUCAO no GitHub Actions
       - name: "Install dependencies"
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
           composer dump-autoload --optimize
 
-      # 5. TRANSFERÊNCIA DE ARQUIVOS (Passo crucial que faltava)
+      # 5. TRANSFERENCIA DE ARQUIVOS (Passo crucial que faltava)
       # Isso envia tudo, incluindo a pasta 'vendor' gerada acima, para o servidor
       - name: "Copy files via SCP"
         uses: appleboy/scp-action@v0.1.4
@@ -45,14 +45,14 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           port: ${{ secrets.HOSTINGER_PORT }}
           source: "./*, !docker, !docker-compose.yml, !init.sql, !README.md"
-          # Caminho extraído do seu script original
+          # Caminho extraido do seu script original
           target: "/home/${{ secrets.HOSTINGER_USERNAME }}/domains/smartreturns.com.br/public_html"
-          # Ignora arquivos desnecessários na produção
+          # Ignora arquivos desnecessarios na producao
           rm: false
           strip_components: 0
 
 
-      # 6. Comandos Pós-Deploy via SSH
+      # 6. Comandos Pos-Deploy via SSH
       - name: "Finalize Deploy via SSH"
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -64,12 +64,12 @@ jobs:
             SITE_PATH="/home/${{ secrets.HOSTINGER_USERNAME }}/domains/smartreturns.com.br/public_html"
             cd $SITE_PATH
             
-            # 6.1. Ajustar permissões de segurança
-            echo "Ajustando permissões..."
+            # 6.1. Ajustar permissoes de seguranca
+            echo "Ajustando permissoes..."
             find . -type f -exec chmod 644 {} \;
             find . -type d -exec chmod 755 {} \;
             
-            # 6.2. Permissões de escrita para pastas específicas se existirem
+            # 6.2. Permissoes de escrita para pastas especificas se existirem
             [ -d "storage" ] && chmod -R 755 storage/ || true
             [ -d "cache" ] && chmod -R 755 cache/ || true
             [ -d "logs" ] && chmod -R 755 logs/ || true
