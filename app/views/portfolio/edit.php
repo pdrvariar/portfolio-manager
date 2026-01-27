@@ -1,4 +1,10 @@
 <?php
+/**
+ * @var array $portfolio Dados do portfólio
+ * @var array $allAssets Lista de todos os ativos disponíveis
+ * @var array $portfolioAssets Ativos já vinculados a este portfólio
+ */
+
 $title = 'Editar Portfólio: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>

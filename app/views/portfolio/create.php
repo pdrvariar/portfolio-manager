@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $assets Lista de ativos disponíveis
+ */
 $title = 'Criar Portfólio';
 ob_start();
 
@@ -356,20 +359,20 @@ function updateTotal() {
 
 document.getElementById('portfolioForm').addEventListener('submit', function(e) {
     // Adicionar ativos ao formulário
-    assets.forEach((asset, index) => {
+    assets.forEach((asset) => {
         const assetInput = document.createElement('input');
         assetInput.type = 'hidden';
-        assetInput.name = `assets[${index}][asset_id]`;
+        assetInput.name = `assets[${asset.asset_id}][asset_id]`;
         assetInput.value = asset.asset_id;
         
         const allocationInput = document.createElement('input');
         allocationInput.type = 'hidden';
-        allocationInput.name = `assets[${index}][allocation]`;
+        allocationInput.name = `assets[${asset.asset_id}][allocation]`;
         allocationInput.value = asset.allocation;
         
         const factorInput = document.createElement('input');
         factorInput.type = 'hidden';
-        factorInput.name = `assets[${index}][performance_factor]`;
+        factorInput.name = `assets[${asset.asset_id}][performance_factor]`;
         factorInput.value = asset.factor;
         
         this.appendChild(assetInput);

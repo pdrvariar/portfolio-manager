@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var string $token Token de recuperação de senha
+ */
 $title = 'Nova Senha - Portfolio Backtest';
 ob_start();
 ?>

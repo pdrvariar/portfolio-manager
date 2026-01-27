@@ -108,7 +108,7 @@ function renderBreadcrumbs($params) {
 
     // Adiciona a ação específica (Editar, Visualizar, etc)
     if ($action === 'view') $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '#'];
-    if ($action === 'edit') $breadcrumbs[] = ['label' => 'Edição', 'url' => '#'];
+    if ($action === 'edit' || $action === 'editUser') $breadcrumbs[] = ['label' => 'Edição', 'url' => '#'];
     if ($action === 'import') $breadcrumbs[] = ['label' => 'Importação', 'url' => '#'];
 
     $html = '<nav aria-label="breadcrumb"><ol class="breadcrumb mb-4 shadow-sm p-2 bg-white rounded">';

@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var array $assets Lista de ativos (id, code, name, currency, asset_type, etc.)
+ */
 $title = 'Biblioteca de Ativos';
 ob_start();
 ?>

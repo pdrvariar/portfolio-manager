@@ -1,4 +1,10 @@
 <?php
+/**
+ * @var array $portfolios Lista de portfólios do usuário
+ * @var array $systemPortfolios Lista de portfólios do sistema
+ * @var array $stats Estatísticas de simulação do usuário
+ * @var array $latestSimulations Lista das últimas simulações realizadas
+ */
 $title = 'Dashboard';
 ob_start();
 ?>

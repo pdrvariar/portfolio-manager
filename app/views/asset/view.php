@@ -1,4 +1,8 @@
 <?php
+/**
+ * @var array $asset Dados do ativo (id, code, name, currency, asset_type)
+ * @var array $historicalData Lista de registros históricos (reference_date, price)
+ */
 $title = $asset['name'] . ' - Detalhes';
 ob_start();
 ?>

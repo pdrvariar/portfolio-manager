@@ -1,4 +1,8 @@
 <?php
+/**
+ * @var array $portfolios Lista de portfólios do usuário
+ */
+
 $title = 'Meus Portfólios';
 ob_start();
 ?>
@@ -63,6 +67,11 @@ ob_start();
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Visualizar"><i class="bi bi-graph-up text-primary"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
+                                
+                                <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
+                                    <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Editar"><i class="bi bi-pencil text-warning"></i></a>
+                                <?php endif; ?>
+
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Excluir" onclick="return confirm('Excluir portfólio?')"><i class="bi bi-trash text-danger"></i></a>
                             </div>
                         </td>

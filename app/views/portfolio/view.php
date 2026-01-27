@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var array $portfolio Dados do portfólio (id, name, start_date, etc.)
+ * @var array $assets Lista de ativos vinculados
+ * @var array|null $latest Último resultado de simulação
+ * @var array $metrics Métricas calculadas (total_return, volatility, etc.)
+ * @var array $chartData Dados formatados para os gráficos JS
+ */
+
 $title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
 ob_start();
 ?>
@@ -107,25 +115,69 @@ ob_start();
 
     <div class="collapse mb-4" id="compositionCollapse">
         <div class="card card-body shadow-sm border-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold">Composição da Carteira</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="openQuickEditModal()">
+                    <i class="bi bi-pencil me-1"></i> Editar Alocações
+                </button>
+            </div>
+
+            <?php
+            // Calcula o total para validação
+            $totalPercent = 0;
+            foreach ($assets as $asset) {
+                $totalPercent += $asset['allocation_percentage'];
+            }
+            ?>
+
             <?php if (!empty($portfolio['description'])): ?>
                 <p class="text-muted small border-bottom pb-2 mb-3">
                     <i class="bi bi-info-circle me-1"></i> <?php echo htmlspecialchars($portfolio['description']); ?>
                 </p>
             <?php endif; ?>
+
             <div class="row row-cols-1 row-cols-md-4 g-3">
                 <?php foreach ($assets as $asset): ?>
                     <div class="col">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-dark fw-bold small text-truncate" title="<?php echo htmlspecialchars($asset['name']); ?>">
-                        <?php echo htmlspecialchars($asset['name']); ?>
-                    </span>
-                            <span class="badge bg-light text-dark border small"><?php echo formatPercentage($asset['allocation_percentage']); ?></span>
+                            <span class="text-dark fw-bold small text-truncate" title="<?php echo htmlspecialchars($asset['name']); ?>">
+                                <?php echo htmlspecialchars($asset['name']); ?>
+                            </span>
+                            <span class="badge bg-light text-dark border small allocation-badge"
+                                  data-asset-id="<?php echo $asset['asset_id']; ?>"
+                                  data-allocation="<?php echo $asset['allocation_percentage']; ?>">
+                                <?php echo formatPercentage($asset['allocation_percentage']); ?>
+                            </span>
                         </div>
                         <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: <?php echo $asset['allocation_percentage']; ?>%"></div>
+                            <div class="progress-bar bg-primary"
+                                 role="progressbar"
+                                 style="width: <?php echo $asset['allocation_percentage']; ?>%"
+                                 data-asset-id="<?php echo $asset['asset_id']; ?>">
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+
+            <!-- Status da composição -->
+            <div class="mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">Total da alocação:</small>
+                        <span class="ms-2 fw-bold <?php echo $totalPercent == 100 ? 'text-success' : 'text-danger'; ?>">
+                            <?php echo number_format($totalPercent, 2); ?>%
+                        </span>
+                        <?php if ($totalPercent != 100): ?>
+                            <span class="badge bg-danger ms-2">Ajuste necessário</span>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="suggestAllocation()">
+                            <i class="bi bi-magic"></i> Sugerir Ajuste
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -186,39 +238,7 @@ ob_start();
                     </div>
                 </div>
             </div>
-
         <?php endforeach; ?>
-        <!-- NOVO: Card de Capital Total Investido -->
-        <div class="col-md-3">
-            <div class="card metric-card shadow-sm h-100 border-start border-4 border-info">
-                <div class="card-body">
-                    <h6 class="text-muted small text-uppercase fw-bold">Capital Total Investido</h6>
-                    <h3 class="text-info fw-bold mb-0"><?php echo formatCurrency($metrics['total_invested'] ?? $portfolio['initial_capital'], $portfolio['output_currency']); ?></h3>
-                    <div class="mt-2 small text-muted">
-                        Inicial: <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
-                        <?php if (($metrics['total_deposits'] ?? 0) > 0): ?>
-                            <br>Aportes: <?php echo formatCurrency($metrics['total_deposits'] ?? 0, $portfolio['output_currency']); ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NOVO: Card de Juros Obtidos -->
-        <div class="col-md-3">
-            <div class="card metric-card shadow-sm h-100 border-start border-4 border-success">
-                <div class="card-body">
-                    <h6 class="text-muted small text-uppercase fw-bold">Juros Obtidos</h6>
-                    <h3 class="text-success fw-bold mb-0"><?php echo formatCurrency($metrics['interest_earned'] ?? 0, $portfolio['output_currency']); ?></h3>
-                    <div class="mt-2 small text-muted">
-                        <?php if (($metrics['total_invested'] ?? 0) > 0): ?>
-                            Retorno: <?php echo formatPercentage((($metrics['interest_earned'] ?? 0) / ($metrics['total_invested'] ?? 1)) * 100); ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <div class="row mb-4">
@@ -439,6 +459,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         </div>
     </div>
 
+    <!-- Modal de Detalhes -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -486,6 +507,111 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             <strong class="text-primary ms-2" id="modalTotalAssets"></strong>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição Rápida de Alocações -->
+    <div class="modal fade" id="editCompositionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Editar Alocação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <form id="quickEditForm">
+                        <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
+                        <input type="hidden" name="portfolio_id" value="<?php echo $portfolio['id']; ?>">
+
+                        <div class="p-3 border-bottom">
+                            <div class="alert alert-info py-2 small">
+                                <i class="bi bi-lightbulb me-1"></i> Ajuste os percentuais e experimente diferentes configurações. A soma deve ser 100%.
+                            </div>
+                        </div>
+
+                        <div class="p-3">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Ativo</th>
+                                        <th style="width: 150px;">Alocação Atual</th>
+                                        <th style="width: 180px;">Novo Percentual</th>
+                                        <th style="width: 120px;">Variação</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="editCompositionBody">
+                                    <?php foreach ($assets as $asset): ?>
+                                        <tr data-asset-id="<?php echo $asset['asset_id']; ?>">
+                                            <td>
+                                                <div class="fw-bold text-dark"><?php echo htmlspecialchars($asset['name']); ?></div>
+                                                <div class="text-muted small"><?php echo $asset['currency']; ?></div>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="badge bg-primary"><?php echo formatPercentage($asset['allocation_percentage']); ?></span>
+                                            </td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number"
+                                                           class="form-control allocation-input"
+                                                           name="assets[<?php echo $asset['asset_id']; ?>]"
+                                                           value="<?php echo $asset['allocation_percentage']; ?>"
+                                                           step="0.01"
+                                                           min="0"
+                                                           max="100"
+                                                           data-asset-id="<?php echo $asset['asset_id']; ?>"
+                                                           data-current="<?php echo $asset['allocation_percentage']; ?>">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-light text-dark" id="change-<?php echo $asset['asset_id']; ?>">0%</span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 border-top pt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <strong>Total:</strong>
+                                            <span class="fs-4 fw-bold <?php echo $totalPercent == 100 ? 'text-success' : 'text-danger'; ?>" id="totalPercent">
+                                                <?php echo number_format($totalPercent, 2); ?>%
+                                            </span>
+                                            <div id="totalStatus">
+                                                <?php if ($totalPercent == 100): ?>
+                                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> OK</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Ajustar</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button type="button" class="btn btn-secondary" onclick="resetAllocations()">
+                                            <i class="bi bi-arrow-clockwise"></i> Resetar
+                                        </button>
+                                        <button type="button" class="btn btn-primary" onclick="quickSaveAllocations()" id="saveAllocationsBtn" <?php echo $totalPercent != 100 ? 'disabled' : ''; ?>>
+                                            <i class="bi bi-save"></i> Salvar & Simular
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div class="alert alert-warning py-2" id="allocationWarning" style="display: <?php echo $totalPercent != 100 ? 'block' : 'none'; ?>;">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        A soma das alocações deve ser exatamente 100%. Diferença atual:
+                                        <span id="difference"><?php echo number_format(abs($totalPercent - 100), 2); ?>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -954,6 +1080,166 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 }
             }
         });
+
+        // Funções para edição rápida de alocações
+        function openQuickEditModal() {
+            // Calcula o total inicial
+            updateAllocationTotal();
+            // Mostra o modal
+            new bootstrap.Modal(document.getElementById('editCompositionModal')).show();
+        }
+
+        function updateAllocationTotal() {
+            let total = 0;
+            let hasChanges = false;
+
+            document.querySelectorAll('.allocation-input').forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                total += value;
+
+                // Atualiza a variação
+                const current = parseFloat(input.dataset.current) || 0;
+                const change = value - current;
+                const changeBadge = document.getElementById(`change-${input.dataset.assetId}`);
+
+                if (change !== 0) {
+                    hasChanges = true;
+                    changeBadge.textContent = (change > 0 ? '+' : '') + change.toFixed(2) + '%';
+                    changeBadge.className = 'badge ' + (change > 0 ? 'bg-success' : 'bg-danger');
+                } else {
+                    changeBadge.textContent = '0%';
+                    changeBadge.className = 'badge bg-light text-dark';
+                }
+            });
+
+            const totalElement = document.getElementById('totalPercent');
+            const statusElement = document.getElementById('totalStatus');
+            const warningElement = document.getElementById('allocationWarning');
+            const differenceElement = document.getElementById('difference');
+            const saveBtn = document.getElementById('saveAllocationsBtn');
+
+            totalElement.textContent = total.toFixed(2) + '%';
+
+            const diff = Math.abs(total - 100);
+            differenceElement.textContent = diff.toFixed(2) + '%';
+
+            if (Math.abs(total - 100) < 0.01) {
+                totalElement.className = 'fs-4 fw-bold text-success';
+                statusElement.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle"></i> OK</span>';
+                warningElement.style.display = 'none';
+                saveBtn.disabled = false;
+            } else {
+                totalElement.className = 'fs-4 fw-bold text-danger';
+                statusElement.innerHTML = '<span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Ajustar</span>';
+                warningElement.style.display = 'block';
+                saveBtn.disabled = true;
+            }
+        }
+
+        function resetAllocations() {
+            document.querySelectorAll('.allocation-input').forEach(input => {
+                input.value = input.dataset.current;
+            });
+            updateAllocationTotal();
+        }
+
+        function quickSaveAllocations() {
+            const form = document.getElementById('quickEditForm');
+            const formData = new FormData(form);
+
+            // Adiciona a ação específica
+            formData.append('action', 'update_allocation');
+
+            // Mostra loading
+            const saveBtn = document.getElementById('saveAllocationsBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Salvando...';
+            saveBtn.disabled = true;
+
+            fetch('/index.php?url=<?= obfuscateUrl('portfolio/quick-update/' . $portfolio['id']) ?>', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error('Erro do servidor (' + response.status + '): ' + text.substring(0, 100));
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Atualiza a interface
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Erro ao salvar alocações');
+                        saveBtn.innerHTML = originalText;
+                        saveBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro detalhado:', error);
+                    alert('Erro na comunicação com o servidor: ' + error.message);
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+        }
+
+        // Adiciona eventos aos inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.allocation-input').forEach(input => {
+                input.addEventListener('input', updateAllocationTotal);
+                input.addEventListener('change', updateAllocationTotal);
+            });
+        });
+
+        // Função para sugerir ajuste automático
+        function suggestAllocation() {
+            const badges = document.querySelectorAll('.allocation-badge');
+            let total = 0;
+            let count = 0;
+
+            // Calcula total atual
+            badges.forEach(badge => {
+                const value = parseFloat(badge.dataset.allocation) || 0;
+                total += value;
+                if (value > 0) count++;
+            });
+
+            if (count === 0) return;
+
+            const diff = 100 - total;
+            const adjustment = diff / count;
+
+            // Aplica ajuste proporcional
+            badges.forEach(badge => {
+                const current = parseFloat(badge.dataset.allocation) || 0;
+                if (current > 0) {
+                    const newValue = Math.max(0, current + adjustment);
+                    badge.textContent = newValue.toFixed(2) + '%';
+                    badge.dataset.allocation = newValue;
+
+                    // Atualiza a barra de progresso
+                    const progressBar = document.querySelector(`.progress-bar[data-asset-id="${badge.dataset.assetId}"]`);
+                    if (progressBar) {
+                        progressBar.style.width = newValue + '%';
+                    }
+                }
+            });
+
+            // Atualiza o total
+            const totalElement = document.querySelector('.card-body .fw-bold');
+            if (totalElement) {
+                const newTotal = total + diff;
+                totalElement.textContent = newTotal.toFixed(2) + '%';
+                totalElement.className = newTotal === 100 ? 'ms-2 fw-bold text-success' : 'ms-2 fw-bold text-danger';
+            }
+        }
+
 
     </script>
 
