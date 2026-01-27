@@ -186,7 +186,39 @@ ob_start();
                     </div>
                 </div>
             </div>
+
         <?php endforeach; ?>
+        <!-- NOVO: Card de Capital Total Investido -->
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100 border-start border-4 border-info">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Capital Total Investido</h6>
+                    <h3 class="text-info fw-bold mb-0"><?php echo formatCurrency($metrics['total_invested'] ?? $portfolio['initial_capital'], $portfolio['output_currency']); ?></h3>
+                    <div class="mt-2 small text-muted">
+                        Inicial: <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
+                        <?php if (($metrics['total_deposits'] ?? 0) > 0): ?>
+                            <br>Aportes: <?php echo formatCurrency($metrics['total_deposits'] ?? 0, $portfolio['output_currency']); ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOVO: Card de Juros Obtidos -->
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100 border-start border-4 border-success">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase fw-bold">Juros Obtidos</h6>
+                    <h3 class="text-success fw-bold mb-0"><?php echo formatCurrency($metrics['interest_earned'] ?? 0, $portfolio['output_currency']); ?></h3>
+                    <div class="mt-2 small text-muted">
+                        <?php if (($metrics['total_invested'] ?? 0) > 0): ?>
+                            Retorno: <?php echo formatPercentage((($metrics['interest_earned'] ?? 0) / ($metrics['total_invested'] ?? 1)) * 100); ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="row mb-4">
@@ -237,6 +269,69 @@ ob_start();
             </div>
         </div>
     </div>
+<?php
+// Extrair os últimos valores do gráfico de performance da estratégia
+$strategyChart = $chartData['strategy_performance_chart'] ?? null;
+$lastStrategyReturn = 0;
+$lastPortfolioReturn = 0;
+
+if ($strategyChart && !empty($strategyChart['datasets'])) {
+    $strategyData = $strategyChart['datasets'][0]['data'] ?? [];
+    $portfolioData = $strategyChart['datasets'][1]['data'] ?? [];
+
+    if (!empty($strategyData)) {
+        $lastStrategyReturn = end($strategyData);
+    }
+    if (!empty($portfolioData)) {
+        $lastPortfolioReturn = end($portfolioData);
+    }
+}
+?>
+
+    <!-- NOVO: Gráfico de Performance da Estratégia (sem aportes) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Performance Real da Estratégia</h5>
+                    <p class="text-muted small mb-0">Comparação entre o crescimento do portfólio total (com aportes) e a performance real da estratégia (excluindo aportes).</p>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="strategyPerformanceChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <div class="d-inline-block me-4">
+                            <span class="badge bg-primary me-1" style="width: 15px; height: 15px; display: inline-block;"></span>
+                            <span class="small">Estratégia (<?php echo formatPercentage($lastStrategyReturn); ?>)</span>
+                        </div>
+                        <div class="d-inline-block">
+                            <span class="badge bg-success me-1" style="width: 15px; height: 15px; display: inline-block;"></span>
+                            <span class="small">Portfólio Total (<?php echo formatPercentage($lastPortfolioReturn); ?>)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Gráfico de Juros Acumulados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Evolução dos Juros</h5>
+                    <p class="text-muted small mb-0">Juros mensais obtidos e acumulados ao longo do tempo.</p>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="interestChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 <?php if ($hasDeposits && isset($chartData['audit_log'])): ?>
     <div class="row mb-4">
@@ -745,6 +840,120 @@ ob_start();
             }
             return varB === 0 ? 1 : cov / varB;
         }
+
+        // Gráfico de Performance da Estratégia
+        new Chart(document.getElementById('strategyPerformanceChart'), {
+            type: 'line',
+            data: chartData.strategy_performance_chart,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toFixed(2) + '%';
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(2) + '%';
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Retorno Acumulado (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Juros
+        new Chart(document.getElementById('interestChart'), {
+            type: 'line',
+            data: chartData.interest_chart,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: '<?php echo $portfolio['output_currency']; ?>'
+                                }).format(value);
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Juros Acumulados'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: '<?php echo $portfolio['output_currency']; ?>'
+                                }).format(value);
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Juros Mensais'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: '<?php echo $portfolio['output_currency']; ?>'
+                                }).format(context.parsed.y);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     </script>
 

@@ -224,5 +224,118 @@ class ChartService {
             ]
         ];
     }
+
+    public function createStrategyPerformanceChart($results) {
+        $dates = [];
+        $strategyValues = [];
+        $portfolioValues = [];
+
+        foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue;
+
+            $dates[] = date('M Y', strtotime($date));
+
+            // Valor da estratégia (sem aportes) - base 100
+            $strategyValue = $data['strategy_value'] ?? $data['total_value'];
+            $strategyValues[] = $strategyValue;
+
+            // Valor total do portfólio (com aportes) - base 100
+            $portfolioValues[] = $data['total_value'];
+        }
+
+        // Normaliza para base 100 para comparação percentual
+        if (!empty($strategyValues) && !empty($portfolioValues)) {
+            $strategyBase = $strategyValues[0];
+            $portfolioBase = $portfolioValues[0];
+
+            $strategyValues = array_map(function($value) use ($strategyBase) {
+                return $strategyBase > 0 ? (($value / $strategyBase) - 1) * 100 : 0;
+            }, $strategyValues);
+
+            $portfolioValues = array_map(function($value) use ($portfolioBase) {
+                return $portfolioBase > 0 ? (($value / $portfolioBase) - 1) * 100 : 0;
+            }, $portfolioValues);
+        }
+
+        return [
+            'labels' => $dates,
+            'datasets' => [
+                [
+                    'label' => 'Estratégia (sem aportes)',
+                    'data' => $strategyValues,
+                    'borderColor' => '#6f42c1',
+                    'backgroundColor' => 'rgba(111, 66, 193, 0.1)',
+                    'borderWidth' => 3,
+                    'fill' => false,
+                    'tension' => 0.1
+                ],
+                [
+                    'label' => 'Portfólio Total (com aportes)',
+                    'data' => $portfolioValues,
+                    'borderColor' => '#20c997',
+                    'backgroundColor' => 'rgba(32, 201, 151, 0.1)',
+                    'borderWidth' => 2,
+                    'borderDash' => [5, 5],
+                    'fill' => false,
+                    'tension'  => 0.1
+                ]
+            ]
+        ];
+    }
+
+    public function createInterestChart($results) {
+        $dates = [];
+        $cumulativeInterest = [];
+        $monthlyInterest = [];
+
+        $previousValue = null;
+        $cumulative = 0;
+
+        foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue;
+
+            $dates[] = date('M Y', strtotime($date));
+
+            // Calcula juros do mês (variação - aportes)
+            $currentValue = $data['total_value'];
+            $deposits = $data['deposit_made'] ?? 0;
+
+            if ($previousValue !== null) {
+                $monthlyInterestValue = ($currentValue - $previousValue - $deposits);
+                $cumulative += $monthlyInterestValue;
+                $monthlyInterest[] = $monthlyInterestValue;
+            } else {
+                $monthlyInterest[] = 0;
+            }
+
+            $cumulativeInterest[] = $cumulative;
+            $previousValue = $currentValue;
+        }
+
+        return [
+            'labels' => $dates,
+            'datasets' => [
+                [
+                    'label' => 'Juros Acumulados',
+                    'data' => $cumulativeInterest,
+                    'borderColor' => '#198754',
+                    'backgroundColor' => 'rgba(25, 135, 84, 0.1)',
+                    'fill' => true,
+                    'tension' => 0.1,
+                    'yAxisID' => 'y'
+                ],
+                [
+                    'label' => 'Juros Mensais',
+                    'data' => $monthlyInterest,
+                    'type' => 'bar',
+                    'backgroundColor' => 'rgba(255, 193, 7, 0.3)',
+                    'borderColor' => '#ffc107',
+                    'borderWidth' => 1,
+                    'yAxisID' => 'y1'
+                ]
+            ]
+        ];
+    }
+
 }
 ?>

@@ -151,6 +151,10 @@ class BacktestService {
         $previousMonthValue = $initialCapital;
         $totalDeposits = 0;
 
+        // NOVO: Variáveis para cálculo do retorno real
+        $portfolioWithoutDeposits = $initialCapital;
+        $strategyOnlyValues = []; // Armazena valores excluindo aportes
+
         // Inicialização do saldo
         foreach ($assets as $asset) {
             $currentBalances[$asset['asset_id']] = $initialCapital * ($asset['allocation_percentage'] / 100);
@@ -252,10 +256,31 @@ class BacktestService {
                 }
             }
 
+            // NOVO: Calcula o valor da estratégia sem aportes
+            $strategyValueThisMonth = $totalMonthValue - ($depositThisMonth + $strategicDepositThisMonth);
+
+            // Se for o primeiro mês, o valor base é o capital inicial
+            if ($index === 0) {
+                $strategyOnlyValues[$date] = [
+                    'total_value' => $initialCapital,
+                    'variation' => 0
+                ];
+            } else {
+                // Calcula variação real da estratégia (excluindo aportes)
+                $previousStrategyValue = $strategyOnlyValues[$dates[$index-1]]['total_value'];
+                $strategyVariation = $previousStrategyValue > 0 ?
+                    (($strategyValueThisMonth - $previousStrategyValue) / $previousStrategyValue) * 100 : 0;
+
+                $strategyOnlyValues[$date] = [
+                    'total_value' => $strategyValueThisMonth,
+                    'variation' => $strategyVariation
+                ];
+            }
+
             // Atualiza para próximo mês
             $previousMonthValue = $totalMonthValue;
 
-            // Lógica de Rebalanceamento (exisitente)
+            // Lógica de Rebalanceamento (existente)
             $wasRebalanced = false;
             $trades = [];
 
@@ -285,7 +310,10 @@ class BacktestService {
                 'trades' => $trades,
                 'deposit_made' => $depositThisMonth + $strategicDepositThisMonth,
                 'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
-                'total_deposits_to_date' => $totalDeposits
+                'total_deposits_to_date' => $totalDeposits,
+                // NOVO: Adiciona os valores da estratégia
+                'strategy_value' => $strategyValueThisMonth,
+                'strategy_variation' => $strategyOnlyValues[$date]['variation']
             ];
         }
 
@@ -298,6 +326,8 @@ class BacktestService {
 
         return $results;
     }
+
+
     private function calculateMetrics($results) {
         $values = array_column($results, 'total_value');
         $initial = $values[0];
@@ -336,6 +366,25 @@ class BacktestService {
         $excessReturn = $annualReturn - $riskFreeRate;
         $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
 
+        // NOVO: Calcula métricas adicionais
+        $valuesWithoutDeposits = [];
+        foreach ($results as $date => $data) {
+            if ($date !== '_metadata') {
+                $valuesWithoutDeposits[$date] = $data['strategy_value'] ?? $data['total_value'];
+            }
+        }
+
+        // Valor inicial e final sem aportes
+        $initialWithoutDeposits = $valuesWithoutDeposits[array_key_first($valuesWithoutDeposits)] ?? $initial;
+        $finalWithoutDeposits = $valuesWithoutDeposits[array_key_last($valuesWithoutDeposits)] ?? $final;
+
+        // Retorno real da estratégia (sem aportes)
+        $strategyReturn = $initialWithoutDeposits > 0 ?
+            (($finalWithoutDeposits - $initialWithoutDeposits) / $initialWithoutDeposits) * 100 : 0;
+
+        // Juros obtidos (diferença entre valor final e total investido)
+        $interestEarned = $final - $totalInvested;
+
         return [
             'total_return'  => $totalReturnDecimal * 100,
             'annual_return' => $annualReturn * 100,
@@ -344,14 +393,19 @@ class BacktestService {
             'is_short_period' => ($numMonths < 12),
             'initial_value' => $initial,
             'final_value'   => $final,
-            // Novas métricas de aportes
             'total_deposits' => $totalDeposits,
             'total_invested' => $totalInvested,
             'net_profit' => $netProfit,
             'roi' => $roi,
-            'simulation_type' => $metadata['simulation_type'] ?? 'standard'
+            'simulation_type' => $metadata['simulation_type'] ?? 'standard',
+            // NOVAS MÉTRICAS
+            'strategy_return' => $strategyReturn,
+            'interest_earned' => $interestEarned,
+            'final_without_deposits' => $finalWithoutDeposits
         ];
     }
+
+
     private function calculateVolatility($returns) {
         if (empty($returns)) return 0;
         $mean = array_sum($returns) / count($returns);
@@ -369,31 +423,47 @@ class BacktestService {
         return $drawdown;
     }
 
+
     private function generateCharts($results, $assets) {
         $chartService = new ChartService();
         return [
             'value_chart' => $chartService->createValueChart($results),
             'composition_chart' => $chartService->createCompositionChart($results, $assets),
-            'returns_chart' => $chartService->createAnnualReturnsChart($results)
+            'returns_chart' => $chartService->createAnnualReturnsChart($results),
+            // NOVOS GRÁFICOS
+            'strategy_performance_chart' => $chartService->createStrategyPerformanceChart($results),
+            'interest_chart' => $chartService->createInterestChart($results)
         ];
     }
 
     private function saveResults($portfolioId, $metrics, $chartData, $endDate) {
-        $sql = "INSERT INTO simulation_results (portfolio_id, simulation_date, total_value, annual_return, volatility, max_drawdown, sharpe_ratio, chart_data) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; // Trocamos CURDATE() por ?
+        // CORREÇÃO: Agora salva todas as métricas, incluindo ROI e aportes
+        $sql = "INSERT INTO simulation_results 
+            (portfolio_id, simulation_date, total_value, annual_return, volatility, 
+            max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
+            interest_earned, roi, strategy_return) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            $portfolioId, 
-            $endDate, // Agora salvamos a data final real da simulação
-            $metrics['final_value'], 
-            $metrics['annual_return'], 
-            $metrics['volatility'], 
-            $metrics['max_drawdown'], 
-            $metrics['sharpe_ratio'], 
-            json_encode($chartData)
+            $portfolioId,
+            $endDate,
+            $metrics['final_value'],
+            $metrics['annual_return'],
+            $metrics['volatility'],
+            $metrics['max_drawdown'],
+            $metrics['sharpe_ratio'],
+            json_encode($chartData),
+            // NOVOS CAMPOS
+            $metrics['total_deposits'] ?? 0,
+            $metrics['total_invested'] ?? $metrics['initial_value'],
+            $metrics['interest_earned'] ?? 0,
+            $metrics['roi'] ?? 0,
+            $metrics['strategy_return'] ?? 0
         ]);
         return $this->db->lastInsertId();
     }
+
 
     private function saveAssetDetails($simulationId, $results, $assets) {
         $year = date('Y', strtotime(array_key_last($results)));

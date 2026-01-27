@@ -15,13 +15,13 @@ class SimulationResult {
         $stmt->execute([$portfolioId, $limit]);
         return $stmt->fetchAll();
     }
-    
+
     public function getLatest($portfolioId) {
-        // ALTERADO: Ordenar por 'id' que é garantido existir
+        // ALTERADO: Seleciona todas as colunas, incluindo as novas
         $sql = "SELECT * FROM simulation_results 
-                WHERE portfolio_id = ? 
-                ORDER BY id DESC 
-                LIMIT 1";
+            WHERE portfolio_id = ? 
+            ORDER BY id DESC 
+            LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$portfolioId]);
         return $stmt->fetch();

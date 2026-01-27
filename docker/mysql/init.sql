@@ -131,3 +131,11 @@ SET simulation_type = 'standard',
     strategic_threshold = NULL,
     strategic_deposit_percentage = NULL
 WHERE simulation_type IS NULL;
+
+
+ALTER TABLE simulation_results
+ADD COLUMN total_deposits DECIMAL(15,2) DEFAULT 0,
+ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0,
+ADD COLUMN interest_earned DECIMAL(15,2) DEFAULT 0,
+ADD COLUMN roi DECIMAL(10,4) DEFAULT 0,
+ADD COLUMN strategy_return DECIMAL(10,4) DEFAULT 0;
