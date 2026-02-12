@@ -21,6 +21,7 @@ class BacktestService {
             return ['success' => false, 'message' => 'Nenhum dos ativos possui dados em comum no período selecionado.'];
         }
 
+        //Historical data
         $historicalData = $this->loadHistoricalData($assets, $effectiveDates['start'], $effectiveDates['end']); 
 
         if (empty($historicalData)) {
