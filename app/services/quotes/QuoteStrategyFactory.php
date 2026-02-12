@@ -2,6 +2,7 @@
 require_once __DIR__ . '/YahooQuoteStrategy.php';
 require_once __DIR__ . '/FedQuoteStrategy.php';
 require_once __DIR__ . '/SelicQuoteStrategy.php';
+require_once __DIR__ . '/DolarQuoteStrategy.php';
 
 class QuoteStrategyFactory {
     public static function make($asset) {
@@ -24,6 +25,12 @@ class QuoteStrategyFactory {
         if (strcasecmp($source, 'FED') === 0) {
             if (strcasecmp($type, 'TAXA_MENSAL') === 0) {
                 return new FedQuoteStrategy();
+            }
+        }
+
+        if (strcasecmp($source, 'DOLAR') === 0) {
+            if (strcasecmp($type, 'CAMBIO') === 0) {
+                return new DolarQuoteStrategy();
             }
         }
         // Outros provedores no futuro
