@@ -8,7 +8,7 @@ interface AssetQuoteStrategy {
      *
      * @param array $asset Registro do ativo em system_assets
      * @param bool $confirmFull Quando true, força atualização total
-     * @return array { success, updated_count, requires_full_refresh, yahoo_start, yahoo_end, message }
+     * @return array { success, updated_count, requires_full_refresh, provider_start, provider_end, message }
      */
     public function updateQuotes($asset, $confirmFull = false);
 }

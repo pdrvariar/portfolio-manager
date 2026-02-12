@@ -97,7 +97,9 @@ ob_start();
                 body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}`
             }).then(r => r.json()).then(res => {
                 if (res && res.requires_full_refresh) {
-                    if (confirm(`Divergência detectada. Yahoo disponível de ${res.yahoo_start} até ${res.yahoo_end}. Deseja atualizar tudo?`)) {
+                    const providerStart = res.provider_start || res.yahoo_start;
+                    const providerEnd = res.provider_end || res.yahoo_end;
+                    if (confirm(`Divergência detectada. Dados disponíveis de ${providerStart} até ${providerEnd}. Deseja atualizar tudo?`)) {
                         fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

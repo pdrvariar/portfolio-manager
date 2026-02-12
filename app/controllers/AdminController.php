@@ -225,7 +225,9 @@ class AdminController {
         require_once __DIR__ . '/../services/quotes/QuoteStrategyFactory.php';
         $strategy = QuoteStrategyFactory::make($asset);
         if ($strategy === null) {
-            echo json_encode(['success' => false, 'message' => 'Fonte/tipo de ativo não suportado para atualização automática.']);
+            $source = $asset['source'] ?? 'Yahoo';
+            $type = $asset['asset_type'] ?? 'COTACAO';
+            echo json_encode(['success' => false, 'message' => "Fonte/tipo de ativo ($source/$type) não suportado para atualização automática."]);
             exit;
         }
 

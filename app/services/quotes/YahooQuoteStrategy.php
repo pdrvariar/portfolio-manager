@@ -14,7 +14,7 @@ class YahooQuoteStrategy implements AssetQuoteStrategy {
         }
 
         // SELIC (TAXA_MENSAL) ficará para outro método
-        if (strtoupper($asset['code']) === 'SELIC' || $asset['asset_type'] === 'TAXA_MENSAL') {
+        if (strcasecmp(trim($asset['code']), 'SELIC') === 0 || strcasecmp(trim($asset['asset_type']), 'TAXA_MENSAL') === 0) {
             return ['success' => false, 'message' => 'Atualização via Yahoo não disponível para SELIC/Taxa mensal.'];
         }
 
@@ -60,7 +60,9 @@ class YahooQuoteStrategy implements AssetQuoteStrategy {
             return [
                 'success' => false,
                 'requires_full_refresh' => true,
-                'yahoo_start' => $yahoo['min_date'],
+                'provider_start' => $yahoo['min_date'],
+                'provider_end' => $yahoo['max_date'],
+                'yahoo_start' => $yahoo['min_date'], // manter por compatibilidade
                 'yahoo_end' => $yahoo['max_date'],
                 'message' => 'Divergência detectada entre as últimas cotações. Pode ter havido split/agrupamento/dividendos. Confirme para atualizar tudo.'
             ];
