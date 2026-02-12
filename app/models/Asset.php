@@ -132,7 +132,7 @@ class Asset {
     public function update($id, $data) {
         try {
             $sql = "UPDATE system_assets SET 
-                    name = ?, currency = ?, asset_type = ?, is_active = ?
+                    name = ?, currency = ?, asset_type = ?, source = ?, yahoo_ticker = ?, is_active = ?
                     WHERE id = ?";
             
             $stmt = $this->db->prepare($sql);
@@ -140,6 +140,8 @@ class Asset {
                 $data['name'],
                 $data['currency'],
                 $data['asset_type'],
+                $data['source'] ?? 'Yahoo',
+                $data['yahoo_ticker'] ?? null,
                 $data['is_active'] ?? true,
                 $id
             ]);

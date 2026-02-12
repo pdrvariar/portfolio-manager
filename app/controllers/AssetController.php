@@ -170,6 +170,8 @@ private $assetModel;
                 'name' => sanitize($_POST['name']),
                 'currency' => sanitize($_POST['currency']),
                 'asset_type' => sanitize($_POST['asset_type']),
+                'source' => sanitize($_POST['source'] ?? 'Yahoo'),
+                'yahoo_ticker' => sanitize($_POST['yahoo_ticker'] ?? ''),
                 'is_active' => 1
             ];
             

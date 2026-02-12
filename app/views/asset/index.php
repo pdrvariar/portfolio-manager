@@ -112,6 +112,16 @@ ob_start();
                             </select>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Fonte</label>
+                            <input type="text" name="source" id="editAssetSource" class="form-control" placeholder="Yahoo, SELIC...">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Yahoo Ticker (Opcional)</label>
+                            <input type="text" name="yahoo_ticker" id="editAssetYahooTicker" class="form-control" placeholder="ex: BTC-USD">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -147,6 +157,8 @@ $additional_js = <<<JS
             $('#editAssetName').val(asset.name);
             $('#editAssetCurrency').val(asset.currency);
             $('#editAssetType').val(asset.asset_type);
+            $('#editAssetSource').val(asset.source || 'Yahoo');
+            $('#editAssetYahooTicker').val(asset.yahoo_ticker || '');
             
             var editModal = new bootstrap.Modal(document.getElementById('editAssetModal'));
             editModal.show();

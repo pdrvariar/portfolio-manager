@@ -39,7 +39,8 @@ CREATE TABLE asset_historical_data (
     reference_date DATE NOT NULL, 
     price DECIMAL(20, 10) NOT NULL,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id) ON DELETE CASCADE,
-    INDEX idx_asset_date (asset_id, reference_date)
+    INDEX idx_asset_date (asset_id, reference_date),
+    UNIQUE KEY unique_asset_date (asset_id, reference_date)
 ) ENGINE=InnoDB;
 
 -- 5. Tabela de Portfólios
@@ -103,15 +104,15 @@ CREATE TABLE simulation_asset_details (
 INSERT INTO users (username, full_name, email, password, is_admin, status) 
 VALUES ('admin', 'Administrador do Sistema', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE, 'active');
 
-INSERT INTO system_assets (code, name, currency, asset_type) VALUES
-('BTC-USD', 'Bitcoin', 'USD', 'COTACAO'),
-('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO'),
-('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO'),
-('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL'),
-('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL'),
-('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO'),
-('SP500', 'S&P 500', 'USD', 'COTACAO'),
-('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO');
+INSERT INTO system_assets (code, name, currency, asset_type, source) VALUES
+('BTC-USD', 'Bitcoin', 'USD', 'COTACAO', 'Yahoo'),
+('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO', 'Yahoo'),
+('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO', 'Yahoo'),
+('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL', 'SELIC'),
+('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL', 'SELIC'),
+('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO', 'Yahoo'),
+('SP500', 'S&P 500', 'USD', 'COTACAO', 'Yahoo'),
+('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO', 'Yahoo');
 
 ALTER TABLE portfolios
     ADD COLUMN simulation_type ENUM('standard', 'monthly_deposit', 'strategic_deposit') DEFAULT 'standard',
@@ -131,3 +132,5 @@ SET simulation_type = 'standard',
     strategic_threshold = NULL,
     strategic_deposit_percentage = NULL
 WHERE simulation_type IS NULL;
+
+-- Final do script

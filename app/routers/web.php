@@ -54,6 +54,7 @@ function setupRoutes(Router $router) {
     $router->add('admin/users/edit/{id:\d+}', ['controller' => 'admin', 'action' => 'editUser']);
     $router->add('admin/users/update/{id:\d+}', ['controller' => 'admin', 'action' => 'updateUser']);
     $router->add('admin/assets', ['controller' => 'admin', 'action' => 'assets']);
+    $router->add('admin/assets/update-quotes', ['controller' => 'admin', 'action' => 'updateAssetQuotes']);
     $router->add('admin/create-default-portfolios', ['controller' => 'admin', 'action' => 'createDefaultPortfolios']);
 
     // --- Dashboard ---

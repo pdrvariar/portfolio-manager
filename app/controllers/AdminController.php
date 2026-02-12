@@ -191,5 +191,50 @@ class AdminController {
         ");
         return $stmt->fetchAll();
     }
+
+    public function updateAssetQuotes() {
+        Auth::checkAdmin();
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido']);
+            exit;
+        }
+
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Token de segurança inválido.']);
+            exit;
+        }
+
+        $id = intval($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID de ativo inválido']);
+            exit;
+        }
+
+        $asset = $this->assetModel->findById($id);
+        if (!$asset) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Ativo não encontrado']);
+            exit;
+        }
+
+        require_once __DIR__ . '/../services/quotes/QuoteStrategyFactory.php';
+        $strategy = QuoteStrategyFactory::make($asset);
+        if ($strategy === null) {
+            echo json_encode(['success' => false, 'message' => 'Fonte/tipo de ativo não suportado para atualização automática.']);
+            exit;
+        }
+
+        $confirmFull = isset($_POST['confirm_full']) && $_POST['confirm_full'] == '1';
+        $result = $strategy->updateQuotes($asset, $confirmFull);
+
+        // Resultado inclui: success, updated_count, requires_full_refresh, yahoo_start, yahoo_end, message
+        echo json_encode($result);
+        exit;
+    }
 }
 ?>
