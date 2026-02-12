@@ -98,37 +98,107 @@ class PortfolioController {
     public function view() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
-        
+
         if (!$id) {
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }
-        
+
         $portfolio = $this->portfolioModel->findById($id);
         $assets = $this->portfolioModel->getPortfolioAssets($id);
 
         $simulationModel = new SimulationResult();
         $latest = $simulationModel->getLatest($id);
 
-        // Define métricas padrão
+        // Define métricas padrão usando valores do banco ou padrões
         $metrics = $latest ?: [
             'total_return' => 0,
             'annual_return' => 0,
             'volatility' => 0,
-            'sharpe_ratio' => 0
+            'sharpe_ratio' => 0,
+            'max_drawdown' => 0,
+            'total_deposits' => 0,
+            'total_invested' => $portfolio['initial_capital'],
+            'interest_earned' => 0,
+            'roi' => 0,
+            'strategy_return' => 0,
+            'total_value' => $portfolio['initial_capital'],
+            'final_value' => $portfolio['initial_capital']
         ];
 
         // CORREÇÃO: Calcula o Retorno Total real comparando com o capital inicial
         if ($latest) {
             $initial = $portfolio['initial_capital'];
             $final = $latest['total_value'];
+
+            // Sempre recalcula o total_return para garantir precisão
             $metrics['total_return'] = (($final / $initial) - 1) * 100;
+
+            // Se não tiver ROI no banco ou for zero, calcula agora
+            if (empty($latest['roi'])) {
+                // Calcula total de aportes se não estiver no banco
+                $totalDeposits = $latest['total_deposits'] ?? 0;
+
+                // Se total_deposits não estiver no banco, tenta calcular do chart_data
+                if ($totalDeposits == 0 && isset($latest['chart_data'])) {
+                    $chartData = json_decode($latest['chart_data'], true);
+                    if (isset($chartData['audit_log'])) {
+                        foreach ($chartData['audit_log'] as $date => $data) {
+                            if ($date !== '_metadata') {
+                                $totalDeposits += $data['deposit_made'] ?? 0;
+                            }
+                        }
+                    }
+                }
+
+                $totalInvested = $initial + $totalDeposits;
+                $interestEarned = $final - $totalInvested;
+                $roi = $totalInvested > 0 ? ($interestEarned / $totalInvested) * 100 : 0;
+
+                $metrics['total_deposits'] = $totalDeposits;
+                $metrics['total_invested'] = $totalInvested;
+                $metrics['interest_earned'] = $interestEarned;
+                $metrics['roi'] = $roi;
+            } else {
+                // Usa os valores do banco
+                $metrics['total_deposits'] = $latest['total_deposits'] ?? 0;
+                $metrics['total_invested'] = $latest['total_invested'] ?? ($initial + $metrics['total_deposits']);
+                $metrics['interest_earned'] = $latest['interest_earned'] ?? ($final - $metrics['total_invested']);
+                $metrics['roi'] = $latest['roi'] ?? 0;
+            }
+
+            // Se não tiver strategy_return no banco, tenta calcular do chart_data
+            if (empty($latest['strategy_return']) && isset($latest['chart_data'])) {
+                $chartData = json_decode($latest['chart_data'], true);
+                if (isset($chartData['strategy_performance_chart'])) {
+                    $strategyData = $chartData['strategy_performance_chart'];
+                    if (!empty($strategyData['datasets'][0]['data'])) {
+                        $strategyReturns = $strategyData['datasets'][0]['data'];
+                        $metrics['strategy_return'] = end($strategyReturns);
+                    }
+                }
+            } else {
+                $metrics['strategy_return'] = $latest['strategy_return'] ?? 0;
+            }
+
+            // Garante que temos os valores finais
+            $metrics['final_value'] = $final;
+            $metrics['total_value'] = $final;
+
+            // Copia outras métricas do banco
+            $metrics['annual_return'] = $latest['annual_return'] ?? 0;
+            $metrics['volatility'] = $latest['volatility'] ?? 0;
+            $metrics['sharpe_ratio'] = $latest['sharpe_ratio'] ?? 0;
+            $metrics['max_drawdown'] = $latest['max_drawdown'] ?? 0;
         }
 
         $chartData = [
             'value_chart' => ['labels' => [], 'datasets' => []],
             'composition_chart' => ['labels' => [], 'datasets' => []],
-            'returns_chart' => ['labels' => [], 'datasets' => []]
+            'returns_chart' => ['labels' => [], 'datasets' => []],
+            'strategy_performance_chart' => ['labels' => [], 'datasets' => []],
+            'interest_chart' => ['labels' => [], 'datasets' => []],
+            'audit_log' => []
         ];
 
         if ($latest && isset($latest['chart_data'])) {
@@ -139,8 +209,8 @@ class PortfolioController {
         $end   = new DateTime($portfolio['end_date'] ?? 'now');
         $months = ($start->diff($end)->y * 12) + $start->diff($end)->m;
 
-        $metrics['is_short_period'] = ($months < 12);        
-        
+        $metrics['is_short_period'] = ($months < 12);
+
         require_once __DIR__ . '/../views/portfolio/view.php';
     }
     
