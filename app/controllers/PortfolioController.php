@@ -287,10 +287,24 @@ class PortfolioController {
      */
     public function delete() {
         Auth::checkAuthentication();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            Session::setFlash('error', 'Método de requisição inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
         $id = $this->params['id'] ?? null;
         $portfolio = $this->portfolioModel->findById($id);
 
         if (!$portfolio) {
+            Session::setFlash('error', 'Portfólio não encontrado.');
             header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
             exit;
         }

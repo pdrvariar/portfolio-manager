@@ -72,7 +72,12 @@ ob_start();
                                     <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Editar"><i class="bi bi-pencil text-warning"></i></a>
                                 <?php endif; ?>
 
-                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Excluir" onclick="return confirm('Excluir portfólio?')"><i class="bi bi-trash text-danger"></i></a>
+                                <form action="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Excluir portfólio?')">
+                                    <input type="hidden" name="csrf_token" value="<?= Session::getCsrfToken() ?>">
+                                    <button type="submit" class="btn btn-sm btn-white border px-2 no-spinner" title="Excluir">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

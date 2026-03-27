@@ -55,7 +55,7 @@ class Auth {
     }
     
     public static function isAdmin() {
-        return self::isLoggedIn() && Session::get('is_admin') === true;
+        return self::isLoggedIn() && (bool)Session::get('is_admin') === true;
     }
     
     public static function getCurrentUserId() {
