@@ -161,7 +161,7 @@ class Portfolio {
             // 4. Finalmente apagar o portfólio
             // SÊNIOR: Se userId for fornecido, restringimos a exclusão (proteção extra)
             // Se for null, permitimos (usado por Admins no controller)
-            $sql = "DELETE FROM portfolios WHERE id = ? AND is_system_default = FALSE";
+            $sql = "DELETE FROM portfolios WHERE id = ?";
             $params = [$id];
 
             if ($userId) {
