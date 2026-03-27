@@ -306,8 +306,15 @@ class PortfolioController {
         }
 
         if ($canDelete) {
-            $this->portfolioModel->delete($id);
-            Session::setFlash('success', 'Portfólio removido com sucesso.');
+            try {
+                // Sênior: Se for admin, passa null para o user_id para ignorar restrição de dono
+                $deleteUserId = Auth::isAdmin() ? null : $_SESSION['user_id'];
+                $this->portfolioModel->delete($id, $deleteUserId);
+                Session::setFlash('success', 'Portfólio removido com sucesso.');
+            } catch (Exception $e) {
+                error_log("Erro ao deletar portfolio $id: " . $e->getMessage());
+                Session::setFlash('error', 'Ocorreu um erro ao tentar excluir o portfólio. Verifique se ele possui dependências complexas.');
+            }
         } else {
             Session::setFlash('error', 'Você não tem permissão para excluir este portfólio.');
         }

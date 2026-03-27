@@ -139,10 +139,48 @@ class Portfolio {
         ]);
     }
 
-    public function delete($id) {
-        $sql = "DELETE FROM portfolios WHERE id = ? AND user_id = ? AND is_system_default = FALSE";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id, $_SESSION['user_id']]);
+    public function delete($id, $userId = null) {
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Apagar detalhes de simulação (Simulation Asset Details)
+            // Esses dependem de simulation_results, que depende de portfolios
+            $sqlDetails = "DELETE sad FROM simulation_asset_details sad 
+                           JOIN simulation_results sr ON sad.simulation_id = sr.id 
+                           WHERE sr.portfolio_id = ?";
+            $this->db->prepare($sqlDetails)->execute([$id]);
+
+            // 2. Apagar resultados de simulação (Simulation Results)
+            $sqlSimulations = "DELETE FROM simulation_results WHERE portfolio_id = ?";
+            $this->db->prepare($sqlSimulations)->execute([$id]);
+
+            // 3. Apagar ativos do portfólio (Portfolio Assets)
+            $sqlAssets = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
+            $this->db->prepare($sqlAssets)->execute([$id]);
+
+            // 4. Finalmente apagar o portfólio
+            // SÊNIOR: Se userId for fornecido, restringimos a exclusão (proteção extra)
+            // Se for null, permitimos (usado por Admins no controller)
+            $sql = "DELETE FROM portfolios WHERE id = ? AND is_system_default = FALSE";
+            $params = [$id];
+
+            if ($userId) {
+                $sql .= " AND user_id = ?";
+                $params[] = $userId;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $result = $stmt->execute($params);
+
+            $this->db->commit();
+            return $result;
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log("Erro ao excluir portfólio ID $id: " . $e->getMessage());
+            throw $e; // Repassa para o controller tratar
+        }
     }
     
     public function getPortfolioAssets($portfolioId) {
