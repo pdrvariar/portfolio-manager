@@ -138,6 +138,7 @@ ADD COLUMN total_deposits DECIMAL(15,2) DEFAULT 0,
 ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0,
 ADD COLUMN interest_earned DECIMAL(15,2) DEFAULT 0,
 ADD COLUMN roi DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN strategy_return DECIMAL(10,4) DEFAULT 0;
+ADD COLUMN strategy_return DECIMAL(10,4) DEFAULT 0,
+ADD COLUMN strategy_annual_return DECIMAL(10,4) DEFAULT 0;
 
 -- Final do script
