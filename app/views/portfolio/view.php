@@ -383,42 +383,53 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Projeção de Patrimônio Futuro</h5>
-                    <?php
-                    $isMonthly = ($portfolio['simulation_type'] === 'monthly_deposit');
-                    $amount = (float)($portfolio['deposit_amount'] ?? 0);
-                    $freq = $portfolio['deposit_frequency'] ?? 'monthly';
-                    
-                    $monthlyDeposit = 0;
-                    $freqLabel = '';
-                    if ($isMonthly) {
-                        if ($freq === 'monthly') {
-                            $monthlyDeposit = $amount;
-                            $freqLabel = 'mensais';
-                        } elseif ($freq === 'quarterly') {
-                            $monthlyDeposit = $amount / 3;
-                            $freqLabel = 'trimestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
-                        } elseif ($freq === 'biannual') {
-                            $monthlyDeposit = $amount / 6;
-                            $freqLabel = 'semestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
-                        } elseif ($freq === 'annual') {
-                            $monthlyDeposit = $amount / 12;
-                            $freqLabel = 'anuais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Projeção de Patrimônio Futuro</h5>
+                        <?php
+                        $isMonthly = ($portfolio['simulation_type'] === 'monthly_deposit');
+                        $amount = (float)($portfolio['deposit_amount'] ?? 0);
+                        $freq = $portfolio['deposit_frequency'] ?? 'monthly';
+                        
+                        $monthlyDeposit = 0;
+                        $freqLabel = '';
+                        if ($isMonthly) {
+                            if ($freq === 'monthly') {
+                                $monthlyDeposit = $amount;
+                                $freqLabel = 'mensais';
+                            } elseif ($freq === 'quarterly') {
+                                $monthlyDeposit = $amount / 3;
+                                $freqLabel = 'trimestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                            } elseif ($freq === 'biannual') {
+                                $monthlyDeposit = $amount / 6;
+                                $freqLabel = 'semestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                            } elseif ($freq === 'annual') {
+                                $monthlyDeposit = $amount / 12;
+                                $freqLabel = 'anuais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                            }
                         }
-                    }
-                    ?>
-                    <p class="text-muted small mb-0">
-                        Baseado no <strong>CAGR de <?= formatPercentage($metrics['annual_return']) ?></strong> 
-                        e aportes <?= $freqLabel ?> de <strong><?= formatCurrency($amount, $portfolio['output_currency']) ?></strong>.
-                    </p>
+                        ?>
+                        <p class="text-muted small mb-0">
+                            Baseado na <strong>Performance Real (Sem Aportes) de <?= formatPercentage($metrics['strategy_annual_return'] ?? $metrics['annual_return']) ?></strong> 
+                            e aportes <?= $freqLabel ?> de <strong><?= formatCurrency($amount, $portfolio['output_currency']) ?></strong>.
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 bg-light p-2 rounded-3 border">
+                        <label for="currentPatrimony" class="smaller fw-bold text-muted mb-0">Patrimônio Atual:</label>
+                        <div class="input-group input-group-sm" style="width: 180px;">
+                            <span class="input-group-text bg-white border-0 pe-1"><?= $portfolio['output_currency'] === 'BRL' ? 'R$' : '$' ?></span>
+                            <input type="number" step="0.01" class="form-control border-0 shadow-none bg-white" id="currentPatrimony" value="<?= $metrics['total_value'] ?>">
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
+                    <div class="row g-3" id="projectionCards">
                         <?php
                         $years = [5, 10, 15, 20, 25, 30];
                         $currentValue = $metrics['total_value'];
-                        $monthlyRate = pow(1 + ($metrics['annual_return'] / 100), 1/12) - 1;
+                        // Usar strategy_annual_return para projeção pura da estratégia + aportes
+                        $projAnnualReturn = $metrics['strategy_annual_return'] ?? $metrics['annual_return'];
+                        $monthlyRate = pow(1 + ($projAnnualReturn / 100), 1/12) - 1;
                         
                         foreach ($years as $y): 
                             $n = $y * 12;
@@ -434,7 +445,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                 <div class="card h-100 border-0 bg-light shadow-none">
                                     <div class="card-body text-center py-4">
                                         <h6 class="text-muted small text-uppercase fw-bold mb-3"><?= $y ?> Anos</h6>
-                                        <h4 class="text-primary fw-bold mb-0" title="<?= formatCurrency($futureValue, $portfolio['output_currency']) ?>">
+                                        <h4 class="text-primary fw-bold mb-0 projection-value" 
+                                            data-years="<?= $y ?>" 
+                                            title="<?= formatCurrency($futureValue, $portfolio['output_currency']) ?>">
                                             <?php
                                             // Formatação compacta para valores muito grandes
                                             if ($futureValue >= 1000000000) {
@@ -453,7 +466,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     </div>
                     <div class="alert alert-soft-info border-0 rounded-4 mt-4 mb-0 smaller">
                         <i class="bi bi-info-circle-fill me-2"></i>
-                        Esta é uma simulação matemática baseada em retornos passados e não garante resultados futuros. O valor projetado considera a manutenção da taxa de retorno e dos aportes constantes ao longo do período.
+                        Esta é uma simulação matemática baseada em retornos passados e não garante resultados futuros. O valor projetado considera a manutenção da taxa de retorno e dos aportes constantes ao longo do período. 
+                        <strong>Você pode ajustar o valor de "Patrimônio Atual" acima para ver como sua projeção muda.</strong>
                     </div>
                 </div>
             </div>
@@ -1006,6 +1020,50 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         // 1. Define o log de auditoria globalmente para o cálculo do Beta
         window.simulationAuditLog = auditLog || {};
+
+        // Lógica para Projeção de Patrimônio Futuro (JS)
+        const currentPatrimonyInput = document.getElementById('currentPatrimony');
+        if (currentPatrimonyInput) {
+            currentPatrimonyInput.addEventListener('input', function() {
+                const currentValue = parseFloat(this.value) || 0;
+                const monthlyDeposit = <?= $monthlyDeposit ?>;
+                const annualReturn = <?= $metrics['strategy_annual_return'] ?? $metrics['annual_return'] ?>;
+                const monthlyRate = Math.pow(1 + (annualReturn / 100), 1/12) - 1;
+                const outputCurrency = '<?= $portfolio['output_currency'] ?>';
+
+                document.querySelectorAll('.projection-value').forEach(el => {
+                    const years = parseInt(el.getAttribute('data-years'));
+                    const n = years * 12;
+                    let futureValue = 0;
+
+                    if (monthlyRate > 0) {
+                        futureValue = currentValue * Math.pow(1 + monthlyRate, n) + 
+                                     monthlyDeposit * ((Math.pow(1 + monthlyRate, n) - 1) / monthlyRate);
+                    } else {
+                        futureValue = currentValue + (monthlyDeposit * n);
+                    }
+
+                    // Atualiza o título (valor completo)
+                    el.setAttribute('title', formatCurrencyJS(futureValue, outputCurrency));
+
+                    // Atualiza o texto (formato compacto)
+                    if (futureValue >= 1000000000) {
+                        el.innerText = formatCurrencyJS(futureValue / 1000000000, outputCurrency) + ' Bi';
+                    } else if (futureValue >= 1000000) {
+                        el.innerText = formatCurrencyJS(futureValue / 1000000, outputCurrency) + ' Mi';
+                    } else {
+                        el.innerText = formatCurrencyJS(futureValue, outputCurrency);
+                    }
+                });
+            });
+        }
+
+        // Função auxiliar de formatação para JS (equivalente ao PHP formatCurrency)
+        function formatCurrencyJS(value, currency) {
+            const symbols = { 'BRL': 'R$', 'USD': '$', 'EUR': '€' };
+            const symbol = symbols[currency] || currency;
+            return symbol + ' ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
         document.getElementById('benchmarkSelector').addEventListener('change', function() {
             const assetId = this.value;
