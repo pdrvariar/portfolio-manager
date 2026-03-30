@@ -199,6 +199,11 @@ class BacktestService {
 
             $lastFxRate = $currentFxRate;
 
+            // Calcula o fator de retorno real dos ativos neste mês (média ponderada)
+            // antes de qualquer aporte, para rastrear a performance pura da estratégia
+            $monthlyReturnFactor = $previousMonthValue > 0 ? $totalMonthValue / $previousMonthValue : 1;
+            $portfolioWithoutDeposits *= $monthlyReturnFactor;
+
             // ============================================
             // LÓGICA DE APORTES MENSAL (Tipo 1)
             // ============================================
@@ -258,25 +263,16 @@ class BacktestService {
                 }
             }
 
-            // NOVO: Calcula o valor da estratégia sem aportes
-            $strategyValueThisMonth = $totalMonthValue - ($depositThisMonth + $strategicDepositThisMonth);
-
-            // Se for o primeiro mês, o valor base é o capital inicial
-            if ($index === 0) {
-                $strategyOnlyValues[$date] = [
-                    'total_value' => $initialCapital,
-                    'variation' => 0
-                ];
+            // Calcula variação da estratégia usando a carteira virtual (só retorno dos ativos)
+            $strategyVariation = 0;
+            if ($index > 0) {
+                $prevStrategyValue = $results[$dates[$index - 1]]['strategy_value'];
+                $strategyVariation = $prevStrategyValue > 0 ?
+                    (($portfolioWithoutDeposits - $prevStrategyValue) / $prevStrategyValue) * 100 : 0;
             } else {
-                // Calcula variação real da estratégia (excluindo aportes)
-                $previousStrategyValue = $strategyOnlyValues[$dates[$index-1]]['total_value'];
-                $strategyVariation = $previousStrategyValue > 0 ?
-                    (($strategyValueThisMonth - $previousStrategyValue) / $previousStrategyValue) * 100 : 0;
-
-                $strategyOnlyValues[$date] = [
-                    'total_value' => $strategyValueThisMonth,
-                    'variation' => $strategyVariation
-                ];
+                // No primeiro mês, a variação é em relação ao capital inicial
+                $strategyVariation = $initialCapital > 0 ?
+                    (($portfolioWithoutDeposits - $initialCapital) / $initialCapital) * 100 : 0;
             }
 
             // Atualiza para próximo mês
@@ -314,8 +310,8 @@ class BacktestService {
                 'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
                 'total_deposits_to_date' => $totalDeposits,
                 // NOVO: Adiciona os valores da estratégia
-                'strategy_value' => $strategyValueThisMonth,
-                'strategy_variation' => $strategyOnlyValues[$date]['variation']
+                'strategy_value' => $portfolioWithoutDeposits,
+                'strategy_variation' => $strategyVariation
             ];
         }
 
@@ -345,10 +341,10 @@ class BacktestService {
         $netProfit = $final - $totalInvested;
         $roi = $totalInvested > 0 ? ($netProfit / $totalInvested) * 100 : 0;
 
-        // Retorno Total Absoluto (sem considerar aportes)
+        // Retorno Total Absoluto (considerando aportes)
         $totalReturnDecimal = $initial > 0 ? ($final - $initial) / $initial : 0;
 
-        // Cálculo de Retornos Mensais para Volatilidade
+        // Cálculo de Retornos Mensais para Volatilidade (considerando aportes)
         $returns = [];
         for ($i = 1; $i < count($values); $i++) {
             if ($values[$i-1] > 0) {
@@ -356,33 +352,45 @@ class BacktestService {
             }
         }
 
-        // CAGR (considerando tempo)
-        if ($numMonths >= 12) {
-            $annualReturn = pow(1 + $totalReturnDecimal, 12 / $numMonths) - 1;
-        } else {
-            $annualReturn = $totalReturnDecimal;
-        }
-
-        $vol = $this->calculateVolatility($returns);
-        $riskFreeRate = 0.10;
-        $excessReturn = $annualReturn - $riskFreeRate;
-        $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
-
-        // NOVO: Calcula métricas adicionais
+        // NOVO: Calcula métricas adicionais e performance real da estratégia (sem aportes)
         $valuesWithoutDeposits = [];
+        $strategyReturns = [];
+        $prevStrategyValue = $initial;
+
         foreach ($results as $date => $data) {
             if ($date !== '_metadata') {
-                $valuesWithoutDeposits[$date] = $data['strategy_value'] ?? $data['total_value'];
+                $currentStrategyValue = $data['strategy_value'] ?? $data['total_value'];
+                $valuesWithoutDeposits[$date] = $currentStrategyValue;
+                
+                if ($prevStrategyValue > 0) {
+                    $strategyReturns[] = ($currentStrategyValue - $prevStrategyValue) / $prevStrategyValue;
+                }
+                $prevStrategyValue = $currentStrategyValue;
             }
         }
 
         // Valor inicial e final sem aportes
-        $initialWithoutDeposits = $valuesWithoutDeposits[array_key_first($valuesWithoutDeposits)] ?? $initial;
-        $finalWithoutDeposits = $valuesWithoutDeposits[array_key_last($valuesWithoutDeposits)] ?? $final;
+        $initialWithoutDeposits = $initial;
+        $finalWithoutDeposits = end($valuesWithoutDeposits);
 
         // Retorno real da estratégia (sem aportes)
         $strategyReturn = $initialWithoutDeposits > 0 ?
             (($finalWithoutDeposits - $initialWithoutDeposits) / $initialWithoutDeposits) * 100 : 0;
+            
+        // CAGR Real da Estratégia (considerando tempo, sem aportes)
+        $strategyReturnDecimal = $strategyReturn / 100;
+        if ($numMonths >= 12) {
+            $annualReturn = pow(1 + $strategyReturnDecimal, 12 / $numMonths) - 1;
+        } else {
+            $annualReturn = $strategyReturnDecimal;
+        }
+
+        // Volatilidade da Estratégia (sem aportes)
+        $vol = $this->calculateVolatility($strategyReturns);
+        
+        $riskFreeRate = 0.10;
+        $excessReturn = $annualReturn - $riskFreeRate;
+        $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
 
         // Juros obtidos (diferença entre valor final e total investido)
         $interestEarned = $final - $totalInvested;
