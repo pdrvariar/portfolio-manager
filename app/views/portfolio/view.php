@@ -378,6 +378,89 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         </div>
     </div>
 
+    <?php if ($hasDeposits && isset($metrics['annual_return'])): ?>
+    <!-- NOVO: Projeção de Patrimônio -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Projeção de Patrimônio Futuro</h5>
+                    <?php
+                    $isMonthly = ($portfolio['simulation_type'] === 'monthly_deposit');
+                    $amount = (float)($portfolio['deposit_amount'] ?? 0);
+                    $freq = $portfolio['deposit_frequency'] ?? 'monthly';
+                    
+                    $monthlyDeposit = 0;
+                    $freqLabel = '';
+                    if ($isMonthly) {
+                        if ($freq === 'monthly') {
+                            $monthlyDeposit = $amount;
+                            $freqLabel = 'mensais';
+                        } elseif ($freq === 'quarterly') {
+                            $monthlyDeposit = $amount / 3;
+                            $freqLabel = 'trimestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                        } elseif ($freq === 'biannual') {
+                            $monthlyDeposit = $amount / 6;
+                            $freqLabel = 'semestrais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                        } elseif ($freq === 'annual') {
+                            $monthlyDeposit = $amount / 12;
+                            $freqLabel = 'anuais (equiv. mensal: ' . formatCurrency($monthlyDeposit, $portfolio['output_currency']) . ')';
+                        }
+                    }
+                    ?>
+                    <p class="text-muted small mb-0">
+                        Baseado no <strong>CAGR de <?= formatPercentage($metrics['annual_return']) ?></strong> 
+                        e aportes <?= $freqLabel ?> de <strong><?= formatCurrency($amount, $portfolio['output_currency']) ?></strong>.
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <?php
+                        $years = [5, 10, 15, 20, 25, 30];
+                        $currentValue = $metrics['total_value'];
+                        $monthlyRate = pow(1 + ($metrics['annual_return'] / 100), 1/12) - 1;
+                        
+                        foreach ($years as $y): 
+                            $n = $y * 12;
+                            // FV = PV * (1 + r)^n + PMT * [((1 + r)^n - 1) / r]
+                            if ($monthlyRate > 0) {
+                                $futureValue = $currentValue * pow(1 + $monthlyRate, $n) + 
+                                               $monthlyDeposit * ((pow(1 + $monthlyRate, $n) - 1) / $monthlyRate);
+                            } else {
+                                $futureValue = $currentValue + ($monthlyDeposit * $n);
+                            }
+                        ?>
+                            <div class="col-md-2 col-6">
+                                <div class="card h-100 border-0 bg-light shadow-none">
+                                    <div class="card-body text-center py-4">
+                                        <h6 class="text-muted small text-uppercase fw-bold mb-3"><?= $y ?> Anos</h6>
+                                        <h4 class="text-primary fw-bold mb-0" title="<?= formatCurrency($futureValue, $portfolio['output_currency']) ?>">
+                                            <?php
+                                            // Formatação compacta para valores muito grandes
+                                            if ($futureValue >= 1000000000) {
+                                                echo formatCurrency($futureValue / 1000000000, $portfolio['output_currency']) . ' Bi';
+                                            } elseif ($futureValue >= 1000000) {
+                                                echo formatCurrency($futureValue / 1000000, $portfolio['output_currency']) . ' Mi';
+                                            } else {
+                                                echo formatCurrency($futureValue, $portfolio['output_currency']);
+                                            }
+                                            ?>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="alert alert-soft-info border-0 rounded-4 mt-4 mb-0 smaller">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Esta é uma simulação matemática baseada em retornos passados e não garante resultados futuros. O valor projetado considera a manutenção da taxa de retorno e dos aportes constantes ao longo do período.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
 
 <?php if ($hasDeposits && isset($chartData['audit_log'])): ?>
     <div class="row mb-4">
