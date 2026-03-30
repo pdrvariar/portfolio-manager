@@ -380,16 +380,23 @@ class BacktestService {
         // CAGR Real da Estratégia (considerando tempo, sem aportes)
         $strategyReturnDecimal = $strategyReturn / 100;
         if ($numMonths >= 12) {
-            $annualReturn = pow(1 + $strategyReturnDecimal, 12 / $numMonths) - 1;
+            $strategyAnnualReturn = pow(1 + $strategyReturnDecimal, 12 / $numMonths) - 1;
         } else {
-            $annualReturn = $strategyReturnDecimal;
+            $strategyAnnualReturn = $strategyReturnDecimal;
+        }
+
+        // CAGR do Portfólio (considerando aportes)
+        if ($numMonths >= 12) {
+            $portfolioAnnualReturn = pow(1 + $totalReturnDecimal, 12 / $numMonths) - 1;
+        } else {
+            $portfolioAnnualReturn = $totalReturnDecimal;
         }
 
         // Volatilidade da Estratégia (sem aportes)
         $vol = $this->calculateVolatility($strategyReturns);
         
         $riskFreeRate = 0.10;
-        $excessReturn = $annualReturn - $riskFreeRate;
+        $excessReturn = $strategyAnnualReturn - $riskFreeRate;
         $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
 
         // Juros obtidos (diferença entre valor final e total investido)
@@ -397,7 +404,8 @@ class BacktestService {
 
         return [
             'total_return'  => $totalReturnDecimal * 100,
-            'annual_return' => $annualReturn * 100,
+            'annual_return' => $portfolioAnnualReturn * 100, // Retorno anual do portfólio (com aportes)
+            'strategy_annual_return' => $strategyAnnualReturn * 100, // NOVO: Retorno anual da estratégia (sem aportes)
             'volatility'    => $vol * 100,
             'sharpe_ratio'  => $sharpe,
             'is_short_period' => ($numMonths < 12),
@@ -451,8 +459,8 @@ class BacktestService {
         $sql = "INSERT INTO simulation_results 
             (portfolio_id, simulation_date, total_value, annual_return, volatility, 
             max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
-            interest_earned, roi, strategy_return) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            interest_earned, roi, strategy_return, strategy_annual_return) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -469,7 +477,8 @@ class BacktestService {
             $metrics['total_invested'] ?? $metrics['initial_value'],
             $metrics['interest_earned'] ?? 0,
             $metrics['roi'] ?? 0,
-            $metrics['strategy_return'] ?? 0
+            $metrics['strategy_return'] ?? 0,
+            $metrics['strategy_annual_return'] ?? 0
         ]);
         return $this->db->lastInsertId();
     }

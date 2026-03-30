@@ -187,6 +187,23 @@ class PortfolioController {
 
             // Copia outras métricas do banco
             $metrics['annual_return'] = $latest['annual_return'] ?? 0;
+            $metrics['strategy_annual_return'] = $latest['strategy_annual_return'] ?? 0;
+
+            // Se não tiver strategy_annual_return no banco (simulações antigas), calcula a partir do strategy_return
+            if ($metrics['strategy_annual_return'] == 0 && $metrics['strategy_return'] != 0) {
+                $start = new DateTime($portfolio['start_date']);
+                $end   = new DateTime($latest['simulation_date']);
+                $numMonths = ($start->diff($end)->y * 12) + $start->diff($end)->m;
+                if ($numMonths <= 0) $numMonths = 1;
+
+                $strategyReturnDecimal = $metrics['strategy_return'] / 100;
+                if ($numMonths >= 12) {
+                    $metrics['strategy_annual_return'] = (pow(1 + $strategyReturnDecimal, 12 / $numMonths) - 1) * 100;
+                } else {
+                    $metrics['strategy_annual_return'] = $strategyReturnDecimal * 100;
+                }
+            }
+
             $metrics['volatility'] = $latest['volatility'] ?? 0;
             $metrics['sharpe_ratio'] = $latest['sharpe_ratio'] ?? 0;
             $metrics['max_drawdown'] = $latest['max_drawdown'] ?? 0;

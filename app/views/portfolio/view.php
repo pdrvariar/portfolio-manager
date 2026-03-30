@@ -221,6 +221,13 @@ ob_start();
                     'class' => 'border-primary',
                     'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
             ];
+
+            $metricsList[] = [
+                'label' => ($metrics['is_short_period'] ?? false) ? 'Perf. Anual Real (Sem Aportes)' : 'Performance Anual Real (Sem Aportes)',
+                'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0),
+                'class' => 'border-success',
+                'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+            ];
             
             $metricsList[] = [
                     'label' => 'Retorno Real (Sem Aportes)',
