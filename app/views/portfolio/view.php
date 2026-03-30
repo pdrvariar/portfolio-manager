@@ -213,8 +213,22 @@ ob_start();
                 ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark']
         ];
 
-        // Adiciona métrica de ROI se houver aportes
+        // Se houver aportes, adicionamos métricas de Retorno Real e ROI
         if ($hasDeposits) {
+            $metricsList[] = [
+                    'label' => 'Performance Real (Sem Aportes)',
+                    'val' => formatPercentage($metrics['strategy_return'] ?? 0),
+                    'class' => 'border-primary',
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+            ];
+            
+            $metricsList[] = [
+                    'label' => 'Retorno Real (Sem Aportes)',
+                    'val' => formatCurrency(($portfolio['initial_capital'] * ($metrics['strategy_return'] ?? 0) / 100), $portfolio['output_currency']),
+                    'class' => 'border-info',
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+            ];
+
             $metricsList[] = [
                     'label' => 'ROI (com aportes)',
                     'val' => formatPercentage($metrics['roi'] ?? 0),
@@ -224,11 +238,16 @@ ob_start();
         }
 
         foreach ($metricsList as $m): ?>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="card metric-card shadow-sm h-100 border-start border-4 <?php echo $m['class']; ?>">
                     <div class="card-body">
                         <h6 class="text-muted small text-uppercase fw-bold"><?php echo $m['label']; ?></h6>
                         <h3 class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
+                        <?php if ($m['label'] == 'Retorno Real (Sem Aportes)'): ?>
+                            <div class="mt-2 small text-muted">
+                                Capital Inicial: <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
+                            </div>
+                        <?php endif; ?>
                         <?php if ($m['label'] == 'ROI (com aportes)' && $hasDeposits): ?>
                             <div class="mt-2 small text-muted">
                                 Investido: <?php echo formatCurrency($metrics['total_invested'], $portfolio['output_currency']); ?>
