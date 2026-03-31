@@ -448,6 +448,7 @@ class BacktestService {
             'value_chart' => $chartService->createValueChart($results),
             'composition_chart' => $chartService->createCompositionChart($results, $assets),
             'returns_chart' => $chartService->createAnnualReturnsChart($results),
+            'strategy_returns_chart' => $chartService->createAnnualStrategyReturnsChart($results),
             // NOVOS GRÁFICOS
             'strategy_performance_chart' => $chartService->createStrategyPerformanceChart($results),
             'interest_chart' => $chartService->createInterestChart($results)

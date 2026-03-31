@@ -486,16 +486,22 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 <?php endif; ?>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Composição Histórica</h5></div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="compositionChart"></canvas></div></div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Retorno por Ano</h5></div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="returnsChart"></canvas></div></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Retorno por Ano Real (Sem Aportes)</h5></div>
+                <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="strategyReturnsChart"></canvas></div></div>
             </div>
         </div>
     </div>
@@ -825,6 +831,35 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 }
             }
         });
+
+        if (chartData.strategy_returns_chart) {
+            new Chart(document.getElementById('strategyReturnsChart'), {
+                type: 'bar',
+                data: chartData.strategy_returns_chart,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Retorno Real: ${context.raw.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         <?php if ($hasDeposits && isset($chartData['audit_log'])): ?>
         // Gráfico de Aportes

@@ -109,6 +109,7 @@ class ChartService {
 
         // Agrupa os valores mensais por ano
         foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue;
             $year = date('Y', strtotime($date));
             $dataByYear[$year][] = $data['total_value'];
         }
@@ -130,6 +131,42 @@ class ChartService {
             'labels' => $labels,
             'datasets' => [[
                 'label' => 'Retorno Anual (%)',
+                'data' => $returns,
+                'backgroundColor' => $colors,
+                'borderColor' => $colors,
+                'borderWidth' => 1
+            ]]
+        ];
+    }
+
+    public function createAnnualStrategyReturnsChart($results) {
+        $annualReturns = [];
+        $dataByYear = [];
+
+        // Agrupa os valores da estratégia por ano
+        foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue;
+            $year = date('Y', strtotime($date));
+            $dataByYear[$year][] = $data['strategy_value'] ?? $data['total_value'];
+        }
+
+        foreach ($dataByYear as $year => $values) {
+            $startValue = $values[0];
+            $endValue = end($values);
+            
+            if ($startValue > 0) {
+                $annualReturns[$year] = (($endValue - $startValue) / $startValue) * 100;
+            }
+        }
+
+        $labels = array_keys($annualReturns);
+        $returns = array_values($annualReturns);
+        $colors = array_map(fn($r) => $r >= 0 ? '#28a745' : '#dc3545', $returns);
+
+        return [
+            'labels' => $labels,
+            'datasets' => [[
+                'label' => 'Retorno Real (Sem Aportes) (%)',
                 'data' => $returns,
                 'backgroundColor' => $colors,
                 'borderColor' => $colors,
