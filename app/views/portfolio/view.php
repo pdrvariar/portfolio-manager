@@ -351,8 +351,21 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             <?php endif; ?>
                         </p>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PROJEÇÃO</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <label for="projectionYears" class="me-2 small fw-bold text-muted text-uppercase" style="white-space: nowrap;">Período:</label>
+                            <select id="projectionYears" class="form-select form-select-sm border-0 bg-light-subtle shadow-sm rounded-pill px-3" style="width: 100px;">
+                                <option value="5">5 anos</option>
+                                <option value="10" selected>10 anos</option>
+                                <option value="15">15 anos</option>
+                                <option value="20">20 anos</option>
+                                <option value="25">25 anos</option>
+                                <option value="30">30 anos</option>
+                            </select>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PROJEÇÃO</span>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body bg-light-subtle">
@@ -365,8 +378,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         </div>
                         <div class="col-md-4">
                             <div class="p-3 bg-white rounded-4 border shadow-sm">
-                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio em 10 anos</div>
-                                <div class="h4 fw-bold mb-0 text-primary">
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase" id="labelProjectionYears">Patrimônio em 10 anos</div>
+                                <div class="h4 fw-bold mb-0 text-primary" id="valueProjectionFinal">
                                     <?php 
                                     $projectionValues = $chartData['projection_chart']['datasets'][0]['data'];
                                     echo formatCurrency(end($projectionValues), $portfolio['output_currency']); 
@@ -377,7 +390,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         <div class="col-md-4">
                             <div class="p-3 bg-white rounded-4 border shadow-sm">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase">Total Investido (Aportes)</div>
-                                <div class="h4 fw-bold mb-0 text-secondary">
+                                <div class="h4 fw-bold mb-0 text-secondary" id="valueProjectionInvested">
                                     <?php 
                                     $investedValues = $chartData['projection_chart']['datasets'][1]['data'];
                                     echo formatCurrency(end($investedValues), $portfolio['output_currency']); 
@@ -1335,7 +1348,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         // Gráfico de Projeção
         if (chartData.projection_chart && document.getElementById('projectionChart')) {
-            new Chart(document.getElementById('projectionChart'), {
+            window.projectionChartInstance = new Chart(document.getElementById('projectionChart'), {
                 type: 'line',
                 data: chartData.projection_chart,
                 options: {
@@ -1376,6 +1389,44 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         }
                     }
                 }
+            });
+        }
+
+        // Lógica para atualização dinâmica do Gráfico de Projeção (Anos)
+        const projectionYearsSelect = document.getElementById('projectionYears');
+        if (projectionYearsSelect) {
+            projectionYearsSelect.addEventListener('change', function() {
+                const years = this.value;
+                const portfolioId = <?= $portfolio['id'] ?>;
+                const outputCurrency = '<?= $portfolio['output_currency'] ?>';
+                
+                // Mostrar loading ou desabilitar select (opcional)
+                this.disabled = true;
+                
+                fetch(`/index.php?url=api/portfolio/projection/${portfolioId}&years=${years}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.disabled = false;
+                        if (!data.success) {
+                            console.error('Erro ao carregar projeção:', data.message);
+                            return;
+                        }
+
+                        // Atualiza o gráfico
+                        if (window.projectionChartInstance) {
+                            window.projectionChartInstance.data = data.chart;
+                            window.projectionChartInstance.update();
+                        }
+
+                        // Atualiza os labels e valores nos cards
+                        document.getElementById('labelProjectionYears').innerText = `Patrimônio em ${years} anos`;
+                        document.getElementById('valueProjectionFinal').innerText = formatCurrencyJS(data.final_value, outputCurrency);
+                        document.getElementById('valueProjectionInvested').innerText = formatCurrencyJS(data.total_invested, outputCurrency);
+                    })
+                    .catch(error => {
+                        this.disabled = false;
+                        console.error('Erro na requisição de projeção:', error);
+                    });
             });
         }
 

@@ -35,6 +35,7 @@ function setupRoutes(Router $router) {
     $router->add('api/assets/update', ['controller' => 'asset', 'action' => 'updateApi']);  
     $router->add('api/assets/{id:\d+}', ['controller' => 'asset', 'action' => 'getAssetApi']); 
     $router->add('api/assets/benchmark/{id:\d+}', ['controller' => 'asset', 'action' => 'getBenchmarkData']);
+    $router->add('api/portfolio/projection/{id:\d+}', ['controller' => 'portfolio', 'action' => 'apiProjection']);
     
     
     // --- Rotas de Perfil ---

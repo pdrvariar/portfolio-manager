@@ -329,6 +329,66 @@ class PortfolioController {
         }
     }
 
+    public function apiProjection() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+        $years = isset($_GET['years']) ? (int)$_GET['years'] : 10;
+        
+        // Limita os anos para evitar abusos
+        $allowedYears = [5, 10, 15, 20, 25, 30];
+        if (!in_array($years, $allowedYears)) {
+            $years = 10;
+        }
+
+        $portfolio = $this->portfolioModel->findById($id);
+        if (!$portfolio) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Portfólio não encontrado']);
+            exit;
+        }
+
+        $latest = $this->portfolioModel->getLatestSimulation($id);
+        if (!$latest) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Simulação não encontrada']);
+            exit;
+        }
+
+        $metrics = $latest;
+        
+        $monthlyDeposit = 0;
+        if (!empty($portfolio['deposit_amount'])) {
+            $monthlyDeposit = (float)$portfolio['deposit_amount'];
+            if ($portfolio['deposit_frequency'] == 'quarterly') {
+                $monthlyDeposit /= 3;
+            } elseif ($portfolio['deposit_frequency'] == 'biannual') {
+                $monthlyDeposit /= 6;
+            } elseif ($portfolio['deposit_frequency'] == 'annual') {
+                $monthlyDeposit /= 12;
+            }
+        }
+
+        $projectionService = new ProjectionService();
+        $projectionRaw = $projectionService->calculateProjection(
+            $metrics['total_value'], 
+            $metrics['strategy_annual_return'], 
+            $monthlyDeposit,
+            $years
+        );
+        
+        $chartData = $projectionService->formatProjectionChart($projectionRaw);
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'chart' => $chartData,
+            'final_value' => (float)end($projectionRaw)['total_value'],
+            'total_invested' => (float)end($projectionRaw)['total_invested'],
+            'years' => $years
+        ]);
+        exit;
+    }
+
     /**
      * POST: Processa a exclusão com lógica de permissão Admin
      */
