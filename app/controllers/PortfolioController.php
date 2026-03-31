@@ -223,7 +223,7 @@ class PortfolioController {
 
             // Gera projeção futura se tivermos um retorno positivo
             if ($metrics['strategy_annual_return'] > 0) {
-                $projectionService = new \app\services\ProjectionService();
+                $projectionService = new ProjectionService();
                 
                 // Pega valor do aporte do portfólio (se houver algum configurado)
                 $monthlyDeposit = 0;

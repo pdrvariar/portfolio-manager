@@ -1,9 +1,5 @@
 <?php
 
-namespace app\services;
-
-use DateTime;
-
 class ProjectionService {
     /**
      * Calcula a projeção de patrimônio futuro baseada em um valor inicial, aportes e taxa de retorno.
@@ -23,7 +19,7 @@ class ProjectionService {
         $monthlyRate = pow(1 + ($annualReturn / 100), 1 / 12) - 1;
         
         $months = $years * 12;
-        $startDate = new DateTime();
+        $startDate = new \DateTime();
         
         // Adiciona o ponto inicial
         $projection[$startDate->format('Y-m-d')] = [
