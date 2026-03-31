@@ -416,9 +416,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     </div>
                     <div class="d-flex align-items-center gap-2 bg-light p-2 rounded-3 border">
                         <label for="currentPatrimony" class="smaller fw-bold text-muted mb-0">Patrimônio Atual:</label>
-                        <div class="input-group input-group-sm" style="width: 180px;">
+                        <div class="input-group input-group-sm" style="width: 200px;">
                             <span class="input-group-text bg-white border-0 pe-1"><?= $portfolio['output_currency'] === 'BRL' ? 'R$' : '$' ?></span>
-                            <input type="number" step="0.01" class="form-control border-0 shadow-none bg-white" id="currentPatrimony" value="<?= $metrics['total_value'] ?>">
+                            <input type="text" class="form-control border-0 shadow-none bg-white fw-bold" id="currentPatrimony" value="<?= number_format($metrics['total_value'], 2, ',', '.') ?>">
                         </div>
                     </div>
                 </div>
@@ -1024,8 +1024,23 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         // Lógica para Projeção de Patrimônio Futuro (JS)
         const currentPatrimonyInput = document.getElementById('currentPatrimony');
         if (currentPatrimonyInput) {
-            currentPatrimonyInput.addEventListener('input', function() {
-                const currentValue = parseFloat(this.value) || 0;
+            currentPatrimonyInput.addEventListener('input', function(e) {
+                // Remove tudo que não é dígito
+                let value = this.value.replace(/\D/g, '');
+                
+                // Formata como moeda
+                if (value.length > 0) {
+                    value = (parseInt(value) / 100).toFixed(2);
+                    this.value = parseFloat(value).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                } else {
+                    this.value = '0,00';
+                }
+
+                // Cálculo da projeção
+                const numericValue = parseFloat(value) || 0;
                 const monthlyDeposit = <?= $monthlyDeposit ?>;
                 const annualReturn = <?= $metrics['strategy_annual_return'] ?? $metrics['annual_return'] ?>;
                 const monthlyRate = Math.pow(1 + (annualReturn / 100), 1/12) - 1;
@@ -1037,10 +1052,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     let futureValue = 0;
 
                     if (monthlyRate > 0) {
-                        futureValue = currentValue * Math.pow(1 + monthlyRate, n) + 
+                        futureValue = numericValue * Math.pow(1 + monthlyRate, n) + 
                                      monthlyDeposit * ((Math.pow(1 + monthlyRate, n) - 1) / monthlyRate);
                     } else {
-                        futureValue = currentValue + (monthlyDeposit * n);
+                        futureValue = numericValue + (monthlyDeposit * n);
                     }
 
                     // Atualiza o título (valor completo)
