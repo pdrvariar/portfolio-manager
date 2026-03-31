@@ -210,7 +210,9 @@ ob_start();
                         'text'  => 'text-success'
                 ],
                 ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility']), 'class' => 'border-warning', 'text' => 'text-dark'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark']
+                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark'],
+                ['label' => 'Maior Alta Mensal', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0), 'class' => 'border-success', 'text' => 'text-success'],
+                ['label' => 'Maior Queda Mensal', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0), 'class' => 'border-danger', 'text' => 'text-danger'],
         ];
 
         // Se houver aportes, adicionamos métricas de Retorno Real e ROI

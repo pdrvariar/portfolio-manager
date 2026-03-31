@@ -395,6 +395,10 @@ class BacktestService {
         // Volatilidade da Estratégia (sem aportes)
         $vol = $this->calculateVolatility($strategyReturns);
         
+        // Maior Alta e Maior Queda Mensal (da Estratégia)
+        $maxMonthlyGain = !empty($strategyReturns) ? max($strategyReturns) : 0;
+        $maxMonthlyLoss = !empty($strategyReturns) ? min($strategyReturns) : 0;
+        
         $riskFreeRate = 0.10;
         $excessReturn = $strategyAnnualReturn - $riskFreeRate;
         $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
@@ -419,7 +423,9 @@ class BacktestService {
             // NOVAS MÉTRICAS
             'strategy_return' => $strategyReturn,
             'interest_earned' => $interestEarned,
-            'final_without_deposits' => $finalWithoutDeposits
+            'final_without_deposits' => $finalWithoutDeposits,
+            'max_monthly_gain' => $maxMonthlyGain * 100,
+            'max_monthly_loss' => $maxMonthlyLoss * 100
         ];
     }
 
@@ -460,8 +466,9 @@ class BacktestService {
         $sql = "INSERT INTO simulation_results 
             (portfolio_id, simulation_date, total_value, annual_return, volatility, 
             max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
-            interest_earned, roi, strategy_return, strategy_annual_return) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            interest_earned, roi, strategy_return, strategy_annual_return, 
+            max_monthly_gain, max_monthly_loss) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -479,7 +486,9 @@ class BacktestService {
             $metrics['interest_earned'] ?? 0,
             $metrics['roi'] ?? 0,
             $metrics['strategy_return'] ?? 0,
-            $metrics['strategy_annual_return'] ?? 0
+            $metrics['strategy_annual_return'] ?? 0,
+            $metrics['max_monthly_gain'] ?? 0,
+            $metrics['max_monthly_loss'] ?? 0
         ]);
         return $this->db->lastInsertId();
     }

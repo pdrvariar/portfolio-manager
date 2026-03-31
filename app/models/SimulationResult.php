@@ -42,8 +42,9 @@ class SimulationResult {
         $sql = "INSERT INTO simulation_results 
                 (portfolio_id, simulation_date, total_value, annual_return, 
                 volatility, max_drawdown, sharpe_ratio, chart_data, total_deposits, 
-                total_invested, interest_earned, roi, strategy_return, strategy_annual_return) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                total_invested, interest_earned, roi, strategy_return, strategy_annual_return,
+                max_monthly_gain, max_monthly_loss) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -60,7 +61,9 @@ class SimulationResult {
             $data['interest_earned'] ?? 0,
             $data['roi'] ?? 0,
             $data['strategy_return'] ?? 0,
-            $data['strategy_annual_return'] ?? 0
+            $data['strategy_annual_return'] ?? 0,
+            $data['max_monthly_gain'] ?? 0,
+            $data['max_monthly_loss'] ?? 0
         ]);
         
         return $this->db->lastInsertId();
