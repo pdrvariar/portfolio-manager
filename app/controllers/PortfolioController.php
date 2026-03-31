@@ -220,6 +220,36 @@ class PortfolioController {
 
         if ($latest && isset($latest['chart_data'])) {
             $chartData = json_decode($latest['chart_data'], true);
+
+            // Gera projeção futura se tivermos um retorno positivo
+            if ($metrics['strategy_annual_return'] > 0) {
+                $projectionService = new \app\services\ProjectionService();
+                
+                // Pega valor do aporte do portfólio (se houver algum configurado)
+                $monthlyDeposit = 0;
+                if (!empty($portfolio['deposit_amount'])) {
+                    // Se o aporte for mensal ou o usuário apenas preencheu o valor para projeção
+                    $monthlyDeposit = (float)$portfolio['deposit_amount'];
+                    
+                    // Se o aporte configurado não for mensal (ex: trimestral), diluímos para fins de projeção simplificada mensal
+                    if ($portfolio['deposit_frequency'] == 'quarterly') {
+                        $monthlyDeposit /= 3;
+                    } elseif ($portfolio['deposit_frequency'] == 'biannual') {
+                        $monthlyDeposit /= 6;
+                    } elseif ($portfolio['deposit_frequency'] == 'annual') {
+                        $monthlyDeposit /= 12;
+                    }
+                }
+                
+                $projectionRaw = $projectionService->calculateProjection(
+                    $metrics['final_value'], 
+                    $metrics['strategy_annual_return'], 
+                    $monthlyDeposit,
+                    10 // 10 anos de projeção
+                );
+                
+                $chartData['projection_chart'] = $projectionService->formatProjectionChart($projectionRaw);
+            }
         }
 
         $start = new DateTime($portfolio['start_date']);

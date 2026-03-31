@@ -334,6 +334,76 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 }
 ?>
 
+    <?php if (isset($chartData['projection_chart'])): ?>
+    <!-- NOVO: Gráfico de Projeção de Patrimônio Futuro -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Projeção de Patrimônio Futuro (10 anos)</h5>
+                        <p class="text-muted small mb-0">
+                            Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 2) ?>%</strong>
+                            <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
+                                e aporte mensal de <strong><?= formatCurrency($monthlyDeposit, $portfolio['output_currency']) ?></strong>.
+                            <?php else: ?>
+                                (sem novos aportes).
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PROJEÇÃO</span>
+                    </div>
+                </div>
+                <div class="card-body bg-light-subtle">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-white rounded-4 border shadow-sm">
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio Inicial</div>
+                                <div class="h4 fw-bold mb-0 text-dark"><?= formatCurrency($metrics['final_value'], $portfolio['output_currency']) ?></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-white rounded-4 border shadow-sm">
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio em 10 anos</div>
+                                <div class="h4 fw-bold mb-0 text-primary">
+                                    <?php 
+                                    $projectionValues = $chartData['projection_chart']['datasets'][0]['data'];
+                                    echo formatCurrency(end($projectionValues), $portfolio['output_currency']); 
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-white rounded-4 border shadow-sm">
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Total Investido (Aportes)</div>
+                                <div class="h4 fw-bold mb-0 text-secondary">
+                                    <?php 
+                                    $investedValues = $chartData['projection_chart']['datasets'][1]['data'];
+                                    echo formatCurrency(end($investedValues), $portfolio['output_currency']); 
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="projectionChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 py-3">
+                    <div class="alert alert-soft-warning border-0 rounded-4 small mb-0 d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                        <div>
+                            <strong>Importante:</strong> Esta é uma simulação baseada em rentabilidade passada, que não é garantia de rentabilidade futura. 
+                            O cálculo utiliza juros compostos mensais e considera que os aportes configurados serão mantidos fielmente ao longo de todo o período.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- NOVO: Gráfico de Performance da Estratégia (sem aportes) -->
     <div class="row mb-4">
         <div class="col-12">
@@ -1262,6 +1332,52 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 }
             }
         });
+
+        // Gráfico de Projeção
+        if (chartData.projection_chart && document.getElementById('projectionChart')) {
+            new Chart(document.getElementById('projectionChart'), {
+                type: 'line',
+                data: chartData.projection_chart,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('pt-BR', {
+                                        style: 'currency',
+                                        currency: '<?php echo $portfolio['output_currency']; ?>',
+                                        maximumFractionDigits: 0
+                                    }).format(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += new Intl.NumberFormat('pt-BR', {
+                                        style: 'currency',
+                                        currency: '<?php echo $portfolio['output_currency']; ?>'
+                                    }).format(context.parsed.y);
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         // Funções para edição rápida de alocações
         function openQuickEditModal() {
