@@ -309,6 +309,7 @@ class BacktestService {
                 'deposit_made' => $depositThisMonth + $strategicDepositThisMonth,
                 'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
                 'total_deposits_to_date' => $totalDeposits,
+                'fx_rate' => $currentFxRate,
                 // NOVO: Adiciona os valores da estratégia
                 'strategy_value' => $portfolioWithoutDeposits,
                 'strategy_variation' => $strategyVariation

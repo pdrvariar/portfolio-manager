@@ -211,8 +211,8 @@ ob_start();
                 ],
                 ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility']), 'class' => 'border-warning', 'text' => 'text-dark'],
                 ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark'],
-                ['label' => 'Maior Alta Mensal', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0), 'class' => 'border-success', 'text' => 'text-success'],
-                ['label' => 'Maior Queda Mensal', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0), 'class' => 'border-danger', 'text' => 'text-danger'],
+                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0), 'class' => 'border-success', 'text' => 'text-success'],
+                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0), 'class' => 'border-danger', 'text' => 'text-danger'],
         ];
 
         // Se houver aportes, adicionamos métricas de Retorno Real e ROI
@@ -513,7 +513,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <h5 class="mb-0 fw-bold">Auditoria Mensal</h5>
             <div class="d-flex gap-2">
                 <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data..." style="width: 180px;">
-                <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></button>
+                <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary" title="Exportar Auditoria Completa"><i class="bi bi-download"></i> CSV</button>
             </div>
         </div>
         <div class="card-body p-0">
@@ -1025,25 +1025,112 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         });
 
         function exportAuditToCSV() {
-            const headers = ["Referência", "Saldo", "Variação (%)", "Status", "Aportes"];
-            let csv = [headers.join(";")];
+            if (!window.simulationAuditLog) {
+                alert("Dados de auditoria não disponíveis.");
+                return;
+            }
 
-            document.querySelectorAll("#auditTable tbody tr").forEach(row => {
-                const cols = row.querySelectorAll("td");
-                if (cols.length >= 5) {
-                    const reference = `"${cols[0].innerText}"`;
-                    const balance = `"${cols[1].innerText.replace(/[^\d,-]/g,'')}"`;
-                    const variation = `"${cols[2].innerText.replace(/[^\d,-]/g,'')}"`;
-                    const status = `"${cols[3].innerText}"`;
-                    const deposits = `"${cols[4].innerText.replace(/[^\d,-]/g,'')}"`;
-                    csv.push([reference, balance, variation, status, deposits].join(";"));
+            const auditLog = window.simulationAuditLog;
+            const assetsInfo = <?php echo json_encode($assets); ?>;
+            const currency = '<?php echo $portfolio['output_currency']; ?>';
+            const portfolioName = '<?php echo addslashes($portfolio['name']); ?>';
+            const initialCapitalValue = <?php echo $portfolio['initial_capital']; ?>;
+            const assetMap = {};
+            assetsInfo.forEach(a => assetMap[a.asset_id] = a.name);
+
+            // Coletar todos os IDs de ativos únicos presentes no log
+            const allAssetIds = new Set();
+            Object.values(auditLog).forEach(data => {
+                if (data.asset_values) {
+                    Object.keys(data.asset_values).forEach(id => allAssetIds.add(id));
                 }
             });
+            const assetIds = Array.from(allAssetIds);
 
-            const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
+            // Metadados do Portfólio
+            let csv = ["\uFEFF" + `Relatório de Auditoria: ${portfolioName}`];
+            csv.push(`Moeda: ${currency}`);
+            csv.push(`Capital Inicial: ${initialCapitalValue.toFixed(2).replace('.', ',')}`);
+            csv.push(""); // Linha em branco
+
+            // Cabeçalhos
+            let headers = [
+                "Data", 
+                "Saldo Total", 
+                "Variação Mensal (%)", 
+                "Aporte do Mês", 
+                "Aporte Acumulado",
+                "Patrimônio Líquido (sem aportes)",
+                "ROI Estratégia Puro (%)",
+                "Câmbio (USD/BRL)",
+                "Status Rebal."
+            ];
+            
+            assetIds.forEach(id => {
+                const name = assetMap[id] || id;
+                headers.push(`${name} - Valor`);
+                headers.push(`${name} - %`);
+                headers.push(`${name} - Antes Rebal.`);
+                headers.push(`${name} - Depois Rebal.`);
+                headers.push(`${name} - Delta Rebal.`);
+            });
+
+            csv.push(headers.join(";"));
+
+            // Ordenar datas
+            const dates = Object.keys(auditLog).filter(d => d !== '_metadata').sort();
+
+            let prevTotalValue = initialCapitalValue;
+
+            dates.forEach(date => {
+                const data = auditLog[date];
+                const dateObj = new Date(date);
+                const dateLabel = dateObj.toLocaleDateString('pt-BR', {month: '2-digit', year: 'numeric'});
+                
+                const totalValue = data.total_value.toFixed(2).replace('.', ',');
+                
+                // Cálculo de variação mensal real (incluindo aporte no saldo final)
+                const variation = (((data.total_value / prevTotalValue) - 1) * 100).toFixed(2).replace('.', ',');
+                
+                const deposit = (data.deposit_made || 0).toFixed(2).replace('.', ',');
+                const totalDepositsToDate = (data.total_deposits_to_date || 0).toFixed(2).replace('.', ',');
+                const strategyValue = (data.strategy_value || 0).toFixed(2).replace('.', ',');
+                const strategyVariation = (data.strategy_variation || 0).toFixed(2).replace('.', ',');
+                const fxRate = data.fx_rate ? data.fx_rate.toFixed(4).replace('.', ',') : "-";
+                const status = data.rebalanced ? "Rebalanceado" : "Mantido";
+
+                let line = [
+                    dateLabel, 
+                    totalValue, 
+                    variation, 
+                    deposit, 
+                    totalDepositsToDate, 
+                    strategyValue, 
+                    strategyVariation,
+                    fxRate,
+                    status
+                ];
+
+                assetIds.forEach(id => {
+                    const val = data.asset_values[id] || 0;
+                    const percent = ((val / data.total_value) * 100).toFixed(2).replace('.', ',');
+                    const trade = (data.trades && data.trades[id]) ? data.trades[id] : null;
+                    
+                    line.push(val.toFixed(2).replace('.', ','));
+                    line.push(percent);
+                    line.push(trade ? trade.pre_value.toFixed(2).replace('.', ',') : "-");
+                    line.push(trade ? trade.post_value.toFixed(2).replace('.', ',') : "-");
+                    line.push(trade ? trade.delta.toFixed(2).replace('.', ',') : "-");
+                });
+
+                csv.push(line.join(";"));
+                prevTotalValue = data.total_value;
+            });
+
+            const blob = new Blob([csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Auditoria_<?php echo $portfolio['id']; ?>_<?php echo date('Y-m-d'); ?>.csv`;
+            link.download = `Auditoria_Completa_<?php echo $portfolio['id']; ?>_<?php echo date('Y-m-d'); ?>.csv`;
             link.click();
         }
 

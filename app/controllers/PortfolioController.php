@@ -207,6 +207,8 @@ class PortfolioController {
             $metrics['volatility'] = $latest['volatility'] ?? 0;
             $metrics['sharpe_ratio'] = $latest['sharpe_ratio'] ?? 0;
             $metrics['max_drawdown'] = $latest['max_drawdown'] ?? 0;
+            $metrics['max_monthly_gain'] = $latest['max_monthly_gain'] ?? 0;
+            $metrics['max_monthly_loss'] = $latest['max_monthly_loss'] ?? 0;
         }
 
         $chartData = [
