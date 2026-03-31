@@ -145,6 +145,7 @@ class BacktestService {
 
         $results = [];
         $currentBalances = [];
+        $currentQuantities = []; // Rastreia quantidades de cada ativo
         $dates = array_keys($historicalData);
         $lastPrices = [];
         $lastFxRate = null;
@@ -157,9 +158,16 @@ class BacktestService {
         $portfolioWithoutDeposits = $initialCapital;
         $strategyOnlyValues = []; // Armazena valores excluindo aportes
 
-        // Inicialização do saldo
+        // Inicialização do saldo e quantidades
         foreach ($assets as $asset) {
-            $currentBalances[$asset['asset_id']] = $initialCapital * ($asset['allocation_percentage'] / 100);
+            $assetId = $asset['asset_id'];
+            $initialAssetValue = $initialCapital * ($asset['allocation_percentage'] / 100);
+            $currentBalances[$assetId] = $initialAssetValue;
+            
+            // Determina a quantidade inicial baseada no preço do primeiro mês
+            $firstDate = $dates[0];
+            $initialPrice = (float)($historicalData[$firstDate][$assetId] ?? 1.0);
+            $currentQuantities[$assetId] = $initialPrice > 0 ? ($initialAssetValue / $initialPrice) : 0;
         }
 
         foreach ($dates as $index => $date) {
@@ -167,12 +175,17 @@ class BacktestService {
             $currentFxRate = $fxData[$date] ?? null;
             $totalMonthValue = 0;
             $assetValues = [];
+            $assetPrices = [];
+            $assetQuantities = [];
+            $assetPurchases = []; // Detalha o que foi comprado no mês (aporte)
 
             foreach ($assets as $asset) {
                 $assetId = $asset['asset_id'];
                 $dbValue = (float)($monthData[$assetId] ?? 0);
                 $factor = (float)($asset['performance_factor'] ?? 1.0);
                 $monthlyReturn = 0;
+
+                $assetPrices[$assetId] = $dbValue;
 
                 if ($asset['asset_type'] === 'TAXA_MENSAL') {
                     $monthlyReturn = ($dbValue * $factor) / 100;
@@ -193,7 +206,19 @@ class BacktestService {
                 }
 
                 $currentBalances[$assetId] *= (1 + $monthlyReturn);
+                
+                // Atualiza quantidade para ativos que não são taxa mensal (onde quantidade faz sentido)
+                // Se for taxa mensal, a "quantidade" é o próprio saldo
+                if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                    // A quantidade não muda com a valorização do preço, apenas com aportes/rebal
+                    // Mas precisamos garantir que ela esteja sincronizada com o saldo se houver arredondamentos
+                    // Para fins de simulação, mantemos a quantidade e atualizamos o saldo.
+                } else {
+                    $currentQuantities[$assetId] = $currentBalances[$assetId];
+                }
+
                 $assetValues[$assetId] = $currentBalances[$assetId];
+                $assetQuantities[$assetId] = $currentQuantities[$assetId];
                 $totalMonthValue += $currentBalances[$assetId];
             }
 
@@ -228,8 +253,33 @@ class BacktestService {
                     foreach ($assets as $asset) {
                         $assetId = $asset['asset_id'];
                         $currentAllocation = $currentBalances[$assetId] / max($totalMonthValue, 0.001);
-                        $currentBalances[$assetId] += $depositThisMonth * $currentAllocation;
+                        $amountToAsset = $depositThisMonth * $currentAllocation;
+                        
+                        $currentBalances[$assetId] += $amountToAsset;
+                        
+                        // Atualiza quantidade comprada
+                        if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                            $price = (float)($monthData[$assetId] ?? 0);
+                            if ($price > 0) {
+                                $boughtQty = $amountToAsset / $price;
+                                $currentQuantities[$assetId] += $boughtQty;
+                                $assetPurchases[$assetId] = [
+                                    'amount' => $amountToAsset,
+                                    'quantity' => $boughtQty,
+                                    'price' => $price
+                                ];
+                            }
+                        } else {
+                            $currentQuantities[$assetId] = $currentBalances[$assetId];
+                            $assetPurchases[$assetId] = [
+                                'amount' => $amountToAsset,
+                                'quantity' => $amountToAsset,
+                                'price' => 1.0
+                            ];
+                        }
+
                         $assetValues[$assetId] = $currentBalances[$assetId];
+                        $assetQuantities[$assetId] = $currentQuantities[$assetId];
                     }
 
                     $totalMonthValue += $depositThisMonth;
@@ -254,8 +304,33 @@ class BacktestService {
                         foreach ($assets as $asset) {
                             $assetId = $asset['asset_id'];
                             $currentAllocation = $currentBalances[$assetId] / max($totalMonthValue, 0.001);
-                            $currentBalances[$assetId] += $strategicDepositThisMonth * $currentAllocation;
+                            $amountToAsset = $strategicDepositThisMonth * $currentAllocation;
+                            
+                            $currentBalances[$assetId] += $amountToAsset;
+
+                            // Atualiza quantidade comprada
+                            if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                                $price = (float)($monthData[$assetId] ?? 0);
+                                if ($price > 0) {
+                                    $boughtQty = $amountToAsset / $price;
+                                    $currentQuantities[$assetId] += $boughtQty;
+                                    $assetPurchases[$assetId] = [
+                                        'amount' => $amountToAsset,
+                                        'quantity' => $boughtQty,
+                                        'price' => $price
+                                    ];
+                                }
+                            } else {
+                                $currentQuantities[$assetId] = $currentBalances[$assetId];
+                                $assetPurchases[$assetId] = [
+                                    'amount' => $amountToAsset,
+                                    'quantity' => $amountToAsset,
+                                    'price' => 1.0
+                                ];
+                            }
+
                             $assetValues[$assetId] = $currentBalances[$assetId];
+                            $assetQuantities[$assetId] = $currentQuantities[$assetId];
                         }
 
                         $totalMonthValue += $strategicDepositThisMonth;
@@ -287,27 +362,46 @@ class BacktestService {
                 foreach ($assets as $asset) {
                     $assetId = $asset['asset_id'];
                     $preValue = $currentBalances[$assetId];
+                    $preQty = $currentQuantities[$assetId];
+
                     $targetAllocation = (float)$asset['allocation_percentage'] / 100;
                     $postValue = $totalMonthValue * $targetAllocation;
+                    
+                    // Calcula nova quantidade após rebalanceamento
+                    $postQty = $preQty;
+                    if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                        $price = (float)($monthData[$assetId] ?? 0);
+                        $postQty = $price > 0 ? ($postValue / $price) : 0;
+                    } else {
+                        $postQty = $postValue;
+                    }
 
                     $trades[$assetId] = [
                         'pre_value' => $preValue,
                         'post_value' => $postValue,
-                        'delta' => $postValue - $preValue
+                        'pre_quantity' => $preQty,
+                        'post_quantity' => $postQty,
+                        'delta' => $postValue - $preValue,
+                        'delta_quantity' => $postQty - $preQty
                     ];
 
                     $currentBalances[$assetId] = $postValue;
+                    $currentQuantities[$assetId] = $postQty;
                     $assetValues[$assetId] = $postValue;
+                    $assetQuantities[$assetId] = $postQty;
                 }
             }
 
             $results[$date] = [
                 'total_value' => $totalMonthValue,
                 'asset_values' => $assetValues,
+                'asset_prices' => $assetPrices,
+                'asset_quantities' => $assetQuantities,
                 'rebalanced' => $wasRebalanced,
                 'trades' => $trades,
                 'deposit_made' => $depositThisMonth + $strategicDepositThisMonth,
                 'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
+                'deposit_details' => $assetPurchases,
                 'total_deposits_to_date' => $totalDeposits,
                 'fx_rate' => $currentFxRate,
                 // NOVO: Adiciona os valores da estratégia

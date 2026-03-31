@@ -1068,11 +1068,17 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             
             assetIds.forEach(id => {
                 const name = assetMap[id] || id;
+                headers.push(`${name} - Cotação`);
+                headers.push(`${name} - Qtd`);
                 headers.push(`${name} - Valor`);
                 headers.push(`${name} - %`);
-                headers.push(`${name} - Antes Rebal.`);
-                headers.push(`${name} - Depois Rebal.`);
-                headers.push(`${name} - Delta Rebal.`);
+                headers.push(`${name} - Compra Aporte (Qtd)`);
+                headers.push(`${name} - Qtd Antes Rebal.`);
+                headers.push(`${name} - Qtd Depois Rebal.`);
+                headers.push(`${name} - Delta Qtd Rebal.`);
+                headers.push(`${name} - Valor Antes Rebal.`);
+                headers.push(`${name} - Valor Depois Rebal.`);
+                headers.push(`${name} - Delta Valor Rebal.`);
             });
 
             csv.push(headers.join(";"));
@@ -1113,11 +1119,24 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
                 assetIds.forEach(id => {
                     const val = data.asset_values[id] || 0;
+                    const price = (data.asset_prices && data.asset_prices[id]) ? data.asset_prices[id] : 0;
+                    const qty = (data.asset_quantities && data.asset_quantities[id]) ? data.asset_quantities[id] : 0;
                     const percent = ((val / data.total_value) * 100).toFixed(2).replace('.', ',');
-                    const trade = (data.trades && data.trades[id]) ? data.trades[id] : null;
                     
+                    const trade = (data.trades && data.trades[id]) ? data.trades[id] : null;
+                    const purchase = (data.deposit_details && data.deposit_details[id]) ? data.deposit_details[id] : null;
+                    
+                    line.push(price.toFixed(4).replace('.', ','));
+                    line.push(qty.toFixed(6).replace('.', ','));
                     line.push(val.toFixed(2).replace('.', ','));
                     line.push(percent);
+                    
+                    line.push(purchase ? purchase.quantity.toFixed(6).replace('.', ',') : "0");
+                    
+                    line.push(trade ? trade.pre_quantity.toFixed(6).replace('.', ',') : "-");
+                    line.push(trade ? trade.post_quantity.toFixed(6).replace('.', ',') : "-");
+                    line.push(trade ? trade.delta_quantity.toFixed(6).replace('.', ',') : "-");
+                    
                     line.push(trade ? trade.pre_value.toFixed(2).replace('.', ',') : "-");
                     line.push(trade ? trade.post_value.toFixed(2).replace('.', ',') : "-");
                     line.push(trade ? trade.delta.toFixed(2).replace('.', ',') : "-");
