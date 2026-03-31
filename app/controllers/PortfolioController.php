@@ -353,7 +353,8 @@ class PortfolioController {
             exit;
         }
 
-        $latest = $this->portfolioModel->getLatestSimulation($id);
+        $simulationModel = new SimulationResult();
+        $latest = $simulationModel->getLatest($id);
         if (!$latest) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'Simulação não encontrada']);
