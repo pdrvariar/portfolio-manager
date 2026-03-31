@@ -333,6 +333,7 @@ class PortfolioController {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
         $years = isset($_GET['years']) ? (int)$_GET['years'] : 10;
+        $initialCapital = isset($_GET['initial_capital']) ? (float)str_replace(['.', ','], ['', '.'], $_GET['initial_capital']) : null;
         
         // Limita os anos para evitar abusos
         $allowedYears = [5, 10, 15, 20, 25, 30];
@@ -356,6 +357,11 @@ class PortfolioController {
 
         $metrics = $latest;
         
+        // Se não foi passado capital inicial, usa o valor final da simulação
+        if ($initialCapital === null) {
+            $initialCapital = (float)$metrics['final_value'];
+        }
+        
         $monthlyDeposit = 0;
         if (!empty($portfolio['deposit_amount'])) {
             $monthlyDeposit = (float)$portfolio['deposit_amount'];
@@ -370,7 +376,7 @@ class PortfolioController {
 
         $projectionService = new ProjectionService();
         $projectionRaw = $projectionService->calculateProjection(
-            $metrics['total_value'], 
+            $initialCapital, 
             $metrics['strategy_annual_return'], 
             $monthlyDeposit,
             $years

@@ -371,15 +371,22 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 <div class="card-body bg-light-subtle">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm">
-                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio Inicial</div>
-                                <div class="h4 fw-bold mb-0 text-dark"><?= formatCurrency($metrics['final_value'], $portfolio['output_currency']) ?></div>
+                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio Inicial (Simulado)</div>
+                                <div class="input-group input-group-sm mt-2">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <?= $portfolio['output_currency'] === 'BRL' ? 'R$' : '$' ?>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 bg-light fw-bold" id="projectionInitialValue" 
+                                           value="<?= number_format($metrics['final_value'], 2, ',', '.') ?>">
+                                </div>
+                                <div class="smaller text-muted mt-1">Valor atual do portfólio</div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm">
+                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase" id="labelProjectionYears">Patrimônio em 10 anos</div>
-                                <div class="h4 fw-bold mb-0 text-primary" id="valueProjectionFinal">
+                                <div class="h4 fw-bold mb-0 text-primary mt-2" id="valueProjectionFinal">
                                     <?php 
                                     $projectionValues = $chartData['projection_chart']['datasets'][0]['data'];
                                     echo formatCurrency(end($projectionValues), $portfolio['output_currency']); 
@@ -388,9 +395,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm">
+                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase">Total Investido (Aportes)</div>
-                                <div class="h4 fw-bold mb-0 text-secondary" id="valueProjectionInvested">
+                                <div class="h4 fw-bold mb-0 text-secondary mt-2" id="valueProjectionInvested">
                                     <?php 
                                     $investedValues = $chartData['projection_chart']['datasets'][1]['data'];
                                     echo formatCurrency(end($investedValues), $portfolio['output_currency']); 
@@ -1104,7 +1111,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         // 1. Define o log de auditoria globalmente para o cálculo do Beta
         window.simulationAuditLog = auditLog || {};
 
-        // Lógica para Projeção de Patrimônio Futuro (JS)
+        // Lógica para Projeção de Patrimônio Futuro (Cards de resumo)
         const currentPatrimonyInput = document.getElementById('currentPatrimony');
         if (currentPatrimonyInput) {
             currentPatrimonyInput.addEventListener('input', function(e) {
@@ -1122,7 +1129,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     this.value = '0,00';
                 }
 
-                // Cálculo da projeção
+                // Cálculo da projeção para os cards de 5 a 30 anos
                 const numericValue = parseFloat(value) || 0;
                 const monthlyDeposit = <?= $monthlyDeposit ?>;
                 const annualReturn = <?= $metrics['strategy_annual_return'] ?? $metrics['annual_return'] ?>;
@@ -1392,41 +1399,79 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             });
         }
 
-        // Lógica para atualização dinâmica do Gráfico de Projeção (Anos)
+        // Lógica para atualização dinâmica do Gráfico de Projeção (Anos e Capital Inicial)
         const projectionYearsSelect = document.getElementById('projectionYears');
+        const projectionInitialInput = document.getElementById('projectionInitialValue');
+
+        function updateProjection() {
+            if (!projectionYearsSelect) return;
+            
+            const years = projectionYearsSelect.value;
+            const initialCapital = projectionInitialInput ? projectionInitialInput.value : '';
+            const portfolioId = <?= $portfolio['id'] ?>;
+            const outputCurrency = '<?= $portfolio['output_currency'] ?>';
+            
+            // Desabilita controles durante o fetch
+            projectionYearsSelect.disabled = true;
+            if (projectionInitialInput) projectionInitialInput.disabled = true;
+            
+            fetch(`/index.php?url=api/portfolio/projection/${portfolioId}&years=${years}&initial_capital=${encodeURIComponent(initialCapital)}`)
+                .then(response => response.json())
+                .then(data => {
+                    projectionYearsSelect.disabled = false;
+                    if (projectionInitialInput) projectionInitialInput.disabled = false;
+                    
+                    if (!data.success) {
+                        console.error('Erro ao carregar projeção:', data.message);
+                        return;
+                    }
+
+                    // Atualiza o gráfico
+                    if (window.projectionChartInstance) {
+                        window.projectionChartInstance.data = data.chart;
+                        window.projectionChartInstance.update();
+                    }
+
+                    // Atualiza os labels e valores nos cards
+                    const labelYears = document.getElementById('labelProjectionYears');
+                    if (labelYears) labelYears.innerText = `Patrimônio em ${years} anos`;
+                    
+                    const valueFinal = document.getElementById('valueProjectionFinal');
+                    if (valueFinal) valueFinal.innerText = formatCurrencyJS(data.final_value, outputCurrency);
+                    
+                    const valueInvested = document.getElementById('valueProjectionInvested');
+                    if (valueInvested) valueInvested.innerText = formatCurrencyJS(data.total_invested, outputCurrency);
+                })
+                .catch(error => {
+                    projectionYearsSelect.disabled = false;
+                    if (projectionInitialInput) projectionInitialInput.disabled = false;
+                    console.error('Erro na requisição de projeção:', error);
+                });
+        }
+
         if (projectionYearsSelect) {
-            projectionYearsSelect.addEventListener('change', function() {
-                const years = this.value;
-                const portfolioId = <?= $portfolio['id'] ?>;
-                const outputCurrency = '<?= $portfolio['output_currency'] ?>';
-                
-                // Mostrar loading ou desabilitar select (opcional)
-                this.disabled = true;
-                
-                fetch(`/index.php?url=api/portfolio/projection/${portfolioId}&years=${years}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        this.disabled = false;
-                        if (!data.success) {
-                            console.error('Erro ao carregar projeção:', data.message);
-                            return;
-                        }
+            projectionYearsSelect.addEventListener('change', updateProjection);
+        }
 
-                        // Atualiza o gráfico
-                        if (window.projectionChartInstance) {
-                            window.projectionChartInstance.data = data.chart;
-                            window.projectionChartInstance.update();
-                        }
+        if (projectionInitialInput) {
+            projectionInitialInput.addEventListener('blur', updateProjection);
+            projectionInitialInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    updateProjection();
+                    this.blur();
+                }
+            });
 
-                        // Atualiza os labels e valores nos cards
-                        document.getElementById('labelProjectionYears').innerText = `Patrimônio em ${years} anos`;
-                        document.getElementById('valueProjectionFinal').innerText = formatCurrencyJS(data.final_value, outputCurrency);
-                        document.getElementById('valueProjectionInvested').innerText = formatCurrencyJS(data.total_invested, outputCurrency);
-                    })
-                    .catch(error => {
-                        this.disabled = false;
-                        console.error('Erro na requisição de projeção:', error);
+            // Máscara de moeda simples para o input
+            projectionInitialInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    value = (parseInt(value) / 100).toFixed(2);
+                    this.value = parseFloat(value).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
                     });
+                }
             });
         }
 
