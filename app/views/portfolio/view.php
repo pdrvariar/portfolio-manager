@@ -341,7 +341,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="card shadow-sm border-0 overflow-hidden">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Projeção de Patrimônio Futuro (10 anos)</h5>
+                        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)</h5>
                         <p class="text-muted small mb-0">
                             Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 2) ?>%</strong>
                             <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
@@ -1407,32 +1407,57 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             if (!projectionYearsSelect) return;
             
             const years = projectionYearsSelect.value;
-            const initialCapital = projectionInitialInput ? projectionInitialInput.value : '';
             const portfolioId = <?= $portfolio['id'] ?>;
             const outputCurrency = '<?= $portfolio['output_currency'] ?>';
             
             // Desabilita controles durante o fetch
             projectionYearsSelect.disabled = true;
             if (projectionInitialInput) projectionInitialInput.disabled = true;
+
+            // Filtra o initialCapital para remover qualquer coisa que não seja dígito, vírgula ou ponto
+            // Se o campo estiver vazio, envia vazio para o controlador usar o padrão
+            let initialCapitalParam = '';
+            if (projectionInitialInput && projectionInitialInput.value.trim() !== '') {
+                initialCapitalParam = projectionInitialInput.value.replace(/[^\d,.]/g, '');
+            }
             
-            fetch(`/index.php?url=api/portfolio/projection/${portfolioId}&years=${years}&initial_capital=${encodeURIComponent(initialCapital)}`)
-                .then(response => response.json())
+            fetch(`/index.php?url=api/portfolio/projection/${portfolioId}&years=${years}&initial_capital=${encodeURIComponent(initialCapitalParam)}`)
+                .then(response => {
+                    console.log('API Response status:', response.status);
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('Falha ao parsear JSON. Resposta recebida:', text);
+                            throw new Error('Resposta do servidor não é um JSON válido');
+                        }
+                    });
+                })
                 .then(data => {
+                    console.log('API Data received:', data);
                     projectionYearsSelect.disabled = false;
                     if (projectionInitialInput) projectionInitialInput.disabled = false;
                     
                     if (!data.success) {
                         console.error('Erro ao carregar projeção:', data.message);
+                        alert('Erro ao carregar projeção: ' + data.message);
                         return;
                     }
 
                     // Atualiza o gráfico
                     if (window.projectionChartInstance) {
+                        console.log('Updating chart instance...');
                         window.projectionChartInstance.data = data.chart;
                         window.projectionChartInstance.update();
+                        console.log('Chart updated.');
+                    } else {
+                        console.warn('window.projectionChartInstance not found!');
                     }
 
                     // Atualiza os labels e valores nos cards
+                    const titleYears = document.getElementById('titleProjectionYears');
+                    if (titleYears) titleYears.innerText = years;
+
                     const labelYears = document.getElementById('labelProjectionYears');
                     if (labelYears) labelYears.innerText = `Patrimônio em ${years} anos`;
                     
@@ -1446,6 +1471,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     projectionYearsSelect.disabled = false;
                     if (projectionInitialInput) projectionInitialInput.disabled = false;
                     console.error('Erro na requisição de projeção:', error);
+                    alert('Erro na requisição de projeção. Verifique o console.');
                 });
         }
 
