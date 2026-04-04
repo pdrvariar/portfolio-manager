@@ -682,7 +682,8 @@ class BacktestService {
 
         $freqMonths = $frequencyMap[$frequency] ?? 1;
 
-        // Verifica se é um mês de aporte
-        return $monthsDiff % $freqMonths == 0;
+        // O primeiro aporte começa no mês SEGUINTE ao do capital inicial (mês 0 = implantação do capital).
+        // monthsDiff == 0 significa que estamos na própria data de início: sem aporte.
+        return $monthsDiff > 0 && $monthsDiff % $freqMonths == 0;
     }
 }
