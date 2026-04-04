@@ -664,26 +664,35 @@ class BacktestService {
     }
 
     private function shouldMakeDeposit($date, $portfolioStartDate, $frequency, $currentMonthIndex) {
-        $startDate = new DateTime($portfolioStartDate);
-        $currentDate = new DateTime($date);
+        // Usamos o índice de simulação ($currentMonthIndex) em vez de diferença de datas de calendário.
+        //
+        // Por quê? O start_date é salvo como o PRIMEIRO dia do mês (ex: 2026-01-01),
+        // mas os dados históricos ficam no ÚLTIMO dia do mês (ex: 2026-01-31).
+        // Isso faz com que diff() retorne 0 meses para Jan-01 → Jan-31, tornando o
+        // cálculo por monthsDiff não confiável para definir a periodicidade dos aportes.
+        //
+        // Lógica correta baseada em índice:
+        //  - O mês base (capital inicial, ex: Dez/2025) é removido do array de datas
+        //    via array_shift() ANTES do loop, portanto NUNCA chega aqui com index >= 0.
+        //  - index 0 = 1º mês simulado (Jan/2026) → 1º aporte mensal.
+        //  - index 1 = 2º mês simulado (Fev/2026) → 2º aporte mensal.
+        //  - Para trimestral: aportes em index 0, 3, 6, 9, ...
+        //  - Para semestral:  aportes em index 0, 6, 12, ...
+        //  - Para anual:      aportes em index 0, 12, 24, ...
 
-        // Calcula diferença em meses
-        $interval = $startDate->diff($currentDate);
-        $monthsDiff = ($interval->y * 12) + $interval->m;
-
-        // Mapeia frequência para número de meses
         $frequencyMap = [
-            'monthly' => 1,
+            'monthly'   => 1,
             'bimonthly' => 2,
             'quarterly' => 3,
-            'biannual' => 6,
-            'annual' => 12
+            'biannual'  => 6,
+            'annual'    => 12,
         ];
 
         $freqMonths = $frequencyMap[$frequency] ?? 1;
 
-        // O primeiro aporte começa no mês SEGUINTE ao do capital inicial (mês 0 = implantação do capital).
-        // monthsDiff == 0 significa que estamos na própria data de início: sem aporte.
-        return $monthsDiff > 0 && $monthsDiff % $freqMonths == 0;
+        // index 0 é sempre o primeiro mês simulado (nunca o mês do capital inicial,
+        // pois esse foi retirado por array_shift). Portanto aportamos quando o índice
+        // é múltiplo da frequência (0 % N == 0 sempre inclui o índice 0 → 1º aporte).
+        return $currentMonthIndex % $freqMonths === 0;
     }
 }
