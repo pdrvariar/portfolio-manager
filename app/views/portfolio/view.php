@@ -196,6 +196,38 @@ ob_start();
     </div>
 <?php endif; ?>
 
+    <?php if (!$latest): ?>
+    <div class="alert border-0 rounded-4 d-flex align-items-start p-3 mb-4 shadow-sm"
+         style="background-color: rgba(255,193,7,0.08); border-left: 4px solid #ffc107 !important;">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+             style="width: 42px; height: 42px;">
+            <i class="bi bi-bar-chart-line-fill text-white fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold mb-1 text-dark">Nenhuma simulação disponível para este período</h6>
+            <p class="text-muted smaller mb-0">
+                Os gráficos e métricas aparecerão após você executar a simulação.
+                Clique em <strong>Simular</strong> para processar os dados históricos do período selecionado.
+                <?php
+                $start = new \DateTime($portfolio['start_date']);
+                $endDisplay = $portfolio['end_date'] ? new \DateTime($portfolio['end_date']) : new \DateTime();
+                $periodMonths = ($start->diff($endDisplay)->y * 12) + $start->diff($endDisplay)->m;
+                if ($periodMonths < 12): ?>
+                    <br><small class="text-warning fw-bold">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Período curto detectado (<?= $periodMonths ?> meses). Certifique-se de que os ativos possuem
+                        dados históricos disponíveis a partir de <strong><?= date('m/Y', strtotime($portfolio['start_date'])) ?></strong>.
+                    </small>
+                <?php endif; ?>
+            </p>
+        </div>
+        <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>"
+           class="btn btn-warning btn-sm rounded-pill px-3 ms-3 flex-shrink-0 align-self-center">
+            <i class="bi bi-play-fill me-1"></i> Simular Agora
+        </a>
+    </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
         <?php
         // Adiciona métricas específicas para simulações com aportes

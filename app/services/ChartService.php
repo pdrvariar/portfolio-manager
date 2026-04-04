@@ -28,6 +28,7 @@ class ChartService {
         $annualComposition = [];
         
         foreach ($results as $date => $data) {
+            if ($date === '_metadata') continue; // ignora metadados internos
             $year = date('Y', strtotime($date));
             if (!isset($annualComposition[$year])) {
                 $annualComposition[$year] = [];

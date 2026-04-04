@@ -203,9 +203,13 @@ class BacktestService {
 
         if ($isFirstDateBeforeStart) {
             $lastFxRate = $fxData[$firstAvailableDate] ?? null;
-            // Removemos a data base da lista de iteração da simulação
-            unset($dates[0]);
+            // Removemos a data base da lista de iteração da simulação e re-indexamos
+            // para que $index comece em 0, garantindo que a lógica de rebalanceamento
+            // e de variação da estratégia funcione corretamente.
+            array_shift($dates);
         }
+
+        $prevDateForStrategy = null; // rastreia a data anterior sem depender de índice numérico
 
         foreach ($dates as $index => $date) {
             $monthData = $historicalData[$date];
@@ -381,23 +385,16 @@ class BacktestService {
 
             // Calcula variação da estratégia usando a carteira virtual (só retorno dos ativos)
             $strategyVariation = 0;
-            // Se tivermos data base anterior ao início, o primeiro registro já terá lastPrices e 
-            // portfolioWithoutDeposits já terá evoluído para refletir o retorno desse primeiro mês.
             if ($index > 0 || $isFirstDateBeforeStart) {
-                // Buscamos o valor anterior da estratégia para calcular a variação percentual
-                $prevStrategyValue = 0;
-                if ($index > 0) {
-                    $prevStrategyValue = $results[$dates[$index - 1]]['strategy_value'];
+                // Se temos uma data anterior registrada em $results, usamos; caso contrário, usa capital inicial.
+                if ($prevDateForStrategy !== null && isset($results[$prevDateForStrategy]['strategy_value'])) {
+                    $prevStrategyValue = $results[$prevDateForStrategy]['strategy_value'];
                 } else {
-                    // Se for o primeiro registro da simulação e tínhamos base anterior, o prev é o capital inicial
                     $prevStrategyValue = $initialCapital;
                 }
 
                 $strategyVariation = $prevStrategyValue > 0 ?
                     (($portfolioWithoutDeposits - $prevStrategyValue) / $prevStrategyValue) * 100 : 0;
-            } else {
-                // Caso não haja base anterior e seja o primeiro índice, variação é zero pois não há ponto de comparação
-                $strategyVariation = 0;
             }
 
             // Atualiza para próximo mês
@@ -459,6 +456,9 @@ class BacktestService {
                 'strategy_value' => $portfolioWithoutDeposits,
                 'strategy_variation' => $strategyVariation
             ];
+
+            // Atualiza a referência da data anterior para o cálculo da variação da estratégia
+            $prevDateForStrategy = $date;
         }
 
         // Adiciona informação de total de aportes ao resultado
@@ -474,13 +474,18 @@ class BacktestService {
 
     private function calculateMetrics($results) {
         $values = array_column($results, 'total_value');
-        $initial = $values[0];
         $final = end($values);
         $numMonths = count($values);
 
         // Extrai metadados dos aportes
         $metadata = $results['_metadata'] ?? [];
         $totalDeposits = $metadata['total_deposits'] ?? 0;
+
+        // CORREÇÃO: usa o capital inicial real (do metadata), não o valor do 1º mês simulado.
+        // Antes, $values[0] era o valor após o 1º mês, o que excluía o retorno do 1º mês do cálculo.
+        $initial = isset($metadata['initial_capital']) && $metadata['initial_capital'] > 0
+            ? (float) $metadata['initial_capital']
+            : $values[0];
 
         // Calcula ROI considerando aportes
         $totalInvested = $initial + $totalDeposits;
