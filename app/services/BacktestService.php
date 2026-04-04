@@ -93,6 +93,20 @@ class BacktestService {
 
     // Novo método para buscar os dados de câmbio
     private function getExchangeRateData($start, $end) {
+        $fxData = [];
+        
+        // Busca taxa base (imediatamente anterior ao início)
+        $sql = "SELECT reference_date, price FROM asset_historical_data ahd
+                JOIN system_assets sa ON ahd.asset_id = sa.id
+                WHERE sa.code = 'USD-BRL' AND reference_date < ?
+                ORDER BY reference_date DESC LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$start]);
+        $baseRow = $stmt->fetch();
+        if ($baseRow) {
+            $fxData[$baseRow['reference_date']] = (float)$baseRow['price'];
+        }
+
         $sql = "SELECT reference_date, price FROM asset_historical_data ahd
                 JOIN system_assets sa ON ahd.asset_id = sa.id
                 WHERE sa.code = 'USD-BRL' AND reference_date BETWEEN ? AND ?
@@ -101,16 +115,26 @@ class BacktestService {
         $stmt->execute([$start, $end]);
         $results = $stmt->fetchAll();
         
-        $fxData = [];
         foreach ($results as $row) {
             $fxData[$row['reference_date']] = (float)$row['price'];
         }
         return $fxData;
-    }    
+    }
 
     private function loadHistoricalData($assets, $start, $end) {
         $data = [];
         foreach ($assets as $asset) {
+            // Buscamos um registro a mais ANTES da data de início para servir de base de cálculo
+            $sql = "SELECT reference_date, price FROM asset_historical_data 
+                    WHERE asset_id = ? AND reference_date < ?
+                    ORDER BY reference_date DESC LIMIT 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$asset['asset_id'], $start]);
+            $baseRow = $stmt->fetch();
+            if ($baseRow) {
+                $data[$baseRow['reference_date']][$asset['asset_id']] = $baseRow['price'];
+            }
+
             $sql = "SELECT reference_date, price FROM asset_historical_data 
                     WHERE asset_id = ? AND reference_date BETWEEN ? AND ?
                     ORDER BY reference_date ASC";
@@ -159,15 +183,30 @@ class BacktestService {
         $strategyOnlyValues = []; // Armazena valores excluindo aportes
 
         // Inicialização do saldo e quantidades
+        // O primeiro registro em historicalData pode ser anterior à data de início (base de cálculo)
+        $firstAvailableDate = $dates[0];
+        $isFirstDateBeforeStart = ($firstAvailableDate < $portfolio['start_date']);
+
         foreach ($assets as $asset) {
             $assetId = $asset['asset_id'];
             $initialAssetValue = $initialCapital * ($asset['allocation_percentage'] / 100);
             $currentBalances[$assetId] = $initialAssetValue;
             
-            // Determina a quantidade inicial baseada no preço do primeiro mês
-            $firstDate = $dates[0];
-            $initialPrice = (float)($historicalData[$firstDate][$assetId] ?? 1.0);
+            // Determina a quantidade inicial baseada no preço da PRIMEIRA data disponível
+            // Se tivermos uma data anterior ao início, usamos ela como preço de compra
+            $initialPrice = (float)($historicalData[$firstAvailableDate][$assetId] ?? 0);
             $currentQuantities[$assetId] = $initialPrice > 0 ? ($initialAssetValue / $initialPrice) : 0;
+            
+            // Se a primeira data for a base de cálculo, já preenchemos lastPrices
+            if ($isFirstDateBeforeStart) {
+                $lastPrices[$assetId] = $initialPrice;
+            }
+        }
+
+        if ($isFirstDateBeforeStart) {
+            $lastFxRate = $fxData[$firstAvailableDate] ?? null;
+            // Removemos a data base da lista de iteração da simulação
+            unset($dates[0]);
         }
 
         foreach ($dates as $index => $date) {
@@ -223,6 +262,10 @@ class BacktestService {
             }
 
             $lastFxRate = $currentFxRate;
+
+            // Calcula a rentabilidade do mês para auditoria ANTES do aporte
+            // para que a variação exibida seja a performance dos ativos
+            $totalBeforeDeposit = $totalMonthValue;
 
             // Calcula o fator de retorno real dos ativos neste mês (média ponderada)
             // antes de qualquer aporte, para rastrear a performance pura da estratégia
@@ -340,14 +383,23 @@ class BacktestService {
 
             // Calcula variação da estratégia usando a carteira virtual (só retorno dos ativos)
             $strategyVariation = 0;
-            if ($index > 0) {
-                $prevStrategyValue = $results[$dates[$index - 1]]['strategy_value'];
+            // Se tivermos data base anterior ao início, o primeiro registro já terá lastPrices e 
+            // portfolioWithoutDeposits já terá evoluído para refletir o retorno desse primeiro mês.
+            if ($index > 0 || $isFirstDateBeforeStart) {
+                // Buscamos o valor anterior da estratégia para calcular a variação percentual
+                $prevStrategyValue = 0;
+                if ($index > 0) {
+                    $prevStrategyValue = $results[$dates[$index - 1]]['strategy_value'];
+                } else {
+                    // Se for o primeiro registro da simulação e tínhamos base anterior, o prev é o capital inicial
+                    $prevStrategyValue = $initialCapital;
+                }
+
                 $strategyVariation = $prevStrategyValue > 0 ?
                     (($portfolioWithoutDeposits - $prevStrategyValue) / $prevStrategyValue) * 100 : 0;
             } else {
-                // No primeiro mês, a variação é em relação ao capital inicial
-                $strategyVariation = $initialCapital > 0 ?
-                    (($portfolioWithoutDeposits - $initialCapital) / $initialCapital) * 100 : 0;
+                // Caso não haja base anterior e seja o primeiro índice, variação é zero pois não há ponto de comparação
+                $strategyVariation = 0;
             }
 
             // Atualiza para próximo mês
@@ -394,6 +446,7 @@ class BacktestService {
 
             $results[$date] = [
                 'total_value' => $totalMonthValue,
+                'total_before_deposit' => $totalBeforeDeposit,
                 'asset_values' => $assetValues,
                 'asset_prices' => $assetPrices,
                 'asset_quantities' => $assetQuantities,

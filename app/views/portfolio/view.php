@@ -537,7 +537,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             if ($date === '_metadata') continue;
 
                             $currentValue = $data['total_value'];
-                            $variation = (($currentValue / $prevValue) - 1) * 100;
+                            // CORREÇÃO: Usar o valor ANTES do aporte para calcular a variação real dos ativos no mês
+                            $totalBeforeDeposit = $data['total_before_deposit'] ?? $currentValue;
+                            $variation = (($totalBeforeDeposit / $prevValue) - 1) * 100;
                             $rebalanced = $data['rebalanced'] ?? false;
                             $depositMade = $data['deposit_made'] ?? 0;
                             $depositType = $data['deposit_type'] ?? 'none';
