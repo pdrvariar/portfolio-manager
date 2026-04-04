@@ -11,7 +11,8 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
 
     /**
      * Atualiza cotações do Dólar (CAMBIO)
-     * Baseia-se na série 3698 (Dólar comercial venda - mensal - fim de período) do BCB
+     * Baseia-se na série 10813 (PTAX Dólar comercial venda - diário) do BCB,
+     * pegando o ÚLTIMO DIA ÚTIL de cada mês — mesma regra do Yahoo Finance.
      */
     public function updateQuotes($asset, $confirmFull = false) {
         if (!$asset) {
@@ -102,16 +103,21 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
     }
 
     protected function fetchDolarMonthly() {
-        // Dólar comercial (venda) - Mensal - fim de período - Série 3698
-        $codigoSerie = 3698;
-        // Buscamos a partir de Dezembro/1994 para que, ao deslocar 1 mês para frente, 
-        // tenhamos a cotação inicial em 01/01/1995 (referente ao fechamento do mês anterior).
-        $dataInicio = "01/12/1994";
+        // PTAX Dólar comercial (venda) - Diário - Série 10813
+        // Usamos a série DIÁRIA e pegamos o ÚLTIMO DIA ÚTIL de cada mês,
+        // replicando exatamente o mesmo comportamento do Yahoo Finance (interval=1mo → último dia de negociação).
+        //
+        // ATENÇÃO: A Série 3698 (mensal) representa a MÉDIA MENSAL da PTAX, NÃO o fim de período,
+        // apesar da descrição oficial dizer "fim de período". Verificado empiricamente:
+        // Jan/2026 → Média mensal = 5.3380, Último dia útil (30/01/2026) = 5.2295 (diferença ~2,1%).
+        // Por isso usamos a série diária 10813 agrupada pelo último dia de cada mês.
+        $codigoSerie = 10813;
+        $dataInicio = "02/01/1995"; // Início disponível da série PTAX diária
         $apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.$codigoSerie/dados?formato=json&dataInicial=$dataInicio";
 
         $ch = curl_init($apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Aumentado pois são dados diários (~30 anos)
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Accept: application/json, text/plain, */*',
             'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) PortfolioManager/1.0'
@@ -130,10 +136,10 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
             return ['success' => false, 'message' => "Resposta inválida da API do BCB."];
         }
 
-        $result = [];
-        $minDate = null;
-        $maxDate = null;
-        
+        // Agrupa por mês e mantém APENAS o último registro de cada mês (= último dia útil).
+        // A API BCB retorna os dados em ordem cronológica, portanto a última sobrescrição
+        // de cada chave 'YYYY-MM' será sempre o último dia útil daquele mês.
+        $monthlyData = [];
         $hoje = new DateTime();
         $todayYm = $hoje->format('Y-m');
 
@@ -143,43 +149,40 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
             $parts = explode('/', $item['data']);
             if (count($parts) !== 3) continue;
 
-            $d = (int)$parts[0];
             $m = (int)$parts[1];
             $y = (int)$parts[2];
 
             $dataYm = sprintf("%04d-%02d", $y, $m);
 
-            // Requisito: não carregar o mês em aberto (mês atual dos dados)
-            if ($dataYm === $todayYm) {
+            // Ignorar mês atual (em aberto) e dados futuros
+            if ($dataYm >= $todayYm) {
                 continue;
             }
 
-            // Conforme pedido: o mês de Janeiro de 2026 corresponde a cotação em 01/02/2026.
-            // A série 3698 traz dados de fim de período. 
-            // Ex: 31/01/1995 -> salvamos como 01/01/1995, mas o valor é o de fim de mês (início do próximo).
-            try {
-                $targetDate = "$y-" . sprintf("%02d", $m) . "-01";
-                
-                // Evitar carregar dados futuros (redundante mas seguro)
-                if ($targetDate > $hoje->format('Y-m-d')) {
-                    continue;
-                }
+            $targetDate = "$y-" . sprintf("%02d", $m) . "-01";
 
-                $result[] = [
-                    'date' => $targetDate,
-                    'price' => (float)$item['valor']
-                ];
+            // Sobrescreve para que ao final fique o último dia útil do mês
+            $monthlyData[$dataYm] = [
+                'date'  => $targetDate,
+                'price' => (float)$item['valor']
+            ];
+        }
 
-                if ($minDate === null || $targetDate < $minDate) $minDate = $targetDate;
-                if ($maxDate === null || $targetDate > $maxDate) $maxDate = $targetDate;
-            } catch (Exception $e) {
-                continue;
-            }
+        ksort($monthlyData);
+
+        $result   = [];
+        $minDate  = null;
+        $maxDate  = null;
+
+        foreach ($monthlyData as $row) {
+            $result[] = ['date' => $row['date'], 'price' => $row['price']];
+            if ($minDate === null || $row['date'] < $minDate) $minDate = $row['date'];
+            if ($maxDate === null || $row['date'] > $maxDate) $maxDate = $row['date'];
         }
 
         return [
-            'success' => true,
-            'data' => $result,
+            'success'  => true,
+            'data'     => $result,
             'min_date' => $minDate,
             'max_date' => $maxDate
         ];
