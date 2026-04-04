@@ -1293,10 +1293,18 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     document.getElementById('betaValue').innerText = beta.toFixed(2);
                     document.getElementById('betaContainer').style.display = 'block';
 
+                    // Se o gráfico tem o ponto 0 (capital inicial), o benchmark precisa de um
+                    // null no início para alinhar corretamente (benchmark não tem dado para t=0)
+                    const chartLabelCount = chart.data.labels.length;
+                    const auditLogCount = Object.keys(auditLog).length;
+                    const benchmarkData = chartLabelCount > auditLogCount
+                        ? [null, ...res.values]
+                        : res.values;
+
                     // Adiciona a linha ao gráfico
                     chart.data.datasets.push({
                         label: 'Benchmark: ' + this.options[this.selectedIndex].text,
-                        data: res.values,
+                        data: benchmarkData,
                         borderColor: '#6c757d',
                         borderDash: [5, 5],
                         backgroundColor: 'transparent',

@@ -4,7 +4,25 @@ class ChartService {
     public function createValueChart($results) {
         $dates = [];
         $values = [];
-        
+
+        $metadata = $results['_metadata'] ?? [];
+        $initialCapital = $metadata['initial_capital'] ?? null;
+
+        // Determina a primeira data simulada para calcular o label do ponto 0
+        $firstDate = null;
+        foreach ($results as $date => $data) {
+            if ($date !== '_metadata') { $firstDate = $date; break; }
+        }
+
+        // Prepend ponto 0 = capital inicial (no mês anterior ao início da simulação)
+        if ($initialCapital !== null && $firstDate !== null) {
+            $dt = new \DateTime($firstDate);
+            $dt->modify('first day of this month');
+            $dt->modify('-1 month');
+            $dates[] = $dt->format('Y-m-d');
+            $values[] = $initialCapital;
+        }
+
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
             $dates[] = $date;
@@ -109,6 +127,9 @@ class ChartService {
         $annualReturns = [];
         $dataByYear = [];
 
+        $metadata = $results['_metadata'] ?? [];
+        $initialCapital = $metadata['initial_capital'] ?? null;
+
         // Agrupa os valores mensais por ano
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
@@ -116,13 +137,16 @@ class ChartService {
             $dataByYear[$year][] = $data['total_value'];
         }
 
+        // Retorno anual correto: primeiro ano usa capital inicial; anos seguintes usam o valor final do ano anterior
+        $prevYearEndValue = $initialCapital;
         foreach ($dataByYear as $year => $values) {
-            $startValue = $values[0];
+            $startValue = ($prevYearEndValue !== null) ? $prevYearEndValue : $values[0];
             $endValue = end($values);
             
             if ($startValue > 0) {
                 $annualReturns[$year] = (($endValue - $startValue) / $startValue) * 100;
             }
+            $prevYearEndValue = $endValue;
         }
 
         $labels = array_keys($annualReturns);
@@ -145,6 +169,9 @@ class ChartService {
         $annualReturns = [];
         $dataByYear = [];
 
+        $metadata = $results['_metadata'] ?? [];
+        $initialCapital = $metadata['initial_capital'] ?? null;
+
         // Agrupa os valores da estratégia por ano
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
@@ -152,13 +179,16 @@ class ChartService {
             $dataByYear[$year][] = $data['strategy_value'] ?? $data['total_value'];
         }
 
+        // Retorno anual correto: primeiro ano usa capital inicial; anos seguintes usam o valor final do ano anterior
+        $prevYearEndValue = $initialCapital;
         foreach ($dataByYear as $year => $values) {
-            $startValue = $values[0];
+            $startValue = ($prevYearEndValue !== null) ? $prevYearEndValue : $values[0];
             $endValue = end($values);
             
             if ($startValue > 0) {
                 $annualReturns[$year] = (($endValue - $startValue) / $startValue) * 100;
             }
+            $prevYearEndValue = $endValue;
         }
 
         $labels = array_keys($annualReturns);
@@ -269,6 +299,25 @@ class ChartService {
         $strategyValues = [];
         $portfolioValues = [];
 
+        $metadata = $results['_metadata'] ?? [];
+        $initialCapital = $metadata['initial_capital'] ?? null;
+
+        // Determina a primeira data simulada para calcular o label do ponto 0
+        $firstDate = null;
+        foreach ($results as $date => $data) {
+            if ($date !== '_metadata') { $firstDate = $date; break; }
+        }
+
+        // Prepend ponto 0: capital inicial (base 0%) no mês anterior ao início
+        if ($initialCapital !== null && $firstDate !== null) {
+            $dt = new \DateTime($firstDate);
+            $dt->modify('first day of this month');
+            $dt->modify('-1 month');
+            $dates[] = $dt->format('Y-m-d');
+            $strategyValues[] = $initialCapital;
+            $portfolioValues[] = $initialCapital;
+        }
+
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
 
@@ -282,7 +331,7 @@ class ChartService {
             $portfolioValues[] = $data['total_value'];
         }
 
-        // Normaliza para base 100 para comparação percentual
+        // Normaliza para base 100 (% em relação ao capital inicial) para comparação percentual
         if (!empty($strategyValues) && !empty($portfolioValues)) {
             $strategyBase = $strategyValues[0];
             $portfolioBase = $portfolioValues[0];
@@ -327,7 +376,27 @@ class ChartService {
         $cumulativeInterest = [];
         $monthlyInterest = [];
 
-        $previousValue = null;
+        $metadata = $results['_metadata'] ?? [];
+        $initialCapital = $metadata['initial_capital'] ?? null;
+
+        // Determina a primeira data simulada para o ponto 0
+        $firstDate = null;
+        foreach ($results as $date => $data) {
+            if ($date !== '_metadata') { $firstDate = $date; break; }
+        }
+
+        // Prepend ponto 0 (sem juros ainda, antes do início da simulação)
+        if ($firstDate !== null) {
+            $dt = new \DateTime($firstDate);
+            $dt->modify('first day of this month');
+            $dt->modify('-1 month');
+            $dates[] = date('M Y', $dt->getTimestamp());
+            $cumulativeInterest[] = 0;
+            $monthlyInterest[] = 0;
+        }
+
+        // Inicializa com capital inicial para calcular corretamente os juros do 1º mês
+        $previousValue = $initialCapital;
         $cumulative = 0;
 
         foreach ($results as $date => $data) {

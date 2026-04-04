@@ -10,7 +10,7 @@ class ProjectionService {
      * @param int $years Quantidade de anos para a projeção (padrão 10)
      * @return array Dados da projeção mensal
      */
-    public function calculateProjection($initialCapital, $annualReturn, $monthlyDeposit, $years = 10) {
+    public function calculateProjection($initialCapital, $annualReturn, $monthlyDeposit, $years = 10, $customStartDate = null) {
         $projection = [];
         $currentValue = $initialCapital;
         $totalInvested = $initialCapital;
@@ -19,8 +19,9 @@ class ProjectionService {
         $monthlyRate = pow(1 + ($annualReturn / 100), 1 / 12) - 1;
         
         $months = $years * 12;
-        $startDate = new \DateTime();
-        
+        // Usa a data de fim da simulação como ponto de partida; se não fornecida, usa hoje
+        $startDate = $customStartDate ? new \DateTime($customStartDate) : new \DateTime();
+
         // Adiciona o ponto inicial
         $projection[$startDate->format('Y-m-d')] = [
             'total_value' => round($currentValue, 2),

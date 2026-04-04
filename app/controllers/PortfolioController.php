@@ -223,6 +223,32 @@ class PortfolioController {
         if ($latest && isset($latest['chart_data'])) {
             $chartData = json_decode($latest['chart_data'], true);
 
+            // === FIX: Garante que o ponto 0 (capital inicial) exista no gráfico de evolução ===
+            // Aplica tanto em simulações antigas (sem ponto 0) quanto novas.
+            $initialCapitalValue = (float)$portfolio['initial_capital'];
+            $firstSimDate = null;
+            if (isset($chartData['audit_log'])) {
+                foreach ($chartData['audit_log'] as $auditDate => $auditData) {
+                    if ($auditDate !== '_metadata') { $firstSimDate = $auditDate; break; }
+                }
+            }
+
+            if ($firstSimDate && !empty($chartData['value_chart']['labels'])) {
+                $dt0 = new \DateTime($firstSimDate);
+                $dt0->modify('first day of this month');
+                $dt0->modify('-1 month');
+                $point0Date = $dt0->format('Y-m-d');
+
+                // Só adiciona se ainda não estiver presente (evita duplicação em simulações novas)
+                if ($chartData['value_chart']['labels'][0] !== $point0Date) {
+                    array_unshift($chartData['value_chart']['labels'], $point0Date);
+                    foreach ($chartData['value_chart']['datasets'] as &$ds) {
+                        array_unshift($ds['data'], $initialCapitalValue);
+                    }
+                    unset($ds);
+                }
+            }
+
             // Gera projeção futura se tivermos um retorno positivo
             if ($metrics['strategy_annual_return'] > 0) {
                 $projectionService = new ProjectionService();
@@ -230,10 +256,8 @@ class PortfolioController {
                 // Pega valor do aporte do portfólio (se houver algum configurado)
                 $monthlyDeposit = 0;
                 if (!empty($portfolio['deposit_amount'])) {
-                    // Se o aporte for mensal ou o usuário apenas preencheu o valor para projeção
                     $monthlyDeposit = (float)$portfolio['deposit_amount'];
                     
-                    // Se o aporte configurado não for mensal (ex: trimestral), diluímos para fins de projeção simplificada mensal
                     if ($portfolio['deposit_frequency'] == 'quarterly') {
                         $monthlyDeposit /= 3;
                     } elseif ($portfolio['deposit_frequency'] == 'biannual') {
@@ -243,11 +267,13 @@ class PortfolioController {
                     }
                 }
                 
+                // Usa a data de fim da simulação como ponto de partida da projeção (não "hoje")
                 $projectionRaw = $projectionService->calculateProjection(
                     $metrics['final_value'], 
                     $metrics['strategy_annual_return'], 
                     $monthlyDeposit,
-                    10 // 10 anos de projeção
+                    10, // 10 anos de projeção
+                    $latest['simulation_date'] // Ponto de partida = fim da simulação
                 );
                 
                 $chartData['projection_chart'] = $projectionService->formatProjectionChart($projectionRaw);
@@ -387,7 +413,8 @@ class PortfolioController {
             $initialCapital, 
             $metrics['strategy_annual_return'], 
             $monthlyDeposit,
-            $years
+            $years,
+            $latest['simulation_date'] // Ponto de partida = fim da simulação
         );
         
         $chartData = $projectionService->formatProjectionChart($projectionRaw);
