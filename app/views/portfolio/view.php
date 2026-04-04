@@ -756,7 +756,15 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         window.valueChart = new Chart(document.getElementById('valueChart'), {
             type: 'line',
-            data: chartData.value_chart,
+            data: {
+                labels: chartData.value_chart.labels.map(l => {
+                    if (l.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        return new Date(l + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'});
+                    }
+                    return l;
+                }),
+                datasets: chartData.value_chart.datasets
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -869,22 +877,22 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         // Gráfico de Aportes
         const depositDates = [];
         const depositAmounts = [];
-        const portfolioValues = [];
+        const portfolioValuesPlot = [];
 
         Object.entries(auditLog).forEach(([date, data]) => {
             depositDates.push(date);
             depositAmounts.push(data.deposit_made || 0);
-            portfolioValues.push(data.total_value);
+            portfolioValuesPlot.push(data.total_value);
         });
 
         new Chart(document.getElementById('depositsChart'), {
             type: 'bar',
             data: {
-                labels: depositDates.map(d => new Date(d).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})),
+                labels: depositDates.map(d => new Date(d + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})),
                 datasets: [
                     {
                         label: 'Valor do Portfólio',
-                        data: portfolioValues,
+                        data: portfolioValuesPlot,
                         type: 'line',
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
@@ -1287,9 +1295,20 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         }
 
         // Gráfico de Performance da Estratégia
+        const strategyPerformanceData = chartData.strategy_performance_chart || { labels: [], datasets: [] };
+        if (strategyPerformanceData.labels) {
+            strategyPerformanceData.labels = strategyPerformanceData.labels.map(l => {
+                // Se o label for uma data (YYYY-MM-DD), formata
+                if (l.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    return new Date(l + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'});
+                }
+                return l;
+            });
+        }
+
         new Chart(document.getElementById('strategyPerformanceChart'), {
             type: 'line',
-            data: chartData.strategy_performance_chart,
+            data: strategyPerformanceData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,

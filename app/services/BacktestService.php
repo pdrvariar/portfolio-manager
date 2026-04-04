@@ -32,8 +32,6 @@ class BacktestService {
         $metrics = $this->calculateMetrics($results);
         $chartData = $this->generateCharts($results, $assets);
 
-        $chartData['audit_log'] = $results;
-
         // Dentro do runSimulation, onde você chama o saveResults:
         $simulationId = $this->saveResults($portfolioId, $metrics, $chartData, $effectiveDates['end']);
 
@@ -547,6 +545,9 @@ class BacktestService {
         $maxMonthlyGain = !empty($strategyReturns) ? max($strategyReturns) : 0;
         $maxMonthlyLoss = !empty($strategyReturns) ? min($strategyReturns) : 0;
         
+        // CORREÇÃO: Se houver apenas um mês (data base + 1 mês), o array strategyReturns terá 1 elemento.
+        // O primeiro retorno (do mês base para o primeiro mês real) deve ser capturado corretamente.
+        
         $riskFreeRate = 0.10;
         $excessReturn = $strategyAnnualReturn - $riskFreeRate;
         $sharpe = ($vol > 0) ? ($excessReturn / $vol) : 0;
@@ -605,7 +606,8 @@ class BacktestService {
             'strategy_returns_chart' => $chartService->createAnnualStrategyReturnsChart($results),
             // NOVOS GRÁFICOS
             'strategy_performance_chart' => $chartService->createStrategyPerformanceChart($results),
-            'interest_chart' => $chartService->createInterestChart($results)
+            'interest_chart' => $chartService->createInterestChart($results),
+            'audit_log' => $results // Garante que o audit_log vá para o chartData
         ];
     }
 

@@ -6,7 +6,8 @@ class ChartService {
         $values = [];
         
         foreach ($results as $date => $data) {
-            $dates[] = date('M Y', strtotime($date));
+            if ($date === '_metadata') continue;
+            $dates[] = $date;
             $values[] = $data['total_value'];
         }
         
@@ -270,7 +271,7 @@ class ChartService {
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
 
-            $dates[] = date('M Y', strtotime($date));
+            $dates[] = $date;
 
             // Valor da estratégia (sem aportes) - base 100
             $strategyValue = $data['strategy_value'] ?? $data['total_value'];
