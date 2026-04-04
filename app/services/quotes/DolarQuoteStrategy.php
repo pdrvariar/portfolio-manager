@@ -111,39 +111,60 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
         // apesar da descrição oficial dizer "fim de período". Verificado empiricamente:
         // Jan/2026 → Média mensal = 5.3380, Último dia útil (30/01/2026) = 5.2295 (diferença ~2,1%).
         // Por isso usamos a série diária 10813 agrupada pelo último dia de cada mês.
+        //
+        // LIMITE DE API: A BCB retorna HTTP 406 para janelas muito grandes (~>1500 registros).
+        // Solução: buscar em janelas de 4 anos para ficar seguro (~1000 registros/janela).
         $codigoSerie = 10813;
-        $dataInicio = "02/01/1995"; // Início disponível da série PTAX diária
-        $apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.$codigoSerie/dados?formato=json&dataInicial=$dataInicio";
+        $hoje = new DateTime();
+        $todayYm = $hoje->format('Y-m');
 
-        $ch = curl_init($apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Aumentado pois são dados diários (~30 anos)
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Accept: application/json, text/plain, */*',
-            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) PortfolioManager/1.0'
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            return ['success' => false, 'message' => "Erro ao acessar API BCB: HTTP $httpCode"];
+        // Gera janelas de 4 anos de 1995 até hoje
+        $startYear = 1995;
+        $endYear   = (int)$hoje->format('Y');
+        $chunks    = [];
+        for ($y = $startYear; $y <= $endYear; $y += 4) {
+            $chunkEnd = min($y + 3, $endYear);
+            $chunks[] = [
+                'ini' => "02/01/{$y}",
+                'fim' => "31/12/{$chunkEnd}"
+            ];
         }
 
-        $dados = json_decode($response, true);
-        if (!is_array($dados)) {
-            return ['success' => false, 'message' => "Resposta inválida da API do BCB."];
+        $allDados = [];
+        foreach ($chunks as $chunk) {
+            $apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{$codigoSerie}/dados"
+                    . "?formato=json&dataInicial={$chunk['ini']}&dataFinal={$chunk['fim']}";
+
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Accept: application/json, text/plain, */*',
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) PortfolioManager/1.0'
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200) {
+                return ['success' => false, 'message' => "Erro ao acessar API BCB ({$chunk['ini']} a {$chunk['fim']}): HTTP {$httpCode}"];
+            }
+
+            $dados = json_decode($response, true);
+            if (!is_array($dados)) {
+                return ['success' => false, 'message' => "Resposta inválida da API do BCB ({$chunk['ini']} a {$chunk['fim']})."];
+            }
+
+            $allDados = array_merge($allDados, $dados);
         }
 
         // Agrupa por mês e mantém APENAS o último registro de cada mês (= último dia útil).
         // A API BCB retorna os dados em ordem cronológica, portanto a última sobrescrição
         // de cada chave 'YYYY-MM' será sempre o último dia útil daquele mês.
         $monthlyData = [];
-        $hoje = new DateTime();
-        $todayYm = $hoje->format('Y-m');
 
-        foreach ($dados as $item) {
+        foreach ($allDados as $item) {
             if (!isset($item['data']) || !isset($item['valor'])) continue;
 
             $parts = explode('/', $item['data']);
@@ -159,20 +180,18 @@ class DolarQuoteStrategy implements AssetQuoteStrategy {
                 continue;
             }
 
-            $targetDate = "$y-" . sprintf("%02d", $m) . "-01";
-
             // Sobrescreve para que ao final fique o último dia útil do mês
             $monthlyData[$dataYm] = [
-                'date'  => $targetDate,
+                'date'  => "$y-" . sprintf("%02d", $m) . "-01",
                 'price' => (float)$item['valor']
             ];
         }
 
         ksort($monthlyData);
 
-        $result   = [];
-        $minDate  = null;
-        $maxDate  = null;
+        $result  = [];
+        $minDate = null;
+        $maxDate = null;
 
         foreach ($monthlyData as $row) {
             $result[] = ['date' => $row['date'], 'price' => $row['price']];
