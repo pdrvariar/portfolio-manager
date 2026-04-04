@@ -154,25 +154,20 @@ class YahooQuoteStrategy implements AssetQuoteStrategy {
 
         for ($i = 0; $i < count($timestamps); $i++) {
             $ts = intval($timestamps[$i]);
-            $yahooDay = gmdate('d', $ts);
             $yahooYm = gmdate('Y-m', $ts);
 
-            // 1. Ignorar o mês em aberto. 
-            // Se o ponto do Yahoo é do mês atual e não é o dia 1, é o preço "live" do mês em curso.
-            // Se for dia 1 do mês atual, segundo o usuário, ele representa o mês anterior (que já fechou).
-            if ($yahooYm === $todayYm && $yahooDay !== '01') {
+            // 1. Ignorar o mês atual (em curso).
+            // Conforme solicitado, todas as cotações referentes ao mês atual devem ser desconsideradas.
+            if ($yahooYm === $todayYm) {
                 continue;
             }
 
-            // 2. Ajuste de Data: O Yahoo usa 01/Mês Seguinte para representar o fechamento do Mês Anterior.
-            // O sistema quer que a rentabilidade de Janeiro seja gravada como 01/01.
-            $dateObj = new DateTime("@$ts");
-            $dateObj->setTimezone(new DateTimeZone('UTC'));
-            $dateObj->modify('-1 month');
-            $systemDate = $dateObj->format('Y-m-01');
+            // 2. Ajuste de Data: O Yahoo para interval=1mo retorna o dia 1 do mês de referência.
+            // Ex: "2026-03-01" refere-se ao mês de Março de 2026 (fechamento em 2026-03-31).
+            // No nosso sistema, usamos "YYYY-MM-01" para representar o fechamento daquele mês.
+            $systemDate = $yahooYm . '-01';
 
-            // 3. Apenas meses totalmente fechados no sistema.
-            // Se o ajuste resultou no mês atual ou futuro, ignoramos.
+            // 3. Apenas meses totalmente fechados (anteriores ao mês atual).
             if ($systemDate >= $todayYm . '-01') {
                 continue;
             }
