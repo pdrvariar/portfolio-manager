@@ -22,8 +22,8 @@ function formatCurrency($value, $currency = 'BRL') {
     return $symbol . ' ' . number_format($value, 2, ',', '.');
 }
 
-function formatPercentage($value) {
-    return number_format($value, 2, ',', '.') . '%';
+function formatPercentage($value, $decimals = 4) {
+    return number_format($value, $decimals, ',', '.') . '%';
 }
 
 function formatDate($date, $format = 'd/m/Y') {

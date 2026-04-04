@@ -390,7 +390,7 @@ class ChartService {
             $dt = new \DateTime($firstDate);
             $dt->modify('first day of this month');
             $dt->modify('-1 month');
-            $dates[] = date('M Y', $dt->getTimestamp());
+            $dates[] = $dt->format('Y-m-d'); // ISO para formatação uniforme no JS
             $cumulativeInterest[] = 0;
             $monthlyInterest[] = 0;
         }
@@ -402,7 +402,7 @@ class ChartService {
         foreach ($results as $date => $data) {
             if ($date === '_metadata') continue;
 
-            $dates[] = date('M Y', strtotime($date));
+            $dates[] = $date; // ISO (YYYY-MM-DD)
 
             // Calcula juros do mês (variação - aportes)
             $currentValue = $data['total_value'];

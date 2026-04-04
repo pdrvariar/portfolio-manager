@@ -242,7 +242,7 @@ ob_start();
                         'text'  => 'text-success'
                 ],
                 ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility']), 'class' => 'border-warning', 'text' => 'text-dark'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark'],
+                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 4), 'class' => 'border-info', 'text' => 'text-dark'],
                 ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0), 'class' => 'border-success', 'text' => 'text-success'],
                 ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0), 'class' => 'border-danger', 'text' => 'text-danger'],
         ];
@@ -377,7 +377,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     <div>
                         <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)</h5>
                         <p class="text-muted small mb-0">
-                            Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 2) ?>%</strong>
+                            Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
                             <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
                                 e aporte mensal de <strong><?= formatCurrency($monthlyDeposit, $portfolio['output_currency']) ?></strong>.
                             <?php else: ?>
@@ -786,15 +786,61 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         const auditLog = { ...chartData.audit_log };
         delete auditLog._metadata;
 
+        // ============================================================
+        // Helpers: formatação de eixo X e tooltip de período
+        // ============================================================
+
+        /**
+         * Converte data ISO (YYYY-MM-DD) para rótulo compacto MM/AA.
+         * Ex.: "2026-01-31" → "01/26"
+         */
+        function formatXAxisLabel(isoDate) {
+            if (!isoDate || !String(isoDate).match(/^\d{4}-\d{2}-\d{2}$/)) return isoDate;
+            const d = new Date(isoDate + "T12:00:00");
+            return String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getFullYear()).slice(2);
+        }
+
+        /**
+         * Gera título de tooltip com período de referência.
+         * Clarifica que "01/26" = variação entre o fechamento de 31/12/25 e 31/01/26.
+         * Retorna array de duas linhas para exibição no Chart.js.
+         */
+        function formatPeriodTitle(isoDate) {
+            if (!isoDate || !String(isoDate).match(/^\d{4}-\d{2}-\d{2}$/)) {
+                return [String(isoDate)];
+            }
+            const d    = new Date(isoDate + "T12:00:00");
+            const mm   = String(d.getMonth() + 1).padStart(2, '0');
+            const yy   = String(d.getFullYear()).slice(2);
+            // Último dia do mês atual
+            const endDate  = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+            const endDay   = String(endDate.getDate()).padStart(2, '0');
+            // Último dia do mês anterior
+            const prevDate = new Date(d.getFullYear(), d.getMonth(), 0);
+            const prevDay  = String(prevDate.getDate()).padStart(2, '0');
+            const prevMm   = String(prevDate.getMonth() + 1).padStart(2, '0');
+            const prevYy   = String(prevDate.getFullYear()).slice(2);
+            return [
+                mm + '/' + yy,
+                'Variação: ' + prevDay + '/' + prevMm + '/' + prevYy + ' → ' + endDay + '/' + mm + '/' + yy
+            ];
+        }
+
+        /** Configuração padrão de eixo X para gráficos mensais (MM/AA, inclinado 45°) */
+        const xAxisMonthly = {
+            ticks: {
+                callback: function(value) {
+                    return formatXAxisLabel(this.getLabelForValue(value));
+                },
+                maxRotation: 45,
+                minRotation: 45
+            }
+        };
+
         window.valueChart = new Chart(document.getElementById('valueChart'), {
             type: 'line',
             data: {
-                labels: chartData.value_chart.labels.map(l => {
-                    if (l.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                        return new Date(l + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'});
-                    }
-                    return l;
-                }),
+                labels: chartData.value_chart.labels, // ISO dates – formatados via ticks.callback
                 datasets: chartData.value_chart.datasets
             },
             options: {
@@ -803,11 +849,15 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 plugins: {
                     tooltip: {
                         callbacks: {
+                            title: function(tooltipItems) {
+                                return formatPeriodTitle(tooltipItems[0].label);
+                            },
                             label: (ctx) => `Valor: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(ctx.raw)}`
                         }
                     }
                 },
                 scales: {
+                    x: xAxisMonthly,
                     y: {
                         ticks: {
                             callback: function(value) {
@@ -841,7 +891,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toFixed(2)}%`;
+                                return `${context.dataset.label}: ${context.raw.toFixed(4)}%`;
                             }
                         }
                     }
@@ -868,7 +918,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Retorno: ${context.raw.toFixed(2)}%`;
+                                return `Retorno: ${context.raw.toFixed(4)}%`;
                             }
                         }
                     }
@@ -893,13 +943,13 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         }
                     },
                     plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Retorno Real: ${context.raw.toFixed(2)}%`;
-                                }
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Retorno Real: ${context.raw.toFixed(4)}%`;
                             }
                         }
+                    }
                     }
                 }
             });
@@ -920,7 +970,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         new Chart(document.getElementById('depositsChart'), {
             type: 'bar',
             data: {
-                labels: depositDates.map(d => new Date(d + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})),
+                labels: depositDates, // ISO dates – formatados via ticks.callback
                 datasets: [
                     {
                         label: 'Valor do Portfólio',
@@ -947,6 +997,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
+                    x: xAxisMonthly,
                     y: {
                         type: 'linear',
                         display: true,
@@ -974,6 +1025,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 plugins: {
                     tooltip: {
                         callbacks: {
+                            title: function(tooltipItems) {
+                                return formatPeriodTitle(tooltipItems[0].label);
+                            },
                             label: function(context) {
                                 if (context.datasetIndex === 0) {
                                     return `Portfólio: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(context.raw)}`;
@@ -1336,15 +1390,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         // Gráfico de Performance da Estratégia
         const strategyPerformanceData = chartData.strategy_performance_chart || { labels: [], datasets: [] };
-        if (strategyPerformanceData.labels) {
-            strategyPerformanceData.labels = strategyPerformanceData.labels.map(l => {
-                // Se o label for uma data (YYYY-MM-DD), formata
-                if (l.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    return new Date(l + "T12:00:00").toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'});
-                }
-                return l;
-            });
-        }
+        // Labels já são ISO dates (YYYY-MM-DD) – formatados via ticks.callback
 
         new Chart(document.getElementById('strategyPerformanceChart'), {
             type: 'line',
@@ -1359,18 +1405,20 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 plugins: {
                     tooltip: {
                         callbacks: {
+                            title: function(tooltipItems) {
+                                return formatPeriodTitle(tooltipItems[0].label);
+                            },
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.parsed.y.toFixed(2) + '%';
+                                if (label) { label += ': '; }
+                                label += context.parsed.y.toFixed(4) + '%';
                                 return label;
                             }
                         }
                     }
                 },
                 scales: {
+                    x: xAxisMonthly,
                     y: {
                         type: 'linear',
                         display: true,
@@ -1401,6 +1449,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     intersect: false
                 },
                 scales: {
+                    x: xAxisMonthly,
                     y: {
                         type: 'linear',
                         display: true,
@@ -1442,11 +1491,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 plugins: {
                     tooltip: {
                         callbacks: {
+                            title: function(tooltipItems) {
+                                return formatPeriodTitle(tooltipItems[0].label);
+                            },
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                                if (label) { label += ': '; }
                                 label += new Intl.NumberFormat('pt-BR', {
                                     style: 'currency',
                                     currency: '<?php echo $portfolio['output_currency']; ?>'
@@ -1472,6 +1522,20 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         intersect: false
                     },
                     scales: {
+                        x: {
+                            ticks: {
+                                // Para projeções longas: exibe apenas Janeiro de cada ano
+                                callback: function(value, index) {
+                                    const lbl = this.getLabelForValue(value);
+                                    if (!lbl || !String(lbl).match(/^\d{4}-\d{2}-\d{2}$/)) return lbl;
+                                    const month = lbl.substring(5, 7);
+                                    return month === '01' ? formatXAxisLabel(lbl) : null;
+                                },
+                                maxRotation: 45,
+                                minRotation: 45,
+                                autoSkip: false
+                            }
+                        },
                         y: {
                             ticks: {
                                 callback: function(value) {
@@ -1487,11 +1551,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     plugins: {
                         tooltip: {
                             callbacks: {
+                                title: function(tooltipItems) {
+                                    return formatPeriodTitle(tooltipItems[0].label);
+                                },
                                 label: function(context) {
                                     let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
+                                    if (label) { label += ': '; }
                                     label += new Intl.NumberFormat('pt-BR', {
                                         style: 'currency',
                                         currency: '<?php echo $portfolio['output_currency']; ?>'

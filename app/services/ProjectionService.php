@@ -24,8 +24,8 @@ class ProjectionService {
 
         // Adiciona o ponto inicial
         $projection[$startDate->format('Y-m-d')] = [
-            'total_value' => round($currentValue, 2),
-            'total_invested' => round($totalInvested, 2),
+            'total_value'    => round($currentValue, 8),
+            'total_invested' => round($totalInvested, 8),
             'interest_earned' => 0,
             'is_projection' => true
         ];
@@ -42,9 +42,9 @@ class ProjectionService {
             $totalInvested += $monthlyDeposit;
             
             $projection[$startDate->format('Y-m-d')] = [
-                'total_value' => round($currentValue, 2),
-                'total_invested' => round($totalInvested, 2),
-                'interest_earned' => round($currentValue - $totalInvested, 2),
+                'total_value'    => round($currentValue, 8),
+                'total_invested' => round($totalInvested, 8),
+                'interest_earned' => round($currentValue - $totalInvested, 8),
                 'is_projection' => true
             ];
         }
@@ -64,8 +64,8 @@ class ProjectionService {
         $invested = [];
         
         foreach ($projectionData as $date => $data) {
-            $labels[] = date('m/Y', strtotime($date));
-            $values[] = $data['total_value'];
+            $labels[] = $date; // ISO (YYYY-MM-DD) – formatado no JS para MM/AA
+            $values[]   = $data['total_value'];
             $invested[] = $data['total_invested'];
         }
         
