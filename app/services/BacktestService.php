@@ -273,9 +273,13 @@ class BacktestService {
             $lastFxRate = $currentFxRate;
 
             // Aplica rendimento SELIC ao caixa (para tipos smart_deposit e selic_cash_deposit)
+            $selicCashEarnings  = 0;
+            $selicCashInjected  = 0;
             if ($selicCash > 0) {
+                $selicCashBeforeInterest = $selicCash;
                 $selicMonthlyRate = $selicRates[$date] ?? 0;
                 $selicCash *= (1 + $selicMonthlyRate);
+                $selicCashEarnings = $selicCash - $selicCashBeforeInterest;
             }
 
             // Total incluindo caixa SELIC (para tipos com caixa; para os demais, selicCash = 0)
@@ -537,6 +541,7 @@ class BacktestService {
                 // Para tipos com caixa SELIC: inclui o caixa no total do rebalanceamento e o zera
                 $rebalanceBase = $totalMonthValue;
                 if (in_array($simulationType, ['smart_deposit', 'selic_cash_deposit']) && $selicCash > 0) {
+                    $selicCashInjected = $selicCash;
                     $rebalanceBase += $selicCash;
                     $selicCash = 0; // Caixa é integralmente investido no rebalanceamento
                 }
@@ -592,7 +597,9 @@ class BacktestService {
                 // NOVO: Adiciona os valores da estratégia
                 'strategy_value' => $portfolioWithoutDeposits,
                 'strategy_variation' => $strategyVariation,
-                'selic_cash' => $selicCash
+                'selic_cash' => $selicCash,
+                'selic_cash_earnings' => $selicCashEarnings,
+                'selic_cash_injected' => $selicCashInjected
             ];
 
             // Atualiza a referência da data anterior para o cálculo da variação da estratégia

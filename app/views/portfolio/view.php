@@ -136,6 +136,42 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<?php
+// ─── AVISO: Caixa SELIC com rebalanceamento e aporte mensais ───────────────
+$isSelicMonthlyConflict = (
+    $portfolio['simulation_type'] === 'selic_cash_deposit' &&
+    $portfolio['rebalance_frequency'] === 'monthly' &&
+    (empty($portfolio['deposit_frequency']) || $portfolio['deposit_frequency'] === 'monthly')
+);
+?>
+<?php if ($isSelicMonthlyConflict): ?>
+    <div class="alert border-0 rounded-4 d-flex align-items-start p-3 mb-4 shadow-sm"
+         style="background-color: rgba(255,193,7,0.10); border-left: 4px solid #ffc107 !important;">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+             style="width: 42px; height: 42px;">
+            <i class="bi bi-lightbulb-fill text-white fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold mb-1 text-dark">Configuração pouco eficiente para esta estratégia</h6>
+            <p class="text-muted smaller mb-0">
+                Com <strong>aporte mensal</strong> e <strong>rebalanceamento mensal</strong>, o Caixa SELIC é
+                reinvestido todo mês, sem acumular rendimentos ao longo do tempo. A estratégia
+                <strong>Aporte em Caixa SELIC</strong> é mais eficiente quando o rebalanceamento é
+                <strong>trimestral, semestral ou anual</strong> — assim os aportes acumulam rendimentos
+                da SELIC por vários meses antes de serem investidos no portfólio.
+                <br>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"
+                   class="fw-bold text-warning-emphasis">
+                    <i class="bi bi-pencil me-1"></i>Editar portfólio para ajustar a frequência de rebalanceamento
+                </a>
+            </p>
+        </div>
+        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 smaller fw-bold ms-3 flex-shrink-0">
+            ATENÇÃO
+        </span>
+    </div>
+<?php endif; ?>
+
     <div class="collapse mb-4" id="compositionCollapse">
         <div class="card card-body shadow-sm border-0">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -581,6 +617,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         <th>Variação</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Aportes</th>
+                        <?php if ($portfolio['simulation_type'] === 'selic_cash_deposit'): ?>
+                        <th class="text-center">Caixa SELIC</th>
+                        <?php endif; ?>
                         <th class="text-end pe-4">Ações</th>
                     </tr>
                     </thead>
@@ -603,6 +642,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             $assetValuesJson = htmlspecialchars(json_encode($data['asset_values']), ENT_QUOTES, 'UTF-8');
                             $tradesJson = htmlspecialchars(json_encode($data['trades'] ?? []), ENT_QUOTES, 'UTF-8');
                             $depositInfoJson = htmlspecialchars(json_encode(['amount' => $depositMade, 'type' => $depositType]), ENT_QUOTES, 'UTF-8');
+                            $selicCashValue    = $data['selic_cash'] ?? 0;
+                            $selicCashEarnings = $data['selic_cash_earnings'] ?? 0;
+                            $selicCashInjected = $data['selic_cash_injected'] ?? 0;
+                            $selicCashInfoJson = htmlspecialchars(json_encode([
+                                'selic_cash'          => $selicCashValue,
+                                'selic_cash_earnings' => $selicCashEarnings,
+                                'selic_cash_injected' => $selicCashInjected
+                            ]), ENT_QUOTES, 'UTF-8');
                             ?>
                             <tr>
                                 <td class="ps-4 fw-bold"><?php echo $dateLabel; ?></td>
@@ -634,9 +681,32 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                         <span class="text-muted small">-</span>
                                     <?php endif; ?>
                                 </td>
+                                <?php if ($portfolio['simulation_type'] === 'selic_cash_deposit'): ?>
+                                <td class="text-center">
+                                    <?php if ($selicCashInjected > 0): ?>
+                                        <span class="badge bg-soft-primary text-primary small"
+                                              title="Caixa SELIC investido no rebalanceamento">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>
+                                            <?= formatCurrency($selicCashInjected, $portfolio['output_currency']) ?>
+                                            <span class="d-block" style="font-size:0.7em; opacity:0.8;">investido</span>
+                                        </span>
+                                    <?php elseif ($selicCashValue > 0): ?>
+                                        <span class="fw-bold text-secondary small">
+                                            <?= formatCurrency($selicCashValue, $portfolio['output_currency']) ?>
+                                        </span>
+                                        <?php if ($selicCashEarnings > 0): ?>
+                                            <div class="text-success" style="font-size:0.78em;">
+                                                +<?= formatCurrency($selicCashEarnings, $portfolio['output_currency']) ?>&nbsp;<abbr title="Rendimento SELIC do mês">SELIC</abbr>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted small">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <?php endif; ?>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-sm btn-link text-decoration-none"
-                                            onclick='openDetailsModal("<?= $dateLabel ?>", <?= $assetValuesJson ?>, <?= $currentValue ?>, <?= $tradesJson ?>, <?= $depositInfoJson ?>)'>
+                                            onclick='openDetailsModal("<?= $dateLabel ?>", <?= $assetValuesJson ?>, <?= $currentValue ?>, <?= $tradesJson ?>, <?= $depositInfoJson ?>, <?= $selicCashInfoJson ?>)'>
                                         Ver Ativos <i class="bi bi-chevron-right ms-1"></i>
                                     </button>
                                 </td>
@@ -1196,7 +1266,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 "Patrimônio Líquido (sem aportes)",
                 "ROI Estratégia Puro (%)",
                 "Câmbio (USD/BRL)",
-                "Status Rebal."
+                "Status Rebal.",
+                "Caixa SELIC",
+                "Rendimento SELIC do Mês",
+                "Caixa SELIC Investido (Rebal.)"
             ];
             
             assetIds.forEach(id => {
@@ -1237,6 +1310,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 const strategyVariation = (data.strategy_variation || 0).toFixed(2).replace('.', ',');
                 const fxRate = data.fx_rate ? data.fx_rate.toFixed(4).replace('.', ',') : "-";
                 const status = data.rebalanced ? "Rebalanceado" : "Mantido";
+                const selicCash        = (data.selic_cash || 0).toFixed(2).replace('.', ',');
+                const selicEarnings    = (data.selic_cash_earnings || 0).toFixed(2).replace('.', ',');
+                const selicInjected    = (data.selic_cash_injected || 0).toFixed(2).replace('.', ',');
 
                 let line = [
                     dateLabel, 
@@ -1247,7 +1323,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     strategyValue, 
                     strategyVariation,
                     fxRate,
-                    status
+                    status,
+                    selicCash,
+                    selicEarnings,
+                    selicInjected
                 ];
 
                 assetIds.forEach(id => {
