@@ -103,3 +103,22 @@ body {
 .transition { transition: all 0.3s ease-in-out; }
 .hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
 .bg-gradient-light { background: linear-gradient(180deg, #ffffff 0%, #fcfdfe 100%); }
+
+/* 6. INFO TOOLTIP BUTTONS */
+.info-tooltip {
+    opacity: 0.45;
+    transition: opacity 0.2s, transform 0.2s;
+    line-height: 1;
+    vertical-align: middle;
+}
+.info-tooltip:hover,
+.info-tooltip:focus {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+/* Hero section: display-6 responsive refinement */
+@media (max-width: 768px) {
+    .display-6 { font-size: 1.5rem; }
+}
+

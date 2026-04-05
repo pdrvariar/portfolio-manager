@@ -39,6 +39,15 @@ ob_start();
                 | <i class="bi bi-currency-exchange ms-2 me-1"></i> <?php echo $portfolio['output_currency']; ?>
                 <?php if ($portfolio['simulation_type'] != 'standard'): ?>
                     | <i class="bi bi-calculator ms-2 me-1"></i> Simulação:
+                    <?php
+                    $simTooltips = [
+                        'monthly_deposit'    => 'Aporte Periódico: a cada período configurado, um valor fixo é investido no portfólio e distribuído entre os ativos conforme as alocações-alvo.',
+                        'strategic_deposit'  => 'Aporte Estratégico: um aporte extra é realizado apenas quando o portfólio cai acima de um percentual configurado em um único mês — comprando na baixa.',
+                        'smart_deposit'      => 'Aporte Direcionado ao Alvo: o aporte periódico é direcionado ao ativo que está mais abaixo de sua alocação-alvo, maximizando a eficiência do rebalanceamento.',
+                        'selic_cash_deposit' => 'Aporte em Caixa SELIC: os aportes ficam rendendo a taxa SELIC em caixa e são investidos no portfólio somente no momento do próximo rebalanceamento.',
+                    ];
+                    $currentSimTooltip = $simTooltips[$portfolio['simulation_type']] ?? '';
+                    ?>
                     <?php if ($portfolio['simulation_type'] == 'monthly_deposit'): ?>
                         <span class="badge bg-info bg-soft">Aporte Periódico</span>
                     <?php elseif ($portfolio['simulation_type'] == 'strategic_deposit'): ?>
@@ -47,6 +56,13 @@ ob_start();
                         <span class="badge bg-success bg-soft">Aporte Direcionado ao Alvo</span>
                     <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
                         <span class="badge bg-secondary bg-soft">Aporte em Caixa (SELIC)</span>
+                    <?php endif; ?>
+                    <?php if ($currentSimTooltip): ?>
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-muted align-middle info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="<?= htmlspecialchars($currentSimTooltip) ?>">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
                     <?php endif; ?>
                 <?php endif; ?>
             </p>
@@ -287,23 +303,160 @@ $isSelicMonthlyConflict = (
     </div>
     <?php endif; ?>
 
+    <?php
+    // ── Hero: 3 métricas em destaque ────────────────────────────────────────
+    $heroHasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
+    ?>
+    <div class="row g-3 mb-4">
+        <!-- Patrimônio Inicial -->
+        <div class="col-md-4">
+            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+                 style="background: linear-gradient(135deg,#f0f4ff 0%,#dde8fd 100%);">
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-05" style="pointer-events:none;">
+                    <i class="bi bi-wallet2" style="font-size:8rem;color:#4a6cf7;opacity:.08;"></i>
+                </div>
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small"
+                              style="background:#4a6cf7;color:#fff;letter-spacing:.05em;">
+                            <i class="bi bi-wallet2 me-1"></i> Patrimônio Inicial
+                        </span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                title="Capital investido no <strong>início da simulação</strong>, antes de qualquer rendimento ou aporte. É o ponto de partida de todo o cálculo.">
+                            <i class="bi bi-info-circle-fill fs-6"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <div class="display-6 fw-bold text-dark lh-1 mb-1">
+                            <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-calendar3 me-1"></i> Início em <?php echo formatDate($portfolio['start_date']); ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Aportes -->
+        <div class="col-md-4">
+            <?php if ($heroHasDeposits): ?>
+            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+                 style="background: linear-gradient(135deg,#edfbf3 0%,#c7f0da 100%);">
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small bg-success">
+                            <i class="bi bi-cash-stack me-1"></i> Total de Aportes
+                        </span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                title="Soma de <strong>todos os aportes realizados</strong> durante o período simulado, além do capital inicial.<br><br>Total Investido = Capital Inicial + Aportes.">
+                            <i class="bi bi-info-circle-fill fs-6"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <div class="display-6 fw-bold text-success lh-1 mb-1">
+                            <?php echo formatCurrency($metrics['total_deposits'], $portfolio['output_currency']); ?>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-stack me-1"></i> Total investido:
+                            <strong><?php echo formatCurrency($metrics['total_invested'], $portfolio['output_currency']); ?></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+                 style="background: linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%);">
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small bg-secondary">
+                            <i class="bi bi-cash-stack me-1"></i> Total de Aportes
+                        </span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                title="Nenhum aporte adicional foi configurado para esta simulação.<br>Apenas o <strong>capital inicial</strong> foi considerado.">
+                            <i class="bi bi-info-circle-fill fs-6"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <div class="display-6 fw-bold text-muted lh-1 mb-1">—</div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-dash-circle me-1"></i> Sem aportes periódicos
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Patrimônio Final -->
+        <div class="col-md-4">
+            <?php
+            $heroFinalValue = $metrics['final_value'] ?? $metrics['total_value'] ?? $portfolio['initial_capital'];
+            $heroTotalReturn = $metrics['total_return'] ?? 0;
+            $heroPositive = $heroTotalReturn >= 0;
+            ?>
+            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+                 style="background: linear-gradient(135deg,<?= $heroPositive ? '#eef5ff 0%,#c7dafc 100%' : '#fff1f3 0%,#ffd5da 100%' ?>);">
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $heroPositive ? 'bg-primary' : 'bg-danger' ?>">
+                            <i class="bi bi-graph-up-arrow me-1"></i> Patrimônio Final
+                        </span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                title="Valor total do portfólio ao <strong>final do período simulado</strong>, incluindo capital inicial, aportes e todos os rendimentos obtidos.">
+                            <i class="bi bi-info-circle-fill fs-6"></i>
+                        </button>
+                    </div>
+                    <?php if ($latest): ?>
+                    <div>
+                        <div class="display-6 fw-bold lh-1 mb-1 <?= $heroPositive ? 'text-primary' : 'text-danger' ?>">
+                            <?php echo formatCurrency($heroFinalValue, $portfolio['output_currency']); ?>
+                        </div>
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill <?= $heroPositive ? 'bg-success' : 'bg-danger' ?> fs-6 px-3 py-2">
+                                <?= ($heroPositive ? '+' : '') . number_format($heroTotalReturn, 2, ',', '.') ?>%
+                            </span>
+                            <span class="text-muted small">retorno total</span>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div>
+                        <div class="display-6 fw-bold text-muted lh-1 mb-1">—</div>
+                        <div class="text-muted small mt-2"><i class="bi bi-play-circle me-1"></i> Execute a simulação</div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3 mb-4">
         <?php
         // Adiciona métricas específicas para simulações com aportes
         $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
 
         $metricsList = [
-                ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return'], 2), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'],
+                ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return'], 2), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger',
+                 'tooltip' => 'Percentual de valorização total do portfólio do início ao fim da simulação. Inclui o efeito dos aportes e do rebalanceamento.'],
                 [
                         'label' => ($metrics['is_short_period'] ?? false) ? 'Retorno no Período' : 'CAGR (Anual)',
                         'val'   => formatPercentage($metrics['annual_return'], 2),
                         'class' => 'border-success',
-                        'text'  => 'text-success'
+                        'text'  => 'text-success',
+                        'tooltip' => 'CAGR (Compound Annual Growth Rate): taxa de crescimento anual composta. Representa o retorno anualizado consistente que teria gerado o mesmo resultado final.'
                 ],
-                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-dark'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark'],
-                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2), 'class' => 'border-success', 'text' => 'text-success'],
-                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2), 'class' => 'border-danger', 'text' => 'text-danger'],
+                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-dark',
+                 'tooltip' => 'Desvio padrão dos retornos mensais. Mede a imprevisibilidade do portfólio: <strong>quanto maior, mais arriscado</strong>. Valores baixos indicam maior estabilidade.'],
+                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark',
+                 'tooltip' => 'Relação entre retorno e risco. <strong>Acima de 1</strong> = bom; <strong>acima de 2</strong> = excelente. Indica quanto de retorno foi obtido por unidade de risco assumido.'],
+                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2), 'class' => 'border-success', 'text' => 'text-success',
+                 'tooltip' => 'O <strong>maior retorno positivo</strong> registrado em um único mês durante o período simulado. Reflete o melhor cenário mensal da estratégia.'],
+                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2), 'class' => 'border-danger', 'text' => 'text-danger',
+                 'tooltip' => 'A <strong>maior perda</strong> sofrida em um único mês durante o período simulado. Ajuda a dimensionar o risco de curto prazo da estratégia.'],
         ];
 
         // Se houver aportes, adicionamos métricas de Retorno Real e ROI
@@ -312,28 +465,32 @@ $isSelicMonthlyConflict = (
                     'label' => 'Performance Real (Sem Aportes)',
                     'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
                     'class' => 'border-primary',
-                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Retorno total gerado <strong>exclusivamente pela estratégia de investimento</strong>, isolando o efeito dos aportes. Mostra o quanto a alocação de ativos contribuiu para o resultado.'
             ];
 
             $metricsList[] = [
                 'label' => ($metrics['is_short_period'] ?? false) ? 'Perf. Anual Real (Sem Aportes)' : 'Performance Anual Real (Sem Aportes)',
                 'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0, 2),
                 'class' => 'border-success',
-                'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+                'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                'tooltip' => 'Versão <strong>anualizada</strong> do retorno real da estratégia, sem considerar o efeito dos aportes. Permite comparar com benchmarks e outras estratégias.'
             ];
             
             $metricsList[] = [
                     'label' => 'Retorno Real (Sem Aportes)',
                     'val' => formatCurrency(($portfolio['initial_capital'] * ($metrics['strategy_return'] ?? 0) / 100), $portfolio['output_currency']),
                     'class' => 'border-info',
-                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => '<strong>Valor monetário</strong> gerado pela estratégia sobre o capital inicial, desconsiderando todos os aportes. É o lucro puro da alocação de ativos.'
             ];
 
             $metricsList[] = [
                     'label' => 'ROI (com aportes)',
                     'val' => formatPercentage($metrics['roi'] ?? 0, 2),
                     'class' => 'border-success',
-                    'text' => ($metrics['roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
+                    'text' => ($metrics['roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Return on Investment: retorno percentual sobre o <strong>total investido</strong> (capital inicial + todos os aportes). Indica a eficiência de todo o capital empregado.'
             ];
         }
 
@@ -341,7 +498,16 @@ $isSelicMonthlyConflict = (
             <div class="col-md-3 mb-3">
                 <div class="card metric-card shadow-sm h-100 border-start border-4 <?php echo $m['class']; ?>">
                     <div class="card-body">
-                        <h6 class="text-muted small text-uppercase fw-bold"><?php echo $m['label']; ?></h6>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="text-muted small text-uppercase fw-bold mb-0 me-1"><?php echo $m['label']; ?></h6>
+                            <?php if (!empty($m['tooltip'])): ?>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-muted flex-shrink-0 info-tooltip"
+                                    data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                    title="<?= htmlspecialchars($m['tooltip']) ?>">
+                                <i class="bi bi-info-circle-fill small"></i>
+                            </button>
+                            <?php endif; ?>
+                        </div>
                         <h3 class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
                         <?php if ($m['label'] == 'Retorno Real (Sem Aportes)'): ?>
                             <div class="mt-2 small text-muted">
@@ -364,7 +530,14 @@ $isSelicMonthlyConflict = (
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Evolução do Patrimônio</h5>
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Evolução do Patrimônio
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Mostra o <strong>valor total do portfólio</strong> a cada mês simulado. Inclui o efeito dos aportes, rebalanceamentos e variação de preços dos ativos.<br><br>Use o seletor <em>Comparar com</em> para adicionar um benchmark.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
                     <div class="d-flex align-items-center gap-3">
                         <?php if ($hasDeposits): ?>
                             <div class="d-flex align-items-center gap-2 border-end pe-3">
@@ -434,7 +607,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="card shadow-sm border-0 overflow-hidden">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)</h5>
+                        <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                            <i class="bi bi-graph-up-arrow me-1"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)
+                            <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                    data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                    title="<strong>Estimativa futura</strong> baseada no retorno anual real histórico da estratégia, com juros compostos mensais.<br><br>⚠️ Rentabilidade passada <strong>não garante</strong> rentabilidade futura. Use como referência de planejamento.">
+                                <i class="bi bi-info-circle-fill"></i>
+                            </button>
+                        </h5>
                         <p class="text-muted small mb-0">
                             Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
                             <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
@@ -522,7 +702,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Performance Real da Estratégia</h5>
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Performance Real da Estratégia
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Compara o crescimento do portfólio <strong>com aportes</strong> (linha verde) versus a <strong>performance pura da estratégia</strong> (linha azul), sem aportes.<br><br>A diferença entre as linhas representa o impacto dos aportes no patrimônio.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
                     <p class="text-muted small mb-0">Comparação entre o crescimento do portfólio total (com aportes) e a performance real da estratégia (excluindo aportes).</p>
                 </div>
                 <div class="card-body">
@@ -549,7 +736,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Evolução dos Juros</h5>
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Evolução dos Juros
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Exibe os <strong>juros mensais obtidos</strong> (barras) e o <strong>total acumulado de juros</strong> (linha) ao longo do tempo.<br><br>Juros = rendimento gerado pelos ativos, excluindo capital aportado.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
                     <p class="text-muted small mb-0">Juros mensais obtidos e acumulados ao longo do tempo.</p>
                 </div>
                 <div class="card-body">
@@ -566,7 +760,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Histórico de Aportes</h5>
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Histórico de Aportes
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Exibe os <strong>aportes realizados</strong> a cada mês (barras verdes) e o valor total do portfólio ao longo do tempo (linha azul).<br><br>Meses sem aporte correspondem a períodos em que a condição de aporte não foi atingida.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="chart-container" style="height: 300px;">
@@ -581,19 +782,46 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Composição Histórica</h5></div>
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Composição Histórica
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Percentual de cada ativo no portfólio <strong>mês a mês</strong>. Mostra como as alocações evoluíram com o tempo e os rebalanceamentos periódicos.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
+                </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="compositionChart"></canvas></div></div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Retorno por Ano</h5></div>
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Retorno por Ano
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Retorno percentual total do portfólio (incluindo aportes) em <strong>cada ano</strong> do período simulado. Barras verdes = anos positivos; barras vermelhas = anos negativos.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
+                </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="returnsChart"></canvas></div></div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3"><h5 class="mb-0 fw-bold">Retorno por Ano Real (Sem Aportes)</h5></div>
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        Retorno por Ano Real (Sem Aportes)
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                title="Retorno percentual gerado pela <strong>estratégia pura</strong> em cada ano, excluindo o efeito dos aportes. Permite avaliar a qualidade da alocação de ativos independentemente do volume aportado.">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </button>
+                    </h5>
+                </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="strategyReturnsChart"></canvas></div></div>
             </div>
         </div>
@@ -601,7 +829,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
     <div class="card shadow-sm border-0 mb-5">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold">Auditoria Mensal</h5>
+            <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                Auditoria Mensal
+                <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                        data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                        title="Registro detalhado de <strong>cada mês simulado</strong>: saldo, variação mensal, status de rebalanceamento e aportes realizados.<br><br>Clique em <em>Ver Ativos</em> para ver a composição exata de cada mês.">
+                    <i class="bi bi-info-circle-fill"></i>
+                </button>
+            </h5>
             <div class="d-flex gap-2">
                 <input type="text" id="auditSearch" class="form-control form-control-sm" placeholder="Buscar data..." style="width: 180px;">
                 <button onclick="exportAuditToCSV()" class="btn btn-sm btn-outline-secondary" title="Exportar Auditoria Completa"><i class="bi bi-download"></i> CSV</button>
@@ -1898,6 +2133,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         // Adiciona eventos aos inputs
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa todos os tooltips Bootstrap da página
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(function(el) {
+                new bootstrap.Tooltip(el, { html: true, trigger: 'hover focus' });
+            });
+
             document.querySelectorAll('.allocation-input').forEach(input => {
                 input.addEventListener('input', updateAllocationTotal);
                 input.addEventListener('change', updateAllocationTotal);
