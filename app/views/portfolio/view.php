@@ -293,31 +293,31 @@ $isSelicMonthlyConflict = (
         $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
 
         $metricsList = [
-                ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return']), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'],
+                ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return'], 2), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger'],
                 [
                         'label' => ($metrics['is_short_period'] ?? false) ? 'Retorno no Período' : 'CAGR (Anual)',
-                        'val'   => formatPercentage($metrics['annual_return']),
+                        'val'   => formatPercentage($metrics['annual_return'], 2),
                         'class' => 'border-success',
                         'text'  => 'text-success'
                 ],
-                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility']), 'class' => 'border-warning', 'text' => 'text-dark'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 4), 'class' => 'border-info', 'text' => 'text-dark'],
-                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0), 'class' => 'border-success', 'text' => 'text-success'],
-                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0), 'class' => 'border-danger', 'text' => 'text-danger'],
+                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-dark'],
+                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark'],
+                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2), 'class' => 'border-success', 'text' => 'text-success'],
+                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2), 'class' => 'border-danger', 'text' => 'text-danger'],
         ];
 
         // Se houver aportes, adicionamos métricas de Retorno Real e ROI
         if ($hasDeposits) {
             $metricsList[] = [
                     'label' => 'Performance Real (Sem Aportes)',
-                    'val' => formatPercentage($metrics['strategy_return'] ?? 0),
+                    'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
                     'class' => 'border-primary',
                     'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
             ];
 
             $metricsList[] = [
                 'label' => ($metrics['is_short_period'] ?? false) ? 'Perf. Anual Real (Sem Aportes)' : 'Performance Anual Real (Sem Aportes)',
-                'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0),
+                'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0, 2),
                 'class' => 'border-success',
                 'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
             ];
@@ -331,7 +331,7 @@ $isSelicMonthlyConflict = (
 
             $metricsList[] = [
                     'label' => 'ROI (com aportes)',
-                    'val' => formatPercentage($metrics['roi'] ?? 0),
+                    'val' => formatPercentage($metrics['roi'] ?? 0, 2),
                     'class' => 'border-success',
                     'text' => ($metrics['roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger'
             ];

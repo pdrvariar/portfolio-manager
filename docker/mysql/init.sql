@@ -144,3 +144,12 @@ ADD COLUMN max_monthly_gain DECIMAL(10,4) DEFAULT 0,
 ADD COLUMN max_monthly_loss DECIMAL(10,4) DEFAULT 0;
 
 -- Final do script
+ALTER TABLE portfolios
+    MODIFY COLUMN simulation_type
+    ENUM(
+    'standard',
+    'monthly_deposit',
+    'strategic_deposit',
+    'smart_deposit',
+    'selic_cash_deposit'
+    ) DEFAULT 'standard';
