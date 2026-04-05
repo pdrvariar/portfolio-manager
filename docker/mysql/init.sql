@@ -68,7 +68,7 @@ CREATE TABLE portfolio_assets (
     portfolio_id INT NOT NULL,
     asset_id INT NOT NULL,
     allocation_percentage DECIMAL(10, 6) NOT NULL,
-    performance_factor DECIMAL(10, 4) DEFAULT 1.0,
+    performance_factor DECIMAL(20, 10) DEFAULT 1.0,
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id),
     UNIQUE KEY unique_portfolio_asset (portfolio_id, asset_id)
@@ -79,11 +79,11 @@ CREATE TABLE simulation_results (
     id INT PRIMARY KEY AUTO_INCREMENT,
     portfolio_id INT NOT NULL,
     simulation_date DATE NOT NULL,
-    total_value DECIMAL(15, 2) NOT NULL,
-    annual_return DECIMAL(10, 4),
-    volatility DECIMAL(10, 4),
-    max_drawdown DECIMAL(10, 4),
-    sharpe_ratio DECIMAL(10, 4),
+    total_value DECIMAL(20, 8) NOT NULL,
+    annual_return DECIMAL(20, 10),
+    volatility DECIMAL(20, 10),
+    max_drawdown DECIMAL(20, 10),
+    sharpe_ratio DECIMAL(20, 10),
     chart_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
@@ -95,7 +95,7 @@ CREATE TABLE simulation_asset_details (
     simulation_id INT NOT NULL,
     asset_id INT NOT NULL,
     year INT NOT NULL,
-    annual_return DECIMAL(10, 4),
+    annual_return DECIMAL(20, 10),
     FOREIGN KEY (simulation_id) REFERENCES simulation_results(id) ON DELETE CASCADE,
     FOREIGN KEY (asset_id) REFERENCES system_assets(id)
 ) ENGINE=InnoDB;
@@ -116,11 +116,11 @@ INSERT INTO system_assets (code, name, currency, asset_type, source) VALUES
 
 ALTER TABLE portfolios
     ADD COLUMN simulation_type ENUM('standard', 'monthly_deposit', 'strategic_deposit') DEFAULT 'standard',
-ADD COLUMN deposit_amount DECIMAL(15, 2) NULL,
+ADD COLUMN deposit_amount DECIMAL(20, 8) NULL,
 ADD COLUMN deposit_currency VARCHAR(3) NULL,
 ADD COLUMN deposit_frequency VARCHAR(20) NULL,
-ADD COLUMN strategic_threshold DECIMAL(10, 4) NULL,
-ADD COLUMN strategic_deposit_percentage DECIMAL(10, 4) NULL;
+ADD COLUMN strategic_threshold DECIMAL(20, 10) NULL,
+ADD COLUMN strategic_deposit_percentage DECIMAL(20, 10) NULL;
 
 -- Atualize o INSERT existente para incluir valores padrão para os novos campos
 -- (Opcional, se quiser que portfolios existentes tenham valores padrão)
@@ -134,14 +134,14 @@ SET simulation_type = 'standard',
 WHERE simulation_type IS NULL;
 
 ALTER TABLE simulation_results
-ADD COLUMN total_deposits DECIMAL(15,2) DEFAULT 0,
-ADD COLUMN total_invested DECIMAL(15,2) DEFAULT 0,
-ADD COLUMN interest_earned DECIMAL(15,2) DEFAULT 0,
-ADD COLUMN roi DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN strategy_return DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN strategy_annual_return DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN max_monthly_gain DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN max_monthly_loss DECIMAL(10,4) DEFAULT 0;
+ADD COLUMN total_deposits DECIMAL(20, 8) DEFAULT 0,
+ADD COLUMN total_invested DECIMAL(20, 8) DEFAULT 0,
+ADD COLUMN interest_earned DECIMAL(20, 8) DEFAULT 0,
+ADD COLUMN roi DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN strategy_return DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN strategy_annual_return DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN max_monthly_gain DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN max_monthly_loss DECIMAL(20, 10) DEFAULT 0;
 
 -- Final do script
 ALTER TABLE portfolios
