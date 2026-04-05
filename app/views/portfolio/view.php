@@ -43,6 +43,10 @@ ob_start();
                         <span class="badge bg-info bg-soft">Aporte Periódico</span>
                     <?php elseif ($portfolio['simulation_type'] == 'strategic_deposit'): ?>
                         <span class="badge bg-warning bg-soft">Aporte Estratégico</span>
+                    <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
+                        <span class="badge bg-success bg-soft">Aporte Direcionado ao Alvo</span>
+                    <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
+                        <span class="badge bg-secondary bg-soft">Aporte em Caixa (SELIC)</span>
                     <?php endif; ?>
                 <?php endif; ?>
             </p>
@@ -104,11 +108,30 @@ ob_start();
                     <strong>Aporte Estratégico:</strong>
                     Se o portfólio cair <?php echo number_format($portfolio['strategic_threshold'], 1); ?>% em um mês,
                     será aportado <?php echo number_format($portfolio['strategic_deposit_percentage'], 1); ?>% do valor atual.
+                <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
+                    <strong>Aporte Direcionado ao Alvo:</strong>
+                    <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
+                    a cada <?php echo $portfolio['deposit_frequency']; ?> — direcionado ao ativo mais abaixo do percentual-alvo.
+                    Sobras acumuladas em Caixa SELIC até o próximo rebalanceamento.
+                <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
+                    <strong>Aporte em Caixa (SELIC):</strong>
+                    <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
+                    a cada <?php echo $portfolio['deposit_frequency']; ?> — acumulado em Caixa SELIC e
+                    investido integralmente a cada rebalanceamento.
                 <?php endif; ?>
             </p>
         </div>
         <span class="badge bg-soft-info text-info rounded-pill px-3 py-2 smaller fw-bold ms-3">
-        <?php echo strtoupper($portfolio['simulation_type']); ?>
+        <?php
+        $simTypeLabels = [
+            'standard'           => 'PADRÃO',
+            'monthly_deposit'    => 'APORTE PERIÓDICO',
+            'strategic_deposit'  => 'APORTE ESTRATÉGICO',
+            'smart_deposit'      => 'APORTE DIRECIONADO',
+            'selic_cash_deposit' => 'CAIXA SELIC',
+        ];
+        echo $simTypeLabels[$portfolio['simulation_type']] ?? strtoupper($portfolio['simulation_type']);
+        ?>
     </span>
     </div>
 <?php endif; ?>
@@ -594,7 +617,16 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                 </td>
                                 <td class="text-center">
                                     <?php if ($depositMade > 0): ?>
-                                        <span class="badge bg-soft-success text-success small" title="<?php echo $depositType == 'monthly' ? 'Aporte Periódico' : 'Aporte Estratégico'; ?>">
+                                        <?php
+                                        $depositTypeLabels = [
+                                            'monthly'    => 'Aporte Periódico',
+                                            'strategic'  => 'Aporte Estratégico',
+                                            'smart'      => 'Aporte Direcionado ao Alvo',
+                                            'selic_cash' => 'Aporte em Caixa SELIC',
+                                        ];
+                                        $depositLabel = $depositTypeLabels[$depositType] ?? 'Aporte';
+                                        ?>
+                                        <span class="badge bg-soft-success text-success small" title="<?php echo $depositLabel; ?>">
                                     <i class="bi bi-cash-coin me-1"></i>
                                     <?php echo formatCurrency($depositMade, $portfolio['output_currency']); ?>
                                 </span>
@@ -1059,7 +1091,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 document.getElementById('modalDeposit').innerText =
                     new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(depositInfo.amount);
                 document.getElementById('modalDepositType').innerText =
-                    depositInfo.type === 'monthly' ? 'Aporte Periódico' : 'Aporte Estratégico';
+                    {
+                        'monthly':    'Aporte Periódico',
+                        'strategic':  'Aporte Estratégico',
+                        'smart':      'Aporte Direcionado ao Alvo',
+                        'selic_cash': 'Aporte em Caixa SELIC'
+                    }[depositInfo.type] || 'Aporte';
             } else {
                 depositSection.style.display = 'none';
             }

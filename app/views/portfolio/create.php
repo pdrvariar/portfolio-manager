@@ -83,16 +83,18 @@ $assets = $assetModel->getAllWithDetails();
                                     <option value="standard">Padrão (sem aportes)</option>
                                     <option value="monthly_deposit">Com Aportes Periódicos</option>
                                     <option value="strategic_deposit">Com Aportes Estratégicos</option>
+                                    <option value="smart_deposit">Aporte Direcionado ao Alvo</option>
+                                    <option value="selic_cash_deposit">Aporte em Caixa (SELIC)</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Campos para Aportes Periódicos -->
+                    <!-- Campos para Aportes Periódicos / Direcionado / Caixa SELIC -->
                     <div id="monthly_deposit_fields" class="simulation-fields" style="display: none;">
                         <div class="card border-primary mb-3">
                             <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos</h6>
+                                <h6 class="mb-0" id="deposit_card_header"><i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -116,7 +118,7 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-4">
                                         <div class="mb-3">
-                                            <label for="deposit_frequency" class="form-label">Frequência</label>
+                                            <label for="deposit_frequency" class="form-label">Frequência do Aporte</label>
                                             <select class="form-select" id="deposit_frequency" name="deposit_frequency">
                                                 <option value="monthly">Mensal</option>
                                                 <option value="bimonthly">Bimestral</option>
@@ -127,8 +129,15 @@ $assets = $assetModel->getAllWithDetails();
                                         </div>
                                     </div>
                                 </div>
-                                <div class="alert alert-info py-2 small mb-0">
-                                    <i class="bi bi-info-circle me-1"></i> Os aportes serão realizados automaticamente na data de início de cada período.
+                                <!-- Descrição dinâmica por tipo -->
+                                <div id="desc_monthly_deposit" class="alert alert-info py-2 small mb-0">
+                                    <i class="bi bi-info-circle me-1"></i> Os aportes serão distribuídos entre todos os ativos proporcionalmente ao peso-alvo (com rebalanceamento a cada aporte).
+                                </div>
+                                <div id="desc_smart_deposit" class="alert alert-success py-2 small mb-0" style="display:none;">
+                                    <i class="bi bi-bullseye me-1"></i> O aporte é direcionado ao ativo mais abaixo do percentual-alvo. Quando atingir o alvo, o restante vai para o próximo mais desviado, e assim por diante. Sobras são acumuladas em Caixa SELIC e usadas integralmente no próximo rebalanceamento.
+                                </div>
+                                <div id="desc_selic_cash_deposit" class="alert alert-secondary py-2 small mb-0" style="display:none;">
+                                    <i class="bi bi-piggy-bank me-1"></i> Todo o aporte vai para o Caixa (SELIC), rendendo a taxa SELIC até o próximo rebalanceamento, quando é integralmente investido nos ativos da carteira.
                                 </div>
                             </div>
                         </div>
@@ -396,10 +405,22 @@ function toggleSimulationFields() {
         field.style.display = 'none';
     });
 
-    // Mostra os campos específicos
-    if (type === 'monthly_deposit') {
+    // Esconde todas as descrições dinâmicas
+    ['desc_monthly_deposit', 'desc_smart_deposit', 'desc_selic_cash_deposit'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+
+    const depositHeaderTexts = {
+        'monthly_deposit':   '<i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos',
+        'smart_deposit':     '<i class="bi bi-bullseye me-2"></i>Configuração — Aporte Direcionado ao Alvo',
+        'selic_cash_deposit':'<i class="bi bi-piggy-bank me-2"></i>Configuração — Aporte em Caixa (SELIC)'
+    };
+
+    if (type === 'monthly_deposit' || type === 'smart_deposit' || type === 'selic_cash_deposit') {
         document.getElementById('monthly_deposit_fields').style.display = 'block';
-        // Define valores padrão
+        document.getElementById('deposit_card_header').innerHTML = depositHeaderTexts[type] || depositHeaderTexts['monthly_deposit'];
+        document.getElementById('desc_' + type).style.display = 'block';
+        // Define valor padrão se estiver vazio
         if (!document.getElementById('deposit_amount').value) {
             document.getElementById('deposit_amount').value = '1000.00';
         }

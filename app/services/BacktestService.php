@@ -176,6 +176,13 @@ class BacktestService {
         $previousMonthValue = $initialCapital;
         $totalDeposits = 0;
 
+        // Variáveis para Caixa SELIC (tipos smart_deposit e selic_cash_deposit)
+        $selicCash = 0.0;
+        $selicRates = [];
+        if (in_array($simulationType, ['smart_deposit', 'selic_cash_deposit'])) {
+            $selicRates = $this->loadSelicRates($portfolio['start_date'], $fxEndDate);
+        }
+
         // NOVO: Variáveis para cálculo do retorno real
         $portfolioWithoutDeposits = $initialCapital;
         $strategyOnlyValues = []; // Armazena valores excluindo aportes
@@ -265,13 +272,22 @@ class BacktestService {
 
             $lastFxRate = $currentFxRate;
 
+            // Aplica rendimento SELIC ao caixa (para tipos smart_deposit e selic_cash_deposit)
+            if ($selicCash > 0) {
+                $selicMonthlyRate = $selicRates[$date] ?? 0;
+                $selicCash *= (1 + $selicMonthlyRate);
+            }
+
+            // Total incluindo caixa SELIC (para tipos com caixa; para os demais, selicCash = 0)
+            $totalWithCash = $totalMonthValue + $selicCash;
+
             // Calcula a rentabilidade do mês para auditoria ANTES do aporte
             // para que a variação exibida seja a performance dos ativos
-            $totalBeforeDeposit = $totalMonthValue;
+            $totalBeforeDeposit = $totalWithCash;
 
             // Calcula o fator de retorno real dos ativos neste mês (média ponderada)
             // antes de qualquer aporte, para rastrear a performance pura da estratégia
-            $monthlyReturnFactor = $previousMonthValue > 0 ? $totalMonthValue / $previousMonthValue : 1;
+            $monthlyReturnFactor = $previousMonthValue > 0 ? $totalWithCash / $previousMonthValue : 1;
             $portfolioWithoutDeposits *= $monthlyReturnFactor;
 
             // ============================================
@@ -389,6 +405,110 @@ class BacktestService {
                 }
             }
 
+            // ============================================
+            // LÓGICA DE APORTE DIRECIONADO AO ALVO (Tipo 3)
+            // Compra o ativo mais abaixo do percentual-alvo; sobra vai para Caixa SELIC
+            // ============================================
+            $smartDepositThisMonth = 0;
+            if ($simulationType === 'smart_deposit' && $depositAmount > 0) {
+                if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
+                    $depositInPortfolioCurrency = $depositAmount;
+                    if ($depositCurrency !== $portfolioCurrency) {
+                        if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                        } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                        }
+                    }
+
+                    $smartDepositThisMonth = $depositInPortfolioCurrency;
+                    $totalDeposits += $smartDepositThisMonth;
+
+                    // Calcula desvio relativo de cada ativo em relação ao alvo
+                    // Base: total do portfólio ANTES do aporte (não inclui caixa SELIC)
+                    $refTotal = $totalMonthValue;
+                    $deviations = [];
+                    foreach ($assets as $asset) {
+                        $assetId = $asset['asset_id'];
+                        $targetPct = (float)$asset['allocation_percentage'] / 100;
+                        $currentPct = $refTotal > 0 ? $currentBalances[$assetId] / $refTotal : 0;
+                        // Desvio relativo positivo = ativo está ABAIXO do alvo
+                        $relDev = $targetPct > 0 ? ($targetPct - $currentPct) / $targetPct : 0;
+                        $deficit = max(0.0, $targetPct * $refTotal - $currentBalances[$assetId]);
+                        $deviations[] = [
+                            'asset_id'  => $assetId,
+                            'asset'     => $asset,
+                            'relDev'    => $relDev,
+                            'deficit'   => $deficit
+                        ];
+                    }
+                    // Ordena: maior desvio positivo (mais abaixo do alvo) primeiro
+                    usort($deviations, fn($a, $b) => $b['relDev'] <=> $a['relDev']);
+
+                    $remaining = $smartDepositThisMonth;
+                    foreach ($deviations as $devInfo) {
+                        if ($remaining < 0.001) break;
+                        if ($devInfo['relDev'] <= 0) break; // Ativo está no alvo ou acima → para
+
+                        $assetId = $devInfo['asset_id'];
+                        $asset   = $devInfo['asset'];
+                        $buy     = min($remaining, $devInfo['deficit']);
+                        if ($buy < 0.001) continue;
+
+                        $price = (float)($monthData[$assetId] ?? 0);
+                        $currentBalances[$assetId] += $buy;
+                        $assetValues[$assetId] = $currentBalances[$assetId];
+
+                        if ($asset['asset_type'] !== 'TAXA_MENSAL' && $price > 0) {
+                            $deltaQty = $buy / $price;
+                            $currentQuantities[$assetId] += $deltaQty;
+                            $assetQuantities[$assetId] = $currentQuantities[$assetId];
+                            $assetPurchases[$assetId] = [
+                                'amount'   => $buy,
+                                'quantity' => $deltaQty,
+                                'price'    => $price
+                            ];
+                        } else {
+                            $currentQuantities[$assetId] = $currentBalances[$assetId];
+                            $assetQuantities[$assetId]   = $currentQuantities[$assetId];
+                            $assetPurchases[$assetId]    = ['amount' => $buy, 'quantity' => $buy, 'price' => 1.0];
+                        }
+
+                        $remaining -= $buy;
+                    }
+
+                    // Sobra do aporte vai para Caixa SELIC
+                    if ($remaining > 0.001) {
+                        $selicCash += $remaining;
+                    }
+
+                    // Atualiza total do portfólio (apenas o que foi investido em ativos)
+                    $totalMonthValue += ($smartDepositThisMonth - $remaining);
+                }
+            }
+
+            // ============================================
+            // LÓGICA DE APORTE EM CAIXA SELIC (Tipo 4)
+            // Todo aporte vai para Caixa SELIC; caixa é usado integralmente no rebalanceamento
+            // ============================================
+            $selicCashDepositThisMonth = 0;
+            if ($simulationType === 'selic_cash_deposit' && $depositAmount > 0) {
+                if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
+                    $depositInPortfolioCurrency = $depositAmount;
+                    if ($depositCurrency !== $portfolioCurrency) {
+                        if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                        } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
+                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                        }
+                    }
+
+                    $selicCashDepositThisMonth = $depositInPortfolioCurrency;
+                    $totalDeposits += $selicCashDepositThisMonth;
+                    $selicCash += $selicCashDepositThisMonth;
+                }
+            }
+
             // Calcula variação da estratégia usando a carteira virtual (só retorno dos ativos)
             $strategyVariation = 0;
             if ($index > 0 || $isFirstDateBeforeStart) {
@@ -404,7 +524,8 @@ class BacktestService {
             }
 
             // Atualiza para próximo mês
-            $previousMonthValue = $totalMonthValue;
+            // Para tipos com caixa SELIC, inclui o saldo do caixa no valor de referência
+            $previousMonthValue = $totalMonthValue + $selicCash;
 
             // Lógica de Rebalanceamento (existente)
             $wasRebalanced = false;
@@ -412,14 +533,22 @@ class BacktestService {
 
             if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
                 $wasRebalanced = true;
+
+                // Para tipos com caixa SELIC: inclui o caixa no total do rebalanceamento e o zera
+                $rebalanceBase = $totalMonthValue;
+                if (in_array($simulationType, ['smart_deposit', 'selic_cash_deposit']) && $selicCash > 0) {
+                    $rebalanceBase += $selicCash;
+                    $selicCash = 0; // Caixa é integralmente investido no rebalanceamento
+                }
+
                 foreach ($assets as $asset) {
                     $assetId = $asset['asset_id'];
                     $preValue = $currentBalances[$assetId];
                     $preQty = $currentQuantities[$assetId];
 
                     $targetAllocation = (float)$asset['allocation_percentage'] / 100;
-                    $postValue = $totalMonthValue * $targetAllocation;
-                    
+                    $postValue = $rebalanceBase * $targetAllocation;
+
                     // Calcula nova quantidade após rebalanceamento
                     $postQty = $preQty;
                     if ($asset['asset_type'] !== 'TAXA_MENSAL') {
@@ -443,24 +572,27 @@ class BacktestService {
                     $assetValues[$assetId] = $postValue;
                     $assetQuantities[$assetId] = $postQty;
                 }
+
+                $totalMonthValue = $rebalanceBase; // Atualiza total (pode ter crescido com caixa)
             }
 
             $results[$date] = [
-                'total_value' => $totalMonthValue,
+                'total_value' => $totalMonthValue + $selicCash,
                 'total_before_deposit' => $totalBeforeDeposit,
                 'asset_values' => $assetValues,
                 'asset_prices' => $assetPrices,
                 'asset_quantities' => $assetQuantities,
                 'rebalanced' => $wasRebalanced,
                 'trades' => $trades,
-                'deposit_made' => $depositThisMonth + $strategicDepositThisMonth,
-                'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : 'none'),
+                'deposit_made' => $depositThisMonth + $strategicDepositThisMonth + $smartDepositThisMonth + $selicCashDepositThisMonth,
+                'deposit_type' => $depositThisMonth > 0 ? 'monthly' : ($strategicDepositThisMonth > 0 ? 'strategic' : ($smartDepositThisMonth > 0 ? 'smart' : ($selicCashDepositThisMonth > 0 ? 'selic_cash' : 'none'))),
                 'deposit_details' => $assetPurchases,
                 'total_deposits_to_date' => $totalDeposits,
                 'fx_rate' => $currentFxRate,
                 // NOVO: Adiciona os valores da estratégia
                 'strategy_value' => $portfolioWithoutDeposits,
-                'strategy_variation' => $strategyVariation
+                'strategy_variation' => $strategyVariation,
+                'selic_cash' => $selicCash
             ];
 
             // Atualiza a referência da data anterior para o cálculo da variação da estratégia
@@ -700,5 +832,58 @@ class BacktestService {
         // pois esse foi retirado por array_shift). Portanto aportamos quando o índice
         // é múltiplo da frequência (0 % N == 0 sempre inclui o índice 0 → 1º aporte).
         return $currentMonthIndex % $freqMonths === 0;
+    }
+
+    /**
+     * Carrega as taxas mensais SELIC do banco de dados para o período informado.
+     * Retorna um mapa [reference_date => taxa_decimal] (ex: 0.009 para 0.9% a.m.)
+     */
+    private function loadSelicRates($start, $end) {
+        $rates = [];
+
+        // 1. Tenta encontrar o ativo SELIC pelo campo source = 'Selic' e tipo TAXA_MENSAL
+        $sql = "SELECT sa.id FROM system_assets sa
+                WHERE sa.asset_type = 'TAXA_MENSAL' AND LOWER(COALESCE(sa.source, '')) = 'selic'
+                LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $selicAsset = $stmt->fetch();
+
+        // 2. Fallback: qualquer ativo do tipo TAXA_MENSAL (CDI / SELIC)
+        if (!$selicAsset) {
+            $sql = "SELECT id FROM system_assets WHERE asset_type = 'TAXA_MENSAL' AND is_active = TRUE LIMIT 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            $selicAsset = $stmt->fetch();
+        }
+
+        if (!$selicAsset) {
+            return $rates; // Sem dados SELIC disponíveis — caixa não rende
+        }
+
+        $selicId = $selicAsset['id'];
+
+        // Carrega também o registro imediatamente anterior ao início (para o período base)
+        $sql = "SELECT reference_date, price FROM asset_historical_data
+                WHERE asset_id = ? AND reference_date < ?
+                ORDER BY reference_date DESC LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$selicId, $start]);
+        $baseRow = $stmt->fetch();
+        if ($baseRow) {
+            $rates[$baseRow['reference_date']] = (float)$baseRow['price'] / 100;
+        }
+
+        // Carrega as taxas do período simulado
+        $sql = "SELECT reference_date, price FROM asset_historical_data
+                WHERE asset_id = ? AND reference_date BETWEEN ? AND ?
+                ORDER BY reference_date ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$selicId, $start, $end]);
+        foreach ($stmt->fetchAll() as $row) {
+            $rates[$row['reference_date']] = (float)$row['price'] / 100;
+        }
+
+        return $rates;
     }
 }

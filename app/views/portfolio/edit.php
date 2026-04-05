@@ -88,16 +88,27 @@ ob_start();
                                         <option value="standard" <?= $portfolio['simulation_type'] == 'standard' ? 'selected' : '' ?>>Padrão (sem aportes)</option>
                                         <option value="monthly_deposit" <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'selected' : '' ?>>Com Aportes Periódicos</option>
                                         <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?>>Com Aportes Estratégicos</option>
+                                        <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?>>Aporte Direcionado ao Alvo</option>
+                                        <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?>>Aporte em Caixa (SELIC)</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Campos para Aportes Periódicos -->
-                        <div id="monthly_deposit_fields" class="simulation-fields" style="display: <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'block' : 'none' ?>;">
+                        <!-- Campos para Aportes Periódicos / Direcionado / Caixa SELIC -->
+                        <?php $showDepositFields = in_array($portfolio['simulation_type'], ['monthly_deposit', 'smart_deposit', 'selic_cash_deposit']); ?>
+                        <div id="monthly_deposit_fields" class="simulation-fields" style="display: <?= $showDepositFields ? 'block' : 'none' ?>;">
                             <div class="card border-primary mb-3">
                                 <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos</h6>
+                                    <?php
+                                    $headerTextsPhp = [
+                                        'monthly_deposit'    => '<i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos',
+                                        'smart_deposit'      => '<i class="bi bi-bullseye me-2"></i>Configuração — Aporte Direcionado ao Alvo',
+                                        'selic_cash_deposit' => '<i class="bi bi-piggy-bank me-2"></i>Configuração — Aporte em Caixa (SELIC)'
+                                    ];
+                                    $currentHeader = $headerTextsPhp[$portfolio['simulation_type']] ?? $headerTextsPhp['monthly_deposit'];
+                                    ?>
+                                    <h6 class="mb-0" id="deposit_card_header"><?= $currentHeader ?></h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
@@ -123,19 +134,26 @@ ob_start();
                                         </div>
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="deposit_frequency" class="form-label">Frequência</label>
+                                                <label for="deposit_frequency" class="form-label">Frequência do Aporte</label>
                                                 <select class="form-select" id="deposit_frequency" name="deposit_frequency">
-                                                    <option value="monthly" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'monthly' ? 'selected' : '' ?>>Mensal</option>
+                                                    <option value="monthly"   <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'monthly'   ? 'selected' : '' ?>>Mensal</option>
                                                     <option value="bimonthly" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'bimonthly' ? 'selected' : '' ?>>Bimestral</option>
                                                     <option value="quarterly" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'quarterly' ? 'selected' : '' ?>>Trimestral</option>
-                                                    <option value="biannual" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'biannual' ? 'selected' : '' ?>>Semestral</option>
-                                                    <option value="annual" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'annual' ? 'selected' : '' ?>>Anual</option>
+                                                    <option value="biannual"  <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'biannual'  ? 'selected' : '' ?>>Semestral</option>
+                                                    <option value="annual"    <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'annual'    ? 'selected' : '' ?>>Anual</option>
                                                 </select>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="alert alert-info py-2 small mb-0">
-                                        <i class="bi bi-info-circle me-1"></i> Os aportes serão realizados automaticamente na data de início de cada período.
+                                    <!-- Descrição dinâmica por tipo -->
+                                    <div id="desc_monthly_deposit" class="alert alert-info py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'block' : 'none' ?>;">
+                                        <i class="bi bi-info-circle me-1"></i> Os aportes serão distribuídos entre todos os ativos proporcionalmente ao peso-alvo (com rebalanceamento a cada aporte).
+                                    </div>
+                                    <div id="desc_smart_deposit" class="alert alert-success py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'block' : 'none' ?>;">
+                                        <i class="bi bi-bullseye me-1"></i> O aporte é direcionado ao ativo mais abaixo do percentual-alvo. Quando atingir o alvo, o restante vai para o próximo mais desviado, e assim por diante. Sobras são acumuladas em Caixa SELIC e usadas integralmente no próximo rebalanceamento.
+                                    </div>
+                                    <div id="desc_selic_cash_deposit" class="alert alert-secondary py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'block' : 'none' ?>;">
+                                        <i class="bi bi-piggy-bank me-1"></i> Todo o aporte vai para o Caixa (SELIC), rendendo a taxa SELIC até o próximo rebalanceamento, quando é integralmente investido nos ativos da carteira.
                                     </div>
                                 </div>
                             </div>
@@ -253,19 +271,7 @@ ob_start();
     </div>
 
     <script>
-        function toggleSimulationFields() {
-            const type = document.getElementById('simulation_type').value;
-            document.querySelectorAll('.simulation-fields').forEach(el => el.style.display = 'none');
-            if (type !== 'standard') {
-                const fields = document.getElementById(type + '_fields');
-                if (fields) fields.style.display = 'block';
-            }
-        }
-
-        // Executar ao carregar para garantir visibilidade correta
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleSimulationFields();
-        });
+        // toggleSimulationFields is defined below alongside the asset/table logic
 
         // Inicialização do array de ativos com dados históricos
         let assets = [
@@ -303,10 +309,24 @@ ob_start();
                 field.style.display = 'none';
             });
 
-            // Mostra os campos específicos
-            if (type === 'monthly_deposit') {
+            // Esconde todas as descrições dinâmicas
+            ['desc_monthly_deposit', 'desc_smart_deposit', 'desc_selic_cash_deposit'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
+            const depositHeaderTexts = {
+                'monthly_deposit':    '<i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos',
+                'smart_deposit':      '<i class="bi bi-bullseye me-2"></i>Configuração — Aporte Direcionado ao Alvo',
+                'selic_cash_deposit': '<i class="bi bi-piggy-bank me-2"></i>Configuração — Aporte em Caixa (SELIC)'
+            };
+
+            if (type === 'monthly_deposit' || type === 'smart_deposit' || type === 'selic_cash_deposit') {
                 document.getElementById('monthly_deposit_fields').style.display = 'block';
-                // Define valores padrão se estiver vazio
+                document.getElementById('deposit_card_header').innerHTML = depositHeaderTexts[type] || depositHeaderTexts['monthly_deposit'];
+                const descEl = document.getElementById('desc_' + type);
+                if (descEl) descEl.style.display = 'block';
+                // Define valor padrão se estiver vazio
                 const depositAmount = document.getElementById('deposit_amount');
                 if (!depositAmount.value) {
                     depositAmount.value = '1000.00';
