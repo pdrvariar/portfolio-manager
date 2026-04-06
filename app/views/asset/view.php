@@ -25,9 +25,9 @@ ob_start();
     
     <div class="row">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Dados Históricos</h5>
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-clock-history me-2"></i>Dados Históricos</h5>
                 </div>
                 <div class="card-body">
                     <?php if (empty($historicalData)): ?>
@@ -36,12 +36,12 @@ ob_start();
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="table table-sm">
+                            <table class="table table-hover align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Data</th>
-                                        <th>Valor</th>
-                                        <th>Variação</th>
+                                        <th class="ps-3 text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Data</th>
+                                        <th class="text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Valor</th>
+                                        <th class="text-end pe-3 text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Variação</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -58,8 +58,8 @@ ob_start();
                                         }
                                     ?>
                                     <tr>
-                                        <td><?php echo formatMonthYear($row['reference_date']); ?></td>
-                                        <td>
+                                        <td class="ps-3 fw-bold text-main" style="color: var(--text-main) !important;"><?php echo formatMonthYear($row['reference_date']); ?></td>
+                                        <td class="text-primary fw-bold">
                                             <?php if ($isRate): ?>
                                                 <?php echo number_format($currentPrice, 2, ',', '.'); ?>%
                                             <?php elseif ($asset['currency'] === 'BRL'): ?>
@@ -68,15 +68,15 @@ ob_start();
                                                 $ <?php echo number_format($currentPrice, 2, ',', '.'); ?>
                                             <?php endif; ?>
                                         </td>
-                                        <td>
+                                        <td class="text-end pe-3">
                                             <?php if ($isRate): ?>
-                                                <span class="text-muted">-</span>
+                                                <span class="text-muted small">-</span>
                                             <?php elseif ($variation !== null): ?>
-                                                <span class="<?php echo $variation >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                                <span class="badge <?php echo $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger'; ?> rounded-pill">
                                                     <?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%
                                                 </span>
                                             <?php else: ?>
-                                                <span class="text-muted">-</span>
+                                                <span class="text-muted small">-</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -101,9 +101,9 @@ ob_start();
         </div>
         
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Estatísticas</h5>
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-graph-up me-2"></i>Estatísticas</h5>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($historicalData)): 
@@ -116,16 +116,14 @@ ob_start();
                         $isRate = ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO');
                         
                         if ($isRate) {
-                            // Para taxas, o "retorno total" não é uma variação simples, mas o acumulado.
-                            // Para simplificar na view de detalhes, vamos mostrar apenas os valores.
                             $totalReturn = null; 
                         } else {
                             $totalReturn = ($firstPrice != 0) ? (($lastPrice - $firstPrice) / $firstPrice) * 100 : 0;
                         }
                     ?>
-                    <div class="mb-3">
-                        <label class="form-label">Valor Inicial</label>
-                        <div class="fs-5">
+                    <div class="mb-3 p-3 bg-light-subtle rounded border">
+                        <label class="form-label text-muted small mb-1 uppercase fw-bold">Valor Inicial</label>
+                        <div class="fs-5 fw-bold text-main">
                             <?php if ($isRate): ?>
                                 <?php echo number_format($firstPrice, 2, ',', '.'); ?>%
                             <?php elseif ($asset['currency'] === 'BRL'): ?>
@@ -136,9 +134,9 @@ ob_start();
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Valor Final</label>
-                        <div class="fs-5">
+                    <div class="mb-3 p-3 bg-light-subtle rounded border-start border-primary border-4 shadow-sm">
+                        <label class="form-label text-muted small mb-1 uppercase fw-bold">Valor Final</label>
+                        <div class="fs-5 fw-bold text-primary">
                             <?php if ($isRate): ?>
                                 <?php echo number_format($lastPrice, 2, ',', '.'); ?>%
                             <?php elseif ($asset['currency'] === 'BRL'): ?>
@@ -150,37 +148,42 @@ ob_start();
                     </div>
                     
                     <?php if (!$isRate): ?>
-                    <div class="mb-3">
-                        <label class="form-label">Retorno Total</label>
-                        <div class="fs-5 <?php echo $totalReturn >= 0 ? 'text-success' : 'text-danger'; ?>">
+                    <div class="mb-3 p-3 bg-light-subtle rounded border">
+                        <label class="form-label text-muted small mb-1 uppercase fw-bold">Retorno Total</label>
+                        <div class="fs-5 fw-bold <?php echo $totalReturn >= 0 ? 'text-success' : 'text-danger'; ?>">
                             <?php echo ($totalReturn >= 0 ? '+' : '') . number_format($totalReturn, 2, ',', '.'); ?>%
                         </div>
                     </div>
                     <?php endif; ?>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Mínimo</label>
-                        <div>
-                            <?php if ($isRate): ?>
-                                <?php echo number_format($minPrice, 2, ',', '.'); ?>%
-                            <?php elseif ($asset['currency'] === 'BRL'): ?>
-                                R$ <?php echo number_format($minPrice, 2, ',', '.'); ?>
-                            <?php else: ?>
-                                $ <?php echo number_format($minPrice, 2, ',', '.'); ?>
-                            <?php endif; ?>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="p-2 border rounded text-center bg-light-subtle">
+                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">Mínimo</label>
+                                <span class="fw-bold text-main">
+                                    <?php if ($isRate): ?>
+                                        <?php echo number_format($minPrice, 2, ',', '.'); ?>%
+                                    <?php elseif ($asset['currency'] === 'BRL'): ?>
+                                        R$ <?php echo number_format($minPrice, 2, ',', '.'); ?>
+                                    <?php else: ?>
+                                        $ <?php echo number_format($minPrice, 2, ',', '.'); ?>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Máximo</label>
-                        <div>
-                            <?php if ($isRate): ?>
-                                <?php echo number_format($maxPrice, 2, ',', '.'); ?>%
-                            <?php elseif ($asset['currency'] === 'BRL'): ?>
-                                R$ <?php echo number_format($maxPrice, 2, ',', '.'); ?>
-                            <?php else: ?>
-                                $ <?php echo number_format($maxPrice, 2, ',', '.'); ?>
-                            <?php endif; ?>
+                        <div class="col-6">
+                            <div class="p-2 border rounded text-center bg-light-subtle">
+                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">Máximo</label>
+                                <span class="fw-bold text-main">
+                                    <?php if ($isRate): ?>
+                                        <?php echo number_format($maxPrice, 2, ',', '.'); ?>%
+                                    <?php elseif ($asset['currency'] === 'BRL'): ?>
+                                        R$ <?php echo number_format($maxPrice, 2, ',', '.'); ?>
+                                    <?php else: ?>
+                                        $ <?php echo number_format($maxPrice, 2, ',', '.'); ?>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <?php else: ?>
@@ -190,8 +193,8 @@ ob_start();
             </div>
             
             <div class="card shadow-sm border-0 mt-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-gear me-2"></i>Gestão do Ativo</h5>
+                <div class="card-header py-3">
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-gear me-2"></i>Gestão do Ativo</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
