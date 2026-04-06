@@ -574,8 +574,9 @@ $isSelicMonthlyConflict = (
 
                                 foreach ($allAssets as $b):
                                     $isValid = ($b['min_date'] <= $pStart && (empty($b['max_date']) || $b['max_date'] >= $pEnd));
+                                    $isSP500 = ($b['code'] === 'SP500' || $b['name'] === 'S&P 500');
                                     ?>
-                                    <option value="<?= $b['id'] ?>" <?= !$isValid ? 'disabled' : '' ?>>
+                                    <option value="<?= $b['id'] ?>" <?= !$isValid ? 'disabled' : '' ?> <?= $isSP500 ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($b['name']) ?>
                                         <?= !$isValid ? ' (Histórico insuficiente)' : '' ?>
                                     </option>
@@ -2154,6 +2155,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 input.addEventListener('input', updateAllocationTotal);
                 input.addEventListener('change', updateAllocationTotal);
             });
+
+            // Disparar o benchmark padrão (S&P 500) se estiver selecionado
+            const benchmarkSelector = document.getElementById('benchmarkSelector');
+            if (benchmarkSelector && benchmarkSelector.value) {
+                benchmarkSelector.dispatchEvent(new Event('change'));
+            }
         });
 
         // Função para sugerir ajuste automático
