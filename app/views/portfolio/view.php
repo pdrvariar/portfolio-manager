@@ -308,17 +308,16 @@ $isSelicMonthlyConflict = (
     $heroHasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
     ?>
     <div class="row g-3 mb-4">
-        <!-- Patrimônio Inicial -->
         <div class="col-md-4">
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: linear-gradient(135deg,#f0f4ff 0%,#dde8fd 100%);">
+                 style="background: var(--hero-initial-bg);">
                 <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-05" style="pointer-events:none;">
-                    <i class="bi bi-wallet2" style="font-size:8rem;color:#4a6cf7;opacity:.08;"></i>
+                    <i class="bi bi-wallet2" style="font-size:8rem;color:var(--hero-initial-icon);opacity:.08;"></i>
                 </div>
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small"
-                              style="background:#4a6cf7;color:#fff;letter-spacing:.05em;">
+                              style="background:var(--hero-initial-icon);color:#fff;letter-spacing:.05em;">
                             <i class="bi bi-wallet2 me-1"></i> Patrimônio Inicial
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -343,7 +342,7 @@ $isSelicMonthlyConflict = (
         <div class="col-md-4">
             <?php if ($heroHasDeposits): ?>
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: linear-gradient(135deg,#edfbf3 0%,#c7f0da 100%);">
+                 style="background: var(--hero-deposits-bg);">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small bg-success">
@@ -399,7 +398,7 @@ $isSelicMonthlyConflict = (
             $heroPositive = $heroTotalReturn >= 0;
             ?>
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: linear-gradient(135deg,<?= $heroPositive ? '#eef5ff 0%,#c7dafc 100%' : '#fff1f3 0%,#ffd5da 100%' ?>);">
+                 style="background: var(<?= $heroPositive ? '--hero-final-pos-bg' : '--hero-final-neg-bg' ?>);">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $heroPositive ? 'bg-primary' : 'bg-danger' ?>">
@@ -563,7 +562,7 @@ $isSelicMonthlyConflict = (
 
                         <div class="d-flex align-items-center gap-2 border-start ps-3">
                             <label class="smaller text-muted fw-bold">Comparar com:</label>
-                            <select class="form-select form-select-sm border-0 bg-light shadow-none" id="benchmarkSelector" style="width: 250px;">
+                            <select class="form-select form-select-sm border-0 bg-light shadow-none transition" id="benchmarkSelector" style="width: 250px;">
                                 <option value="">Nenhum</option>
                                 <?php
                                 $assetModel = new Asset();
@@ -854,7 +853,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="table-responsive-audit">
                 <table class="table table-hover align-middle mb-0" id="auditTable">
                     <thead class="sticky-top-table">
-                    <tr>
+                    <tr class="text-muted smaller text-uppercase">
                         <th class="ps-4">Mês/Ano</th>
                         <th>Saldo</th>
                         <th>Variação</th>
@@ -895,8 +894,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             ]), ENT_QUOTES, 'UTF-8');
                             ?>
                             <tr>
-                                <td class="ps-4 fw-bold"><?php echo $dateLabel; ?></td>
-                                <td><?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?></td>
+                                <td class="ps-4 fw-bold text-main" style="color: var(--text-main) !important;"><?php echo $dateLabel; ?></td>
+                                <td class="fw-bold text-primary" style="color: var(--primary) !important;"><?php echo formatCurrency($currentValue, $portfolio['output_currency']); ?></td>
                                 <td>
                             <span class="badge <?php echo $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger'; ?>">
                                 <?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%
@@ -964,49 +963,49 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <!-- Modal de Detalhes -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Composição: <span id="modalDate"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow" style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
+                <div class="modal-header" style="border-bottom-color: var(--border-color) !important;">
+                    <h5 class="modal-title fw-bold" style="color: var(--text-main) !important;">Composição: <span id="modalDate"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: var(--close-btn-filter, none);"></button>
                 </div>
-                <div class="modal-body p-0">
-                    <div class="p-3 border-bottom">
+                <div class="modal-body p-0" style="background-color: var(--bg-card) !important; color: var(--text-main) !important;">
+                    <div class="p-3 border-bottom bg-light-subtle" style="background-color: var(--bg-body) !important; border-bottom-color: var(--border-color) !important;">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-2">
-                                    <span class="text-muted small">Saldo Total:</span>
-                                    <div class="fw-bold text-primary fs-5" id="modalTotal"></div>
+                                    <span class="text-muted smaller text-uppercase fw-bold d-block mb-1" style="color: var(--text-muted) !important;">Saldo Total</span>
+                                    <div class="fw-bold text-primary fs-5" id="modalTotal" style="color: var(--primary) !important;"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-2" id="modalDepositSection" style="display: none;">
-                                    <span class="text-muted small">Aporte Realizado:</span>
+                                    <span class="text-muted smaller text-uppercase fw-bold d-block mb-1" style="color: var(--text-muted) !important;">Aporte Realizado</span>
                                     <div class="fw-bold text-success" id="modalDeposit"></div>
-                                    <div class="text-muted small" id="modalDepositType"></div>
+                                    <div class="text-muted small" id="modalDepositType" style="color: var(--text-muted) !important;"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <table class="table mb-0">
+                    <table class="table mb-0" style="color: var(--text-main) !important;">
                         <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Ativo</th>
-                            <th class="text-end">Alocação</th>
-                            <th class="text-end pe-4">Saldo</th>
+                        <tr style="background-color: var(--bg-body) !important; color: var(--text-main) !important;">
+                            <th class="ps-4" style="background: transparent !important; color: inherit !important; border-bottom-color: var(--border-color) !important;">Ativo</th>
+                            <th class="text-end" style="background: transparent !important; color: inherit !important; border-bottom-color: var(--border-color) !important;">Alocação</th>
+                            <th class="text-end pe-4" style="background: transparent !important; color: inherit !important; border-bottom-color: var(--border-color) !important;">Saldo</th>
                         </tr>
                         </thead>
-                        <tbody id="modalAssetsBody"></tbody>
+                        <tbody id="modalAssetsBody" class="text-main" style="border-top: none !important;"></tbody>
                     </table>
                 </div>
-                <div class="modal-footer bg-light">
+                <div class="modal-footer bg-light" style="background-color: var(--bg-body) !important; border-top-color: var(--border-color) !important; color: var(--text-main) !important;">
                     <div class="w-100 d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="text-muted small">Rebalanceamento: </span>
+                            <span class="text-muted small" style="color: var(--text-muted) !important;">Rebalanceamento: </span>
                             <span class="badge bg-soft-info small" id="modalRebalanceStatus"></span>
                         </div>
                         <div>
-                            <strong>Total Ativos:</strong>
-                            <strong class="text-primary ms-2" id="modalTotalAssets"></strong>
+                            <strong style="color: var(--text-main) !important;">Total Ativos:</strong>
+                            <strong class="text-primary ms-2" id="modalTotalAssets" style="color: var(--primary) !important;"></strong>
                         </div>
                     </div>
                 </div>
@@ -1436,20 +1435,20 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 if (isRebalanceMonth && trades[id]) {
                     const delta = trades[id].delta;
                     const sign = delta >= 0 ? '+' : '';
-                    rebalanceInfo = `<div class="text-muted small">Ajuste: ${sign}${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
+                    rebalanceInfo = `<div class="text-muted small" style="color: var(--text-muted) !important;">Ajuste: ${sign}${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
                 }
 
                 body.innerHTML += `<tr>
-                <td class="ps-4">
-                    <div class="fw-bold text-dark">${name}</div>
-                    <div class="text-muted small">Meta: ${target.toFixed(2)}%</div>
+                <td class="ps-4" style="border-bottom-color: var(--border-color) !important;">
+                    <div class="fw-bold text-main" style="color: var(--text-main) !important;">${name}</div>
+                    <div class="text-muted smaller" style="color: var(--text-muted) !important;">Meta: ${target.toFixed(2)}%</div>
                     ${rebalanceInfo}
                 </td>
-                <td class="text-end align-middle">
-                    <div class="fw-bold text-primary">${allocationPercent.toFixed(2)}%</div>
+                <td class="text-end align-middle" style="border-bottom-color: var(--border-color) !important;">
+                    <div class="fw-bold text-primary" style="color: var(--primary) !important;">${allocationPercent.toFixed(2)}%</div>
                 </td>
-                <td class="text-end pe-4 align-middle">
-                    <strong>${new Intl.NumberFormat('pt-BR').format(finalVal)}</strong>
+                <td class="text-end pe-4 align-middle" style="border-bottom-color: var(--border-color) !important;">
+                    <strong class="text-main" style="color: var(--text-main) !important;">${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(finalVal)}</strong>
                 </td>
             </tr>`;
             }

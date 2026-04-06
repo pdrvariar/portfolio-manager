@@ -20,6 +20,14 @@
 
     --navbar-text: rgba(255, 255, 255, 0.75);
     --navbar-active: #fff;
+    /* 7. DASHBOARD & PORTFOLIO SPECIFICS */
+    --hero-initial-bg: linear-gradient(135deg,#f0f4ff 0%,#dde8fd 100%);
+    --hero-initial-icon: #4a6cf7;
+    --hero-deposits-bg: linear-gradient(135deg,#edfbf3 0%,#c7f0da 100%);
+    --hero-final-pos-bg: linear-gradient(135deg,#eef5ff 0%,#c7dafc 100%);
+    --hero-final-neg-bg: linear-gradient(135deg,#fff1f3 0%,#ffd5da 100%);
+    --bg-light-subtle: #f8f9fa;
+    --close-btn-filter: none;
 }
 
 [data-theme="dark"] {
@@ -38,6 +46,14 @@
 
     --navbar-text: rgba(255, 255, 255, 0.65);
     --navbar-active: #0d6efd;
+
+    --hero-initial-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --hero-initial-icon: #60a5fa;
+    --hero-deposits-bg: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+    --hero-final-pos-bg: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+    --hero-final-neg-bg: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+    --bg-light-subtle: #1a1d21;
+    --close-btn-filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* 1. BASE & NAVBAR */
@@ -101,7 +117,7 @@ body {
 
 .sticky-top-table { 
     position: sticky; top: -1px; z-index: 10; 
-    background: var(--bg-body) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    background: var(--bg-card) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
 }
 
 /* 3. COMPONENTES (Badges, Buttons, Cards) */
@@ -147,6 +163,11 @@ body {
 [data-theme="dark"] .dropdown-item:hover { background-color: var(--bg-body); }
 [data-theme="dark"] .dropdown-divider { border-top-color: var(--border-color); }
 [data-theme="dark"] .alert-bordered-warning { background-color: rgba(255, 193, 7, 0.05); }
+[data-theme="dark"] .table-light { --bs-table-bg: var(--bg-card); --bs-table-color: var(--text-main); }
+[data-theme="dark"] .modal-content { background-color: var(--bg-card); color: var(--text-main); }
+[data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer { border-color: var(--border-color); }
+[data-theme="dark"] .modal-footer.bg-light { background-color: var(--bg-body) !important; }
+[data-theme="dark"] .form-select.bg-light { background-color: var(--bg-body) !important; color: var(--text-main); }
 
 .btn-action-quick { 
     transition: all 0.3s; border: 1px dashed var(--border-color); 
