@@ -1696,21 +1696,24 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     if (!res.success) return;
 
                     // Cálculo do Beta em tempo real
-                    const portfolioReturns = Object.values(window.simulationAuditLog).map((m, i, arr) => {
-                        if (i === 0) return 0;
-                        const prevValue = Object.values(arr)[i-1].total_value;
-                        return (m.total_value / prevValue) - 1;
-                    });
+                    // Utilizamos os dados do gráfico (valueChart) para garantir sincronia temporal com o benchmark
+                    const portfolioValues = chart.data.datasets[0].data;
+                    const portfolioReturns = [];
+                    for (let i = 1; i < portfolioValues.length; i++) {
+                        const prev = portfolioValues[i-1];
+                        if (prev > 0) {
+                            portfolioReturns.push((portfolioValues[i] / prev) - 1);
+                        }
+                    }
 
                     const beta = calculateBeta(portfolioReturns, res.returns);
-                    document.getElementById('betaValue').innerText = beta.toFixed(2);
+                    document.getElementById('betaValue').innerText = isFinite(beta) ? beta.toFixed(2) : '--';
                     document.getElementById('betaBenchmarkName').innerText = 'Benchmark: ' + this.options[this.selectedIndex].text;
 
                     // Se o gráfico tem o ponto 0 (capital inicial), o benchmark precisa de um
                     // null no início para alinhar corretamente (benchmark não tem dado para t=0)
                     const chartLabelCount = chart.data.labels.length;
-                    const auditLogCount = Object.keys(auditLog).length;
-                    const benchmarkData = chartLabelCount > auditLogCount
+                    const benchmarkData = chartLabelCount > res.values.length
                         ? [null, ...res.values]
                         : res.values;
 
