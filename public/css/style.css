@@ -1,32 +1,71 @@
 /* public/css/style.css - VERSÃO CONSOLIDADA E OTIMIZADA */
 
 :root {
-    /* Design System - Cores Base */
+    /* Design System - Cores Base (Default Light) */
     --primary: #0d6efd;
     --nav-bg: #1a1d21;
-    --bg-light: #f8f9fa;
+    --bg-body: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-main: #212529;
+    --text-muted: #6c757d;
     --border-color: #dee2e6;
     
-    /* Variantes Soft (Otimizadas com Variáveis) */
+    /* Variantes Soft */
     --soft-info: rgba(13, 202, 240, 0.1);
     --soft-success: rgba(25, 135, 84, 0.1);
     --soft-secondary: rgba(108, 117, 125, 0.1);
     --soft-danger: rgba(220, 53, 69, 0.1);
     --soft-primary: rgba(13, 110, 253, 0.08);
     --soft-warning: rgba(255, 193, 7, 0.1);
+
+    --navbar-text: rgba(255, 255, 255, 0.75);
+    --navbar-active: #fff;
+}
+
+[data-theme="dark"] {
+    --bg-body: #0f1114;
+    --bg-card: #1a1d21;
+    --text-main: #e9ecef;
+    --text-muted: #adb5bd;
+    --border-color: #2d3238;
+
+    --soft-info: rgba(13, 202, 240, 0.15);
+    --soft-success: rgba(25, 135, 84, 0.15);
+    --soft-secondary: rgba(108, 117, 125, 0.15);
+    --soft-danger: rgba(220, 53, 69, 0.15);
+    --soft-primary: rgba(13, 110, 253, 0.12);
+    --soft-warning: rgba(255, 193, 7, 0.15);
+
+    --navbar-text: rgba(255, 255, 255, 0.65);
+    --navbar-active: #0d6efd;
 }
 
 /* 1. BASE & NAVBAR */
 body {
-    background-color: var(--bg-light);
+    background-color: var(--bg-body);
+    color: var(--text-main);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+.card {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+.text-dark { color: var(--text-main) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.bg-white { background-color: var(--bg-card) !important; }
+.border-bottom, .border-top, .border { border-color: var(--border-color) !important; }
 
 .navbar {
     background-color: var(--nav-bg) !important;
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
+
+.navbar-dark .navbar-nav .nav-link { color: var(--navbar-text); }
+.navbar-dark .navbar-nav .nav-link.active { color: var(--navbar-active); }
 
 .navbar-brand {
     font-weight: 800;
@@ -62,7 +101,7 @@ body {
 
 .sticky-top-table { 
     position: sticky; top: -1px; z-index: 10; 
-    background: #f8f9fa !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    background: var(--bg-body) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
 }
 
 /* 3. COMPONENTES (Badges, Buttons, Cards) */
@@ -73,17 +112,51 @@ body {
 .bg-soft-primary { background-color: var(--soft-primary) !important; color: var(--primary) !important; }
 .bg-soft-warning { background-color: var(--soft-warning) !important; color: #856404 !important; }
 
-.btn-white { background: #fff; border: 1px solid var(--border-color) !important; transition: background 0.2s; }
-.btn-white:hover { background: #f8f9fa; }
+.btn-white { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color) !important; transition: background 0.2s; }
+.btn-white:hover { background: var(--bg-body); color: var(--text-main); }
+
+.theme-toggle {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--navbar-text);
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    transform: rotate(15deg);
+}
+
+[data-theme="dark"] .theme-toggle {
+    color: #ffc107;
+}
+
+[data-theme="dark"] .bg-light { background-color: var(--bg-body) !important; }
+[data-theme="dark"] .list-group-item { background-color: var(--bg-card); color: var(--text-main); border-color: var(--border-color); }
+[data-theme="dark"] .list-group-item-action:hover { background-color: var(--bg-body); color: var(--text-main); }
+[data-theme="dark"] .dropdown-menu { background-color: var(--bg-card); border-color: var(--border-color); }
+[data-theme="dark"] .dropdown-item { color: var(--text-main); }
+[data-theme="dark"] .dropdown-item:hover { background-color: var(--bg-body); }
+[data-theme="dark"] .dropdown-divider { border-top-color: var(--border-color); }
+[data-theme="dark"] .alert-bordered-warning { background-color: rgba(255, 193, 7, 0.05); }
 
 .btn-action-quick { 
     transition: all 0.3s; border: 1px dashed var(--border-color); 
     text-decoration: none; display: block; 
+    background-color: var(--bg-card);
 }
-.btn-action-quick:hover { background: #fff; border-style: solid; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.btn-action-quick:hover { background: var(--bg-body); border-style: solid; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-.metric-card { transition: transform 0.2s; border: none; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
-.metric-card:hover { transform: translateY(-5px); }
+.metric-card { transition: transform 0.2s; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,.05); background-color: var(--bg-card); }
+.metric-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
 /* 4. UTILITÁRIOS ESPECÍFICOS */
 .financial-value { font-size: 0.9rem; font-weight: 700; }

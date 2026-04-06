@@ -7,11 +7,18 @@
  */
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-100">
+<html lang="pt-BR" class="h-100" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $title ?? 'Portfolio Backtest'; ?></title>
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
@@ -21,7 +28,7 @@
 
     <?php echo $additional_css ?? ''; ?>
 </head>
-<body class="bg-light">
+<body class="h-100">
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-lg">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/index.php?url=<?= obfuscateUrl('dashboard') ?>">
@@ -65,6 +72,11 @@
                 </ul>
                 
                 <ul class="navbar-nav">
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <div id="theme-toggle" class="theme-toggle" title="Alternar Tema">
+                            <i class="bi bi-sun-fill" id="theme-icon"></i>
+                        </div>
+                    </li>
                     <?php if (Auth::isLoggedIn()): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -132,7 +144,7 @@
         endforeach; ?>
     </div>
 
-    <footer class="footer mt-auto py-3 bg-white border-top">
+    <footer class="footer mt-auto py-3 border-top">
         <div class="container text-center">
             <span class="text-muted small">Portfolio Backtest &copy; <?php echo date('Y'); ?></span>
         </div>
@@ -145,6 +157,31 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const html = document.documentElement;
+
+        function updateIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+            } else {
+                themeIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            }
+        }
+
+        // Initialize icon
+        updateIcon(html.getAttribute('data-theme'));
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
         // 1. Auto-hide toasts após 5 segundos
         var toastElList = [].slice.call(document.querySelectorAll('.toast'))
         toastElList.map(function(toastEl) {

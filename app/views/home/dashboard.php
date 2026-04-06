@@ -11,7 +11,7 @@ ob_start();
 
 <div class="dashboard-header mb-5"> <div class="row align-items-center">
         <div class="col-md-8">
-            <h2 class="fw-bold text-dark mb-1">Olá, <?php echo htmlspecialchars($_SESSION['username']); ?>! 👋</h2>
+            <h2 class="fw-bold mb-1">Olá, <?php echo htmlspecialchars($_SESSION['username']); ?>! 👋</h2>
             <p class="text-muted mb-0">Bem-vindo de volta ao seu centro de inteligência financeira.</p>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
@@ -89,7 +89,7 @@ ob_start();
                         </div>
                         <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-1 smaller fw-bold">OFICIAL</span>
                     </div>
-                    <h6 class="fw-bold text-dark mb-2"><?= htmlspecialchars($sp['name']) ?></h6>
+                    <h6 class="fw-bold mb-2"><?= htmlspecialchars($sp['name']) ?></h6>
                     <p class="text-muted small mb-4" style="height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                         <?= htmlspecialchars($sp['description']) ?>
                     </p>
@@ -106,14 +106,14 @@ ob_start();
 
 <div class="row g-5"> <div class="col-lg-8">
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-            <div class="card-header bg-white py-4 px-4 d-flex justify-content-between align-items-center border-bottom">
+            <div class="card-header py-4 px-4 d-flex justify-content-between align-items-center border-bottom">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-list-ul me-2 text-primary"></i>Portfólios Pessoais</h5>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>" class="btn btn-sm btn-link text-decoration-none fw-bold">Ver todos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($portfolios)): ?>
                     <div class="text-center py-5">
-                        <div class="bg-light d-inline-flex p-4 rounded-circle mb-3">
+                        <div class="bg-soft-secondary d-inline-flex p-4 rounded-circle mb-3">
                             <i class="bi bi-folder-plus fs-1 text-muted opacity-50"></i>
                         </div>
                         <p class="text-muted fw-medium">Você ainda não possui portfólios configurados.</p>
@@ -125,9 +125,9 @@ ob_start();
                             <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="list-group-item list-group-item-action py-4 px-4 transition">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <h6 class="mb-1 fw-bold text-dark"><?php echo htmlspecialchars($portfolio['name']); ?></h6>
+                                        <h6 class="mb-1 fw-bold"><?php echo htmlspecialchars($portfolio['name']); ?></h6>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-light text-muted border px-2"><?php echo ucfirst($portfolio['rebalance_frequency']); ?></span>
+                                            <span class="badge bg-soft-secondary text-muted border px-2"><?php echo ucfirst($portfolio['rebalance_frequency']); ?></span>
                                             <span class="smaller text-muted">Criado em <?php echo date('d/m/Y', strtotime($portfolio['created_at'])); ?></span>
                                         </div>
                                     </div>
@@ -148,7 +148,7 @@ ob_start();
 
     <div class="col-lg-4">
         <div class="card shadow-sm border-0 rounded-4 mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
+            <div class="card-header py-3 border-bottom">
                 <h6 class="mb-0 fw-bold">Acesso Rápido</h6>
             </div>
             <div class="card-body p-4">
@@ -170,7 +170,7 @@ ob_start();
         </div>
 
         <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header bg-white py-3 border-bottom">
+            <div class="card-header py-3 border-bottom">
                 <h6 class="mb-0 fw-bold">Atividade Recente</h6>
             </div>
             <div class="card-body p-0">
