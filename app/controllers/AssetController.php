@@ -217,8 +217,8 @@ private $assetModel;
             $currentPrice = floatval($row['price']);
             $currentFxRate = $fxData[$row['reference_date']] ?? null;
             
-            // 1. Retorno Mensal: Taxa Mensal (Selic) vs Variação de Preço (Ações/BTC)
-            if ($asset['asset_type'] === 'TAXA_MENSAL') {
+            // 1. Retorno Mensal: Taxa Mensal (Selic/IPCA) vs Variação de Preço (Ações/BTC)
+            if ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO') {
                 $monthlyReturn = $currentPrice / 100;
             } else {
                 $monthlyReturn = ($index > 0 && $prevPrice > 0) ? ($currentPrice / $prevPrice) - 1 : 0;

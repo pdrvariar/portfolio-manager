@@ -3,6 +3,7 @@ require_once __DIR__ . '/YahooQuoteStrategy.php';
 require_once __DIR__ . '/FedQuoteStrategy.php';
 require_once __DIR__ . '/SelicQuoteStrategy.php';
 require_once __DIR__ . '/DolarQuoteStrategy.php';
+require_once __DIR__ . '/IpcaQuoteStrategy.php';
 
 class QuoteStrategyFactory {
     public static function make($asset) {
@@ -31,6 +32,12 @@ class QuoteStrategyFactory {
         if (strcasecmp($source, 'DOLAR') === 0) {
             if (strcasecmp($type, 'CAMBIO') === 0) {
                 return new DolarQuoteStrategy();
+            }
+        }
+
+        if (strcasecmp($source, 'BCB') === 0 || strcasecmp($source, 'IPCA') === 0) {
+            if (strcasecmp($type, 'TAXA_MENSAL') === 0 || strcasecmp($type, 'INFLACAO') === 0) {
+                return new IpcaQuoteStrategy();
             }
         }
         // Outros provedores no futuro

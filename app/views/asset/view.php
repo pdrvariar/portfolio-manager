@@ -47,22 +47,31 @@ ob_start();
                                 <tbody>
                                     <?php
                                     $prevPrice = null;
+                                    $isRate = ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO');
                                     foreach ($historicalData as $index => $row):
-                                        $currentPrice = $row['price'];
-                                        $variation = $prevPrice !== null ? 
-                                            (($currentPrice - $prevPrice) / $prevPrice) * 100 : null;
+                                        $currentPrice = (float)$row['price'];
+                                        if ($isRate) {
+                                            $variation = $currentPrice;
+                                        } else {
+                                            $variation = ($prevPrice !== null && $prevPrice != 0) ? 
+                                                (($currentPrice - $prevPrice) / $prevPrice) * 100 : null;
+                                        }
                                     ?>
                                     <tr>
                                         <td><?php echo formatMonthYear($row['reference_date']); ?></td>
                                         <td>
-                                            <?php if ($asset['currency'] === 'BRL'): ?>
+                                            <?php if ($isRate): ?>
+                                                <?php echo number_format($currentPrice, 2, ',', '.'); ?>%
+                                            <?php elseif ($asset['currency'] === 'BRL'): ?>
                                                 R$ <?php echo number_format($currentPrice, 2, ',', '.'); ?>
                                             <?php else: ?>
                                                 $ <?php echo number_format($currentPrice, 2, ',', '.'); ?>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php if ($variation !== null): ?>
+                                            <?php if ($isRate): ?>
+                                                <span class="text-muted">-</span>
+                                            <?php elseif ($variation !== null): ?>
                                                 <span class="<?php echo $variation >= 0 ? 'text-success' : 'text-danger'; ?>">
                                                     <?php echo ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.'); ?>%
                                                 </span>
@@ -99,16 +108,27 @@ ob_start();
                 <div class="card-body">
                     <?php if (!empty($historicalData)): 
                         $prices = array_column($historicalData, 'price');
-                        $firstPrice = $prices[0];
-                        $lastPrice = end($prices);
-                        $minPrice = min($prices);
-                        $maxPrice = max($prices);
-                        $totalReturn = (($lastPrice - $firstPrice) / $firstPrice) * 100;
+                        $firstPrice = (float)$prices[0];
+                        $lastPrice = (float)end($prices);
+                        $minPrice = (float)min($prices);
+                        $maxPrice = (float)max($prices);
+                        
+                        $isRate = ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO');
+                        
+                        if ($isRate) {
+                            // Para taxas, o "retorno total" não é uma variação simples, mas o acumulado.
+                            // Para simplificar na view de detalhes, vamos mostrar apenas os valores.
+                            $totalReturn = null; 
+                        } else {
+                            $totalReturn = ($firstPrice != 0) ? (($lastPrice - $firstPrice) / $firstPrice) * 100 : 0;
+                        }
                     ?>
                     <div class="mb-3">
                         <label class="form-label">Valor Inicial</label>
                         <div class="fs-5">
-                            <?php if ($asset['currency'] === 'BRL'): ?>
+                            <?php if ($isRate): ?>
+                                <?php echo number_format($firstPrice, 2, ',', '.'); ?>%
+                            <?php elseif ($asset['currency'] === 'BRL'): ?>
                                 R$ <?php echo number_format($firstPrice, 2, ',', '.'); ?>
                             <?php else: ?>
                                 $ <?php echo number_format($firstPrice, 2, ',', '.'); ?>
@@ -119,7 +139,9 @@ ob_start();
                     <div class="mb-3">
                         <label class="form-label">Valor Final</label>
                         <div class="fs-5">
-                            <?php if ($asset['currency'] === 'BRL'): ?>
+                            <?php if ($isRate): ?>
+                                <?php echo number_format($lastPrice, 2, ',', '.'); ?>%
+                            <?php elseif ($asset['currency'] === 'BRL'): ?>
                                 R$ <?php echo number_format($lastPrice, 2, ',', '.'); ?>
                             <?php else: ?>
                                 $ <?php echo number_format($lastPrice, 2, ',', '.'); ?>
@@ -127,17 +149,21 @@ ob_start();
                         </div>
                     </div>
                     
+                    <?php if (!$isRate): ?>
                     <div class="mb-3">
                         <label class="form-label">Retorno Total</label>
                         <div class="fs-5 <?php echo $totalReturn >= 0 ? 'text-success' : 'text-danger'; ?>">
                             <?php echo ($totalReturn >= 0 ? '+' : '') . number_format($totalReturn, 2, ',', '.'); ?>%
                         </div>
                     </div>
+                    <?php endif; ?>
                     
                     <div class="mb-3">
                         <label class="form-label">Mínimo</label>
                         <div>
-                            <?php if ($asset['currency'] === 'BRL'): ?>
+                            <?php if ($isRate): ?>
+                                <?php echo number_format($minPrice, 2, ',', '.'); ?>%
+                            <?php elseif ($asset['currency'] === 'BRL'): ?>
                                 R$ <?php echo number_format($minPrice, 2, ',', '.'); ?>
                             <?php else: ?>
                                 $ <?php echo number_format($minPrice, 2, ',', '.'); ?>
@@ -148,7 +174,9 @@ ob_start();
                     <div class="mb-3">
                         <label class="form-label">Máximo</label>
                         <div>
-                            <?php if ($asset['currency'] === 'BRL'): ?>
+                            <?php if ($isRate): ?>
+                                <?php echo number_format($maxPrice, 2, ',', '.'); ?>%
+                            <?php elseif ($asset['currency'] === 'BRL'): ?>
                                 R$ <?php echo number_format($maxPrice, 2, ',', '.'); ?>
                             <?php else: ?>
                                 $ <?php echo number_format($maxPrice, 2, ',', '.'); ?>

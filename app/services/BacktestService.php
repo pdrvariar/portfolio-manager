@@ -235,7 +235,7 @@ class BacktestService {
 
                 $assetPrices[$assetId] = $dbValue;
 
-                if ($asset['asset_type'] === 'TAXA_MENSAL') {
+                if ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO') {
                     $monthlyReturn = ($dbValue * $factor) / 100;
                 } else {
                     if (isset($lastPrices[$assetId]) && $lastPrices[$assetId] > 0) {
@@ -255,9 +255,9 @@ class BacktestService {
 
                 $currentBalances[$assetId] *= (1 + $monthlyReturn);
                 
-                // Atualiza quantidade para ativos que não são taxa mensal (onde quantidade faz sentido)
-                // Se for taxa mensal, a "quantidade" é o próprio saldo
-                if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                // Atualiza quantidade para ativos que não são taxa mensal ou inflação (onde quantidade faz sentido)
+                // Se for taxa mensal ou inflação, a "quantidade" é o próprio saldo
+                if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                     // A quantidade não muda com a valorização do preço, apenas com aportes/rebal
                     // Mas precisamos garantir que ela esteja sincronizada com o saldo se houver arredondamentos
                     // Para fins de simulação, mantemos a quantidade e atualizamos o saldo.
@@ -325,7 +325,7 @@ class BacktestService {
                         $currentBalances[$assetId] = $newBalance;
 
                         // Atualiza quantidade comprada/vendida
-                        if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                        if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                             $price = (float)($monthData[$assetId] ?? 0);
                             if ($price > 0) {
                                 $newQty = $newBalance / $price;
@@ -379,7 +379,7 @@ class BacktestService {
                             $currentBalances[$assetId] = $newBalance;
 
                             // Atualiza quantidade comprada/vendida
-                            if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                            if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                                 $price = (float)($monthData[$assetId] ?? 0);
                                 if ($price > 0) {
                                     $newQty = $newBalance / $price;
@@ -556,7 +556,7 @@ class BacktestService {
 
                     // Calcula nova quantidade após rebalanceamento
                     $postQty = $preQty;
-                    if ($asset['asset_type'] !== 'TAXA_MENSAL') {
+                    if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                         $price = (float)($monthData[$assetId] ?? 0);
                         $postQty = $price > 0 ? ($postValue / $price) : 0;
                     } else {

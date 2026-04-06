@@ -108,6 +108,7 @@ ob_start();
                             <select name="asset_type" id="editAssetType" class="form-select">
                                 <option value="COTACAO">Cotação</option>
                                 <option value="TAXA_MENSAL">Taxa Mensal</option>
+                                <option value="INFLACAO">Inflação</option>
                                 <option value="CAMBIO">Câmbio</option>
                             </select>
                         </div>
