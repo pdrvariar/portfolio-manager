@@ -91,20 +91,7 @@ body {
 }
 
 /* 2. TABELAS (DataTables & Auditoria) */
-#assetsTable th, #portfoliosTable th { font-weight: 600; color: var(--text-main); }
-
-[data-theme="dark"] .table {
-    color: var(--text-main);
-    border-color: var(--border-color);
-}
-[data-theme="dark"] .table thead th,
-[data-theme="dark"] .table tbody td {
-    color: var(--text-main);
-}
-[data-theme="dark"] .table-hover tbody tr:hover {
-    color: var(--text-main);
-    background-color: rgba(255, 255, 255, 0.05);
-}
+#assetsTable th, #portfoliosTable th { font-weight: 600; color: #495057; }
 
 /* Ajuste de espaçamento comum para todas as tabelas principais */
 #assetsTable td, #assetsTable th,
