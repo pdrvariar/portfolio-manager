@@ -190,7 +190,7 @@ ob_start();
             </div>
             
             <div class="card shadow-sm border-0 mt-4">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold"><i class="bi bi-gear me-2"></i>Gestão do Ativo</h5>
                 </div>
                 <div class="card-body">
