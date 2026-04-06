@@ -494,6 +494,14 @@ $isSelicMonthlyConflict = (
             ];
         }
 
+        $metricsList[] = [
+            'label' => 'BETA DA CARTEIRA',
+            'val' => '<span id="betaValue">--</span>',
+            'class' => 'border-dark',
+            'text' => 'text-dark',
+            'tooltip' => 'O <strong>Beta</strong> mede a sensibilidade do portfólio em relação a um benchmark (ex: IBOV). <br><br><strong>Beta > 1:</strong> Mais volátil que o mercado.<br><strong>Beta = 1:</strong> Mesma volatilidade.<br><strong>Beta < 1:</strong> Menos volátil que o mercado.'
+        ];
+
         foreach ($metricsList as $m): ?>
             <div class="col-md-3 mb-3">
                 <div class="card metric-card shadow-sm h-100 border-start border-4 <?php echo $m['class']; ?>">
@@ -509,6 +517,11 @@ $isSelicMonthlyConflict = (
                             <?php endif; ?>
                         </div>
                         <h3 class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
+                        <?php if ($m['label'] == 'BETA DA CARTEIRA'): ?>
+                            <div class="mt-2 small text-muted">
+                                <span id="betaBenchmarkName">Selecione um benchmark</span>
+                            </div>
+                        <?php endif; ?>
                         <?php if ($m['label'] == 'Retorno Real (Sem Aportes)'): ?>
                             <div class="mt-2 small text-muted">
                                 Capital Inicial: <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
@@ -547,12 +560,6 @@ $isSelicMonthlyConflict = (
                             </span>
                             </div>
                         <?php endif; ?>
-
-                        <div id="betaContainer" style="display: none;">
-                        <span class="badge bg-soft-dark text-dark border px-3 py-2 rounded-pill" title="Risco Relativo (Beta)">
-                            Beta: <span id="betaValue" class="fw-bold">--</span>
-                        </span>
-                        </div>
 
                         <div class="d-flex align-items-center gap-2 border-start ps-3">
                             <label class="smaller text-muted fw-bold">Comparar com:</label>
@@ -1672,7 +1679,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             if (chart.data.datasets.length > 1) {
                 chart.data.datasets.pop();
                 chart.update();
-                document.getElementById('betaContainer').style.display = 'none';
+                document.getElementById('betaValue').innerText = '--';
+                document.getElementById('betaBenchmarkName').innerText = 'Selecione um benchmark';
             }
 
             if (!assetId) return;
@@ -1696,7 +1704,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
                     const beta = calculateBeta(portfolioReturns, res.returns);
                     document.getElementById('betaValue').innerText = beta.toFixed(2);
-                    document.getElementById('betaContainer').style.display = 'block';
+                    document.getElementById('betaBenchmarkName').innerText = 'Benchmark: ' + this.options[this.selectedIndex].text;
 
                     // Se o gráfico tem o ponto 0 (capital inicial), o benchmark precisa de um
                     // null no início para alinhar corretamente (benchmark não tem dado para t=0)
