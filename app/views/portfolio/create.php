@@ -130,6 +130,15 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
+                                            <label for="rebalance_type" class="form-label">Tipo de Rebalanceamento</label>
+                                            <select class="form-select" id="rebalance_type" name="rebalance_type">
+                                                <option value="full">Completo (Compra e Venda)</option>
+                                                <option value="buy_only">Apenas Compras (Sem Vendas)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
                                             <div class="form-check form-switch mb-2">
                                                 <input class="form-check-input" type="checkbox" id="deposit_inflation_adjusted" name="deposit_inflation_adjusted" value="1">
                                                 <label class="form-check-label" for="deposit_inflation_adjusted">Corrigir pela Inflação (IPCA)</label>
@@ -428,6 +437,16 @@ function toggleSimulationFields() {
         document.getElementById('monthly_deposit_fields').style.display = 'block';
         document.getElementById('deposit_card_header').innerHTML = depositHeaderTexts[type] || depositHeaderTexts['monthly_deposit'];
         document.getElementById('desc_' + type).style.display = 'block';
+        
+        // Exibir seletor de tipo de rebalanceamento apenas para smart_deposit e selic_cash_deposit
+        const rtContainer = document.getElementById('rebalance_type').closest('.col-md-3');
+        if (type === 'smart_deposit' || type === 'selic_cash_deposit') {
+            rtContainer.style.display = 'block';
+        } else {
+            rtContainer.style.display = 'none';
+            document.getElementById('rebalance_type').value = 'full';
+        }
+
         // Define valor padrão se estiver vazio
         if (!document.getElementById('deposit_amount').value) {
             document.getElementById('deposit_amount').value = '1000.00';

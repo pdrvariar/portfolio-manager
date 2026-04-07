@@ -155,6 +155,7 @@ class BacktestService {
 
         // NOVOS PARÂMETROS
         $simulationType = $portfolio['simulation_type'] ?? 'standard';
+        $rebalanceType = $portfolio['rebalance_type'] ?? 'full'; // NOVO: Captura o tipo de rebalanceamento
         $depositAmount = (float)($portfolio['deposit_amount'] ?? 0);
         $depositCurrency = $portfolio['deposit_currency'] ?? 'BRL';
         $depositFrequency = $portfolio['deposit_frequency'] ?? 'monthly';
@@ -568,39 +569,125 @@ class BacktestService {
                     $selicCash = 0; // Caixa é integralmente investido no rebalanceamento
                 }
 
-                foreach ($assets as $asset) {
-                    $assetId = $asset['asset_id'];
-                    $preValue = $currentBalances[$assetId];
-                    $preQty = $currentQuantities[$assetId];
+                if ($rebalanceType === 'buy_only') {
+                    // ============================================
+                    // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS (BUY ONLY)
+                    // Nunca vende ativos; usa apenas o caixa acumulado/aportado para comprar os mais desviados (abaixo do alvo)
+                    // ============================================
+                    $availableToInvest = $selicCashInjected; // No buy_only, usamos apenas o caixa que entrou (SELIC)
 
-                    $targetAllocation = (float)$asset['allocation_percentage'] / 100;
-                    $postValue = $rebalanceBase * $targetAllocation;
+                    if ($availableToInvest > 0.001) {
+                        // Calcula o desvio de cada ativo em relação ao seu alvo (Percentual Atual vs Percentual Alvo)
+                        // IMPORTANTE: Aqui usamos $rebalanceBase (que já inclui o caixa) para o cálculo do alvo ideal
+                        $refTotal = $rebalanceBase;
+                        $deviations = [];
+                        foreach ($assets as $asset) {
+                            $assetId = $asset['asset_id'];
+                            $targetPct = (float)$asset['allocation_percentage'] / 100;
+                            $targetValue = $refTotal * $targetPct;
+                            $currentValue = $currentBalances[$assetId];
+                            
+                            // Ativo está abaixo do alvo se targetValue > currentValue
+                            $deficit = max(0.0, $targetValue - $currentValue);
+                            
+                            // Desvio percentual relativo (prioriza o que está proporcionalmente mais longe do alvo)
+                            $relDev = $targetValue > 0 ? ($targetValue - $currentValue) / $targetValue : 0;
 
-                    // Calcula nova quantidade após rebalanceamento
-                    $postQty = $preQty;
-                    if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
-                        $price = (float)($monthData[$assetId] ?? 0);
-                        $postQty = $price > 0 ? ($postValue / $price) : 0;
+                            $deviations[] = [
+                                'asset_id' => $assetId,
+                                'asset' => $asset,
+                                'deficit' => $deficit,
+                                'relDev' => $relDev
+                            ];
+                        }
+
+                        // Ordena pelos que estão mais distantes do alvo (maior déficit relativo primeiro)
+                        usort($deviations, fn($a, $b) => $b['relDev'] <=> $a['relDev']);
+
+                        $remaining = $availableToInvest;
+                        foreach ($deviations as $devInfo) {
+                            if ($remaining < 0.001) break;
+                            if ($devInfo['deficit'] <= 0.001) continue; // Ativo já está no alvo ou acima
+
+                            $assetId = $devInfo['asset_id'];
+                            $asset = $devInfo['asset'];
+                            $buy = min($remaining, $devInfo['deficit']);
+                            
+                            $price = (float)($monthData[$assetId] ?? 0);
+                            $currentBalances[$assetId] += $buy;
+                            
+                            if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
+                                $deltaQty = $buy / $price;
+                                $currentQuantities[$assetId] += $deltaQty;
+                            } else {
+                                $currentQuantities[$assetId] = $currentBalances[$assetId];
+                            }
+                            
+                            $assetValues[$assetId] = $currentBalances[$assetId];
+                            $assetQuantities[$assetId] = $currentQuantities[$assetId];
+                            
+                            // Registra no trades para visibilidade (apesar de ser apenas compra)
+                            $trades[$assetId] = [
+                                'pre_value' => $currentBalances[$assetId] - $buy,
+                                'post_value' => $currentBalances[$assetId],
+                                'delta' => $buy,
+                                'type' => 'buy_only_rebalance'
+                            ];
+
+                            $remaining -= $buy;
+                        }
+                        
+                        // Se sobrar algo (ninguém mais precisava de aporte ou o saldo era muito alto), volta pro caixa
+                        if ($remaining > 0.001) {
+                            $selicCash = $remaining;
+                        }
+                        
+                        // Atualiza o total investido nos ativos
+                        $totalMonthValue = array_sum($currentBalances);
                     } else {
-                        $postQty = $postValue;
+                        // Se não tem caixa disponível, não faz nada no buy_only (nunca vende)
+                        $wasRebalanced = false;
                     }
 
-                    $trades[$assetId] = [
-                        'pre_value' => $preValue,
-                        'post_value' => $postValue,
-                        'pre_quantity' => $preQty,
-                        'post_quantity' => $postQty,
-                        'delta' => $postValue - $preValue,
-                        'delta_quantity' => $postQty - $preQty
-                    ];
+                } else {
+                    // ============================================
+                    // LÓGICA DE REBALANCEAMENTO: COMPLETO (REBALANCEAMENTO PADRÃO)
+                    // Vende o que está acima e compra o que está abaixo do alvo
+                    // ============================================
+                    foreach ($assets as $asset) {
+                        $assetId = $asset['asset_id'];
+                        $preValue = $currentBalances[$assetId];
+                        $preQty = $currentQuantities[$assetId];
 
-                    $currentBalances[$assetId] = $postValue;
-                    $currentQuantities[$assetId] = $postQty;
-                    $assetValues[$assetId] = $postValue;
-                    $assetQuantities[$assetId] = $postQty;
+                        $targetAllocation = (float)$asset['allocation_percentage'] / 100;
+                        $postValue = $rebalanceBase * $targetAllocation;
+
+                        // Calcula nova quantidade após rebalanceamento
+                        $postQty = $preQty;
+                        if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
+                            $price = (float)($monthData[$assetId] ?? 0);
+                            $postQty = $price > 0 ? ($postValue / $price) : 0;
+                        } else {
+                            $postQty = $postValue;
+                        }
+
+                        $trades[$assetId] = [
+                            'pre_value' => $preValue,
+                            'post_value' => $postValue,
+                            'pre_quantity' => $preQty,
+                            'post_quantity' => $postQty,
+                            'delta' => $postValue - $preValue,
+                            'delta_quantity' => $postQty - $preQty
+                        ];
+
+                        $currentBalances[$assetId] = $postValue;
+                        $currentQuantities[$assetId] = $postQty;
+                        $assetValues[$assetId] = $postValue;
+                        $assetQuantities[$assetId] = $postQty;
+                    }
+
+                    $totalMonthValue = $rebalanceBase; // Atualiza total (pode ter crescido com caixa)
                 }
-
-                $totalMonthValue = $rebalanceBase; // Atualiza total (pode ter crescido com caixa)
             }
 
             $results[$date] = [

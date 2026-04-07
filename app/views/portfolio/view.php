@@ -54,8 +54,14 @@ ob_start();
                         <span class="badge bg-warning bg-soft">Aporte Estratégico</span>
                     <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
                         <span class="badge bg-success bg-soft">Aporte Direcionado ao Alvo</span>
+                        <?php if (($portfolio['rebalance_type'] ?? 'full') == 'buy_only'): ?>
+                            <span class="badge bg-soft-success text-success rounded-pill ms-1 small border border-success">Apenas Compras</span>
+                        <?php endif; ?>
                     <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
                         <span class="badge bg-secondary bg-soft">Aporte em Caixa (SELIC)</span>
+                        <?php if (($portfolio['rebalance_type'] ?? 'full') == 'buy_only'): ?>
+                            <span class="badge bg-soft-secondary text-secondary rounded-pill ms-1 small border border-secondary">Apenas Compras</span>
+                        <?php endif; ?>
                     <?php endif; ?>
                     <?php if ($currentSimTooltip): ?>
                         <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-muted align-middle info-tooltip"

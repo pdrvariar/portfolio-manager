@@ -26,9 +26,9 @@ class Portfolio {
     public function create($data) {
         $sql = "INSERT INTO portfolios (user_id, name, description, initial_capital, 
             start_date, end_date, rebalance_frequency, output_currency, cloned_from,
-            simulation_type, deposit_amount, deposit_currency, deposit_frequency,
+            simulation_type, rebalance_type, deposit_amount, deposit_currency, deposit_frequency,
             strategic_threshold, strategic_deposit_percentage, deposit_inflation_adjusted, is_system_default) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -42,6 +42,7 @@ class Portfolio {
             $data['output_currency'],
             $data['cloned_from'] ?? null,
             $data['simulation_type'] ?? 'standard',
+            $data['rebalance_type'] ?? 'full',
             $data['deposit_amount'] ?? null,
             $data['deposit_currency'] ?? null,
             $data['deposit_frequency'] ?? null,
@@ -74,6 +75,7 @@ class Portfolio {
             'output_currency' => $original['output_currency'],
             'cloned_from' => $portfolioId,
             'simulation_type' => $original['simulation_type'],
+            'rebalance_type' => $original['rebalance_type'] ?? 'full',
             'deposit_amount' => $original['deposit_amount'],
             'deposit_currency' => $original['deposit_currency'],
             'deposit_frequency' => $original['deposit_frequency'],
@@ -115,6 +117,7 @@ class Portfolio {
             rebalance_frequency = ?, 
             output_currency = ?,
             simulation_type = ?,
+            rebalance_type = ?,
             deposit_amount = ?,
             deposit_currency = ?,
             deposit_frequency = ?,
@@ -133,6 +136,7 @@ class Portfolio {
             $data['rebalance_frequency'],
             $data['output_currency'],
             $data['simulation_type'] ?? 'standard',
+            $data['rebalance_type'] ?? 'full',
             $data['deposit_amount'] ?? null,
             $data['deposit_currency'] ?? null,
             $data['deposit_frequency'] ?? null,
