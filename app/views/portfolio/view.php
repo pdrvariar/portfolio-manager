@@ -41,15 +41,15 @@ ob_start();
                     | <i class="bi bi-calculator ms-2 me-1"></i> Simulação:
                     <?php
                     $simTooltips = [
-                        'monthly_deposit'    => 'Aporte Periódico: a cada período configurado, um valor fixo é investido no portfólio e distribuído entre os ativos conforme as alocações-alvo.',
+                        'monthly_deposit'    => 'Com Aportes Periódicos: a cada período configurado, um valor fixo é investido no portfólio e distribuído entre os ativos conforme as alocações-alvo.',
                         'strategic_deposit'  => 'Aporte Estratégico: um aporte extra é realizado apenas quando o portfólio cai acima de um percentual configurado em um único mês — comprando na baixa.',
                         'smart_deposit'      => 'Aporte Direcionado ao Alvo: o aporte periódico é direcionado ao ativo que está mais abaixo de sua alocação-alvo, maximizando a eficiência do rebalanceamento.',
-                        'selic_cash_deposit' => 'Aporte em Caixa SELIC: os aportes ficam rendendo a taxa SELIC em caixa e são investidos no portfólio somente no momento do próximo rebalanceamento.',
+                        'selic_cash_deposit' => 'Aporte em Caixa (SELIC): os aportes ficam rendendo a taxa SELIC em caixa e são investidos no portfólio somente no momento do próximo rebalanceamento.',
                     ];
                     $currentSimTooltip = $simTooltips[$portfolio['simulation_type']] ?? '';
                     ?>
                     <?php if ($portfolio['simulation_type'] == 'monthly_deposit'): ?>
-                        <span class="badge bg-info bg-soft">Aporte Periódico</span>
+                        <span class="badge bg-info bg-soft">Com Aportes Periódicos</span>
                     <?php elseif ($portfolio['simulation_type'] == 'strategic_deposit'): ?>
                         <span class="badge bg-warning bg-soft">Aporte Estratégico</span>
                     <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
@@ -113,10 +113,21 @@ ob_start();
         <div class="flex-grow-1">
             <h6 class="fw-bold mb-1 text-dark">Estratégia de Aportes Ativa</h6>
             <p class="text-muted smaller mb-0">
+                <?php 
+                $freqTranslations = [
+                    'monthly'   => 'mês',
+                    'quarterly' => 'trimestre',
+                    'biannual'  => 'semestre',
+                    'annual'    => 'ano'
+                ];
+                $freq = $freqTranslations[$portfolio['deposit_frequency']] ?? $portfolio['deposit_frequency'];
+                $inflationAdj = ($portfolio['deposit_inflation_adjusted'] ?? 0) ? ' (Corrigido pelo IPCA)' : ' (Sem correção)';
+                ?>
                 <?php if ($portfolio['simulation_type'] == 'monthly_deposit'): ?>
-                    <strong>Aporte Periódico:</strong>
+                    <strong>Com Aportes Periódicos:</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
-                    a cada <?php echo $portfolio['deposit_frequency']; ?>
+                    a cada <?php echo $freq; ?>
+                    <?php echo $inflationAdj; ?>
                     <?php if ($portfolio['deposit_currency'] != $portfolio['output_currency']): ?>
                         (convertido para <?php echo $portfolio['output_currency']; ?> no momento do aporte)
                     <?php endif; ?>
@@ -127,12 +138,16 @@ ob_start();
                 <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
                     <strong>Aporte Direcionado ao Alvo:</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
-                    a cada <?php echo $portfolio['deposit_frequency']; ?> — direcionado ao ativo mais abaixo do percentual-alvo.
+                    a cada <?php echo $freq; ?>
+                    <?php echo $inflationAdj; ?>
+                    — direcionado ao ativo mais abaixo do percentual-alvo.
                     Sobras acumuladas em Caixa SELIC até o próximo rebalanceamento.
                 <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
                     <strong>Aporte em Caixa (SELIC):</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
-                    a cada <?php echo $portfolio['deposit_frequency']; ?> — acumulado em Caixa SELIC e
+                    a cada <?php echo $freq; ?>
+                    <?php echo $inflationAdj; ?>
+                    — acumulado em Caixa SELIC e
                     investido integralmente a cada rebalanceamento.
                 <?php endif; ?>
             </p>
@@ -141,10 +156,10 @@ ob_start();
         <?php
         $simTypeLabels = [
             'standard'           => 'PADRÃO',
-            'monthly_deposit'    => 'APORTE PERIÓDICO',
+            'monthly_deposit'    => 'COM APORTES PERIÓDICOS',
             'strategic_deposit'  => 'APORTE ESTRATÉGICO',
-            'smart_deposit'      => 'APORTE DIRECIONADO',
-            'selic_cash_deposit' => 'CAIXA SELIC',
+            'smart_deposit'      => 'APORTE DIRECIONADO AO ALVO',
+            'selic_cash_deposit' => 'APORTE EM CAIXA (SELIC)',
         ];
         echo $simTypeLabels[$portfolio['simulation_type']] ?? strtoupper($portfolio['simulation_type']);
         ?>

@@ -27,8 +27,8 @@ class Portfolio {
         $sql = "INSERT INTO portfolios (user_id, name, description, initial_capital, 
             start_date, end_date, rebalance_frequency, output_currency, cloned_from,
             simulation_type, deposit_amount, deposit_currency, deposit_frequency,
-            strategic_threshold, strategic_deposit_percentage, is_system_default) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            strategic_threshold, strategic_deposit_percentage, deposit_inflation_adjusted, is_system_default) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -47,6 +47,7 @@ class Portfolio {
             $data['deposit_frequency'] ?? null,
             $data['strategic_threshold'] ?? null,
             $data['strategic_deposit_percentage'] ?? null,
+            $data['deposit_inflation_adjusted'] ?? 0,
             $data['is_system_default'] ?? 0
         ]);
 
@@ -77,7 +78,8 @@ class Portfolio {
             'deposit_currency' => $original['deposit_currency'],
             'deposit_frequency' => $original['deposit_frequency'],
             'strategic_threshold' => $original['strategic_threshold'],
-            'strategic_deposit_percentage' => $original['strategic_deposit_percentage']
+            'strategic_deposit_percentage' => $original['strategic_deposit_percentage'],
+            'deposit_inflation_adjusted' => $original['deposit_inflation_adjusted']
         ]);
 
         // Copiar alocações de ativos
@@ -117,7 +119,8 @@ class Portfolio {
             deposit_currency = ?,
             deposit_frequency = ?,
             strategic_threshold = ?,
-            strategic_deposit_percentage = ?
+            strategic_deposit_percentage = ?,
+            deposit_inflation_adjusted = ?
             WHERE id = ?";
 
         $stmt = $this->db->prepare($sql);
@@ -135,6 +138,7 @@ class Portfolio {
             $data['deposit_frequency'] ?? null,
             $data['strategic_threshold'] ?? null,
             $data['strategic_deposit_percentage'] ?? null,
+            $data['deposit_inflation_adjusted'] ?? 0,
             $data['id']
         ]);
     }

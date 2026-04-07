@@ -97,8 +97,8 @@ $assets = $assetModel->getAllWithDetails();
                                 <h6 class="mb-0" id="deposit_card_header"><i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos</h6>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4">
+                                <div class="row align-items-end">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="deposit_amount" class="form-label">Valor do Aporte</label>
                                             <div class="input-group">
@@ -107,7 +107,7 @@ $assets = $assetModel->getAllWithDetails();
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="deposit_currency" class="form-label">Moeda do Aporte</label>
                                             <select class="form-select" id="deposit_currency" name="deposit_currency" onchange="document.getElementById('deposit_currency_label').innerText = this.value">
@@ -116,7 +116,7 @@ $assets = $assetModel->getAllWithDetails();
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="deposit_frequency" class="form-label">Frequência do Aporte</label>
                                             <select class="form-select" id="deposit_frequency" name="deposit_frequency">
@@ -126,6 +126,14 @@ $assets = $assetModel->getAllWithDetails();
                                                 <option value="biannual">Semestral</option>
                                                 <option value="annual">Anual</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch mb-2">
+                                                <input class="form-check-input" type="checkbox" id="deposit_inflation_adjusted" name="deposit_inflation_adjusted" value="1">
+                                                <label class="form-check-label" for="deposit_inflation_adjusted">Corrigir pela Inflação (IPCA)</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

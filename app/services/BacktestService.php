@@ -160,6 +160,7 @@ class BacktestService {
         $depositFrequency = $portfolio['deposit_frequency'] ?? 'monthly';
         $strategicThreshold = (float)($portfolio['strategic_threshold'] ?? 0) / 100;
         $strategicDepositPercent = (float)($portfolio['strategic_deposit_percentage'] ?? 0) / 100;
+        $depositInflationAdjusted = (bool)($portfolio['deposit_inflation_adjusted'] ?? false);
 
         // Carrega dados de câmbio
         $fxEndDate = $portfolio['end_date'] ?? date('Y-m-d');
@@ -181,6 +182,11 @@ class BacktestService {
         $selicRates = [];
         if (in_array($simulationType, ['smart_deposit', 'selic_cash_deposit'])) {
             $selicRates = $this->loadSelicRates($portfolio['start_date'], $fxEndDate);
+        }
+
+        $ipcaRates = [];
+        if ($depositInflationAdjusted && $depositAmount > 0) {
+            $ipcaRates = $this->loadIpcaRates($portfolio['start_date'], $fxEndDate);
         }
 
         // NOVO: Variáveis para cálculo do retorno real
@@ -217,6 +223,8 @@ class BacktestService {
         }
 
         $prevDateForStrategy = null; // rastreia a data anterior sem depender de índice numérico
+        $adjustedDepositAmount = $depositAmount;
+        $accumulatedIpca = 1.0;
 
         foreach ($dates as $index => $date) {
             $monthData = $historicalData[$date];
@@ -285,6 +293,12 @@ class BacktestService {
             // Total incluindo caixa SELIC (para tipos com caixa; para os demais, selicCash = 0)
             $totalWithCash = $totalMonthValue + $selicCash;
 
+            // Atualiza inflação acumulada para o próximo aporte
+            if ($depositInflationAdjusted) {
+                $monthlyIpca = $ipcaRates[$date] ?? 0;
+                $accumulatedIpca *= (1 + $monthlyIpca);
+            }
+
             // Calcula a rentabilidade do mês para auditoria ANTES do aporte
             // para que a variação exibida seja a performance dos ativos
             $totalBeforeDeposit = $totalWithCash;
@@ -300,14 +314,20 @@ class BacktestService {
             $depositThisMonth = 0;
             if ($simulationType === 'monthly_deposit' && $depositAmount > 0) {
                 if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
+                    // Se for o primeiro aporte (index 0), usamos o valor original.
+                    // Nos demais, usamos o valor corrigido pela inflação acumulada ATÉ O MÊS ANTERIOR ao aporte.
+                    // Como acumulamos o IPCA de cada mês ao final do loop, no momento do aporte
+                    // o $accumulatedIpca contém a inflação dos meses anteriores.
+                    $currentDepositAmount = $depositInflationAdjusted ? ($depositAmount * $accumulatedIpca) : $depositAmount;
+                    
                     // Converte o aporte para a moeda do portfólio se necessário
-                    $depositInPortfolioCurrency = $depositAmount;
+                    $depositInPortfolioCurrency = $currentDepositAmount;
 
                     if ($depositCurrency !== $portfolioCurrency) {
                         if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount * $currentFxRate;
                         } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount / $currentFxRate;
                         }
                     }
 
@@ -416,12 +436,13 @@ class BacktestService {
             $smartDepositThisMonth = 0;
             if ($simulationType === 'smart_deposit' && $depositAmount > 0) {
                 if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
-                    $depositInPortfolioCurrency = $depositAmount;
+                    $currentDepositAmount = $depositInflationAdjusted ? ($depositAmount * $accumulatedIpca) : $depositAmount;
+                    $depositInPortfolioCurrency = $currentDepositAmount;
                     if ($depositCurrency !== $portfolioCurrency) {
                         if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount * $currentFxRate;
                         } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount / $currentFxRate;
                         }
                     }
 
@@ -498,12 +519,13 @@ class BacktestService {
             $selicCashDepositThisMonth = 0;
             if ($simulationType === 'selic_cash_deposit' && $depositAmount > 0) {
                 if ($this->shouldMakeDeposit($date, $portfolio['start_date'], $depositFrequency, $index)) {
-                    $depositInPortfolioCurrency = $depositAmount;
+                    $currentDepositAmount = $depositInflationAdjusted ? ($depositAmount * $accumulatedIpca) : $depositAmount;
+                    $depositInPortfolioCurrency = $currentDepositAmount;
                     if ($depositCurrency !== $portfolioCurrency) {
                         if ($depositCurrency === 'USD' && $portfolioCurrency === 'BRL' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount * $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount * $currentFxRate;
                         } elseif ($depositCurrency === 'BRL' && $portfolioCurrency === 'USD' && $currentFxRate) {
-                            $depositInPortfolioCurrency = $depositAmount / $currentFxRate;
+                            $depositInPortfolioCurrency = $currentDepositAmount / $currentFxRate;
                         }
                     }
 
@@ -888,6 +910,47 @@ class BacktestService {
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$selicId, $start, $end]);
         foreach ($stmt->fetchAll() as $row) {
+            $rates[$row['reference_date']] = (float)$row['price'] / 100;
+        }
+
+        return $rates;
+    }
+
+    /**
+     * Carrega as variações mensais do IPCA do banco de dados para o período informado.
+     * Retorna um mapa [reference_date => taxa_decimal] (ex: 0.001 para 0.1% a.m.)
+     */
+    private function loadIpcaRates($start, $end) {
+        $rates = [];
+
+        // Tenta encontrar o ativo IPCA pelo tipo INFLACAO e código IPCA
+        $sql = "SELECT id FROM system_assets WHERE asset_type = 'INFLACAO' AND code = 'IPCA' AND is_active = TRUE LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $ipcaAsset = $stmt->fetch();
+
+        if (!$ipcaAsset) {
+            // Fallback: qualquer ativo do tipo INFLACAO
+            $sql = "SELECT id FROM system_assets WHERE asset_type = 'INFLACAO' AND is_active = TRUE LIMIT 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            $ipcaAsset = $stmt->fetch();
+        }
+
+        if (!$ipcaAsset) {
+            return $rates;
+        }
+
+        $ipcaId = $ipcaAsset['id'];
+
+        // Carrega as taxas do período simulado
+        $sql = "SELECT reference_date, price FROM asset_historical_data
+                WHERE asset_id = ? AND reference_date BETWEEN ? AND ?
+                ORDER BY reference_date ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$ipcaId, $start, $end]);
+        foreach ($stmt->fetchAll() as $row) {
+            // No banco está 0.10 para indicar 0.10%
             $rates[$row['reference_date']] = (float)$row['price'] / 100;
         }
 
