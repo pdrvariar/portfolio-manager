@@ -20,39 +20,57 @@ $assets = $assetModel->getAllWithDetails();
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="name" class="form-label">Nome do Portfólio *</label>
+                                <label for="name" class="form-label d-flex align-items-center">
+                                    Nome do Portfólio *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Dê um nome claro à sua estratégia (ex: Aposentadoria 2050)."></i>
+                                </label>
                                 <input type="text" class="form-control" id="name" name="name" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="initial_capital" class="form-label">Capital Inicial *</label>
+                                <label for="initial_capital" class="form-label d-flex align-items-center">
+                                    Capital Inicial *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O valor em dinheiro que você possui para investir no primeiro dia da simulação."></i>
+                                </label>
                                 <input type="number" class="form-control" id="initial_capital" name="initial_capital" step="0.01" min="100" value="100000" required>
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="description" class="form-label">Descrição</label>
+                        <label for="description" class="form-label d-flex align-items-center">
+                            Descrição
+                            <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Use este espaço para anotar as premissas ou objetivos desta carteira específica."></i>
+                        </label>
                         <textarea class="form-control" id="description" name="description" rows="2"></textarea>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="start_date" class="form-label">Data Início *</label>
+                                <label for="start_date" class="form-label d-flex align-items-center">
+                                    Data Início *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Data do primeiro aporte. O sistema buscará preços históricos a partir deste dia."></i>
+                                </label>
                                 <input type="date" class="form-control" id="start_date" name="start_date" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="end_date" class="form-label">Data Fim (opcional)</label>
+                                <label for="end_date" class="form-label d-flex align-items-center">
+                                    Data Fim (opcional)
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Data final do backtest. Se vazio, usará os dados mais recentes disponíveis."></i>
+                                </label>
                                 <input type="date" class="form-control" id="end_date" name="end_date">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="rebalance_frequency" class="form-label">Frequência Rebalanceamento *</label>
+                                <label for="rebalance_frequency" class="form-label d-flex align-items-center">
+                                    Frequência Rebalanceamento *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Define de quanto em quanto tempo o sistema deve 'forçar' a volta dos ativos ao peso-alvo original."></i>
+                                </label>
                                 <select class="form-select" id="rebalance_frequency" name="rebalance_frequency" required>
                                     <option value="monthly">Mensal</option>
                                     <option value="quarterly">Trimestral</option>
@@ -65,7 +83,10 @@ $assets = $assetModel->getAllWithDetails();
                     </div>
                     
                     <div class="mb-3">
-                        <label for="output_currency" class="form-label">Moeda de Saída *</label>
+                        <label for="output_currency" class="form-label d-flex align-items-center">
+                            Moeda de Saída *
+                            <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="A moeda em que todos os relatórios e gráficos serão apresentados. O sistema faz a conversão automática se houver ativos em moedas diferentes."></i>
+                        </label>
                         <select class="form-select" id="output_currency" name="output_currency" required>
                             <option value="BRL">BRL (Real)</option>
                             <option value="USD">USD (Dólar)</option>
@@ -78,7 +99,12 @@ $assets = $assetModel->getAllWithDetails();
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="simulation_type" class="form-label">Tipo de Simulação *</label>
+                                <label for="simulation_type" class="form-label d-flex justify-content-between align-items-center">
+                                    <span>Tipo de Simulação *</span>
+                                    <button type="button" class="btn btn-link p-0 text-decoration-none small" data-bs-toggle="modal" data-bs-target="#simulationHelpModal">
+                                        <i class="bi bi-question-circle me-1"></i>Como escolher?
+                                    </button>
+                                </label>
                                 <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
                                     <option value="standard">Padrão (sem aportes)</option>
                                     <option value="monthly_deposit">Com Aportes Periódicos</option>
@@ -100,7 +126,10 @@ $assets = $assetModel->getAllWithDetails();
                                 <div class="row align-items-end">
                                     <div class="col-md-3">
                                         <div class="mb-3">
-                                            <label for="deposit_amount" class="form-label">Valor do Aporte</label>
+                                            <label for="deposit_amount" class="form-label d-flex align-items-center">
+                                                Valor do Aporte
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Valor a ser investido periodicamente segundo a frequência escolhida."></i>
+                                            </label>
                                             <div class="input-group">
                                                 <span class="input-group-text" id="deposit_currency_label">BRL</span>
                                                 <input type="number" class="form-control" id="deposit_amount" name="deposit_amount" step="0.01" min="0" placeholder="Ex: 5000.00">
@@ -109,7 +138,10 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
-                                            <label for="deposit_currency" class="form-label">Moeda do Aporte</label>
+                                            <label for="deposit_currency" class="form-label d-flex align-items-center">
+                                                Moeda do Aporte
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="A moeda original do seu aporte periódico. Se for diferente da moeda de saída, será convertida pelo câmbio do dia."></i>
+                                            </label>
                                             <select class="form-select" id="deposit_currency" name="deposit_currency" onchange="document.getElementById('deposit_currency_label').innerText = this.value">
                                                 <option value="BRL">BRL (Real)</option>
                                                 <option value="USD">USD (Dólar)</option>
@@ -118,7 +150,10 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
-                                            <label for="deposit_frequency" class="form-label">Frequência do Aporte</label>
+                                            <label for="deposit_frequency" class="form-label d-flex align-items-center">
+                                                Frequência do Aporte
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O intervalo regular em que você injeta capital novo na carteira."></i>
+                                            </label>
                                             <select class="form-select" id="deposit_frequency" name="deposit_frequency">
                                                 <option value="monthly">Mensal</option>
                                                 <option value="bimonthly">Bimestral</option>
@@ -130,7 +165,10 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
-                                            <label for="rebalance_type" class="form-label">Tipo de Rebalanceamento</label>
+                                            <label for="rebalance_type" class="form-label d-flex align-items-center">
+                                                Tipo de Rebalanceamento
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="'Apenas Compras' evita vender o que subiu, usando o aporte para comprar apenas o que está abaixo do alvo. 'Completo' vende e compra para manter os pesos exatos."></i>
+                                            </label>
                                             <select class="form-select" id="rebalance_type" name="rebalance_type">
                                                 <option value="full">Completo (Compra e Venda)</option>
                                                 <option value="buy_only">Apenas Compras (Sem Vendas)</option>
@@ -141,7 +179,10 @@ $assets = $assetModel->getAllWithDetails();
                                         <div class="mb-3">
                                             <div class="form-check form-switch mb-2">
                                                 <input class="form-check-input" type="checkbox" id="deposit_inflation_adjusted" name="deposit_inflation_adjusted" value="1">
-                                                <label class="form-check-label" for="deposit_inflation_adjusted">Corrigir pela Inflação (IPCA)</label>
+                                                <label class="form-check-label d-flex align-items-center" for="deposit_inflation_adjusted">
+                                                    Corrigir pela Inflação (IPCA)
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Aumenta o valor do seu aporte mensalmente seguindo o IPCA histórico, preservando o valor real investido."></i>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -149,7 +190,10 @@ $assets = $assetModel->getAllWithDetails();
                                         <div class="mb-3">
                                             <div class="form-check form-switch mb-2">
                                                 <input class="form-check-input" type="checkbox" id="use_cash_assets_for_rebalance" name="use_cash_assets_for_rebalance" value="1">
-                                                <label class="form-check-label" for="use_cash_assets_for_rebalance">Usar ativos caixa no rebalanceamento</label>
+                                                <label class="form-check-label d-flex align-items-center" for="use_cash_assets_for_rebalance">
+                                                    Usar ativos caixa no rebalanceamento
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Permite que os ativos 'Caixa SELIC' ou 'Caixa Dólar' sejam usados para comprar outros ativos da carteira durante o rebalanceamento. Esses ativos caixa devem estar definidos e com peso na sua alocação."></i>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -178,7 +222,10 @@ $assets = $assetModel->getAllWithDetails();
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="strategic_threshold" class="form-label">Limiar de Queda para Aporte</label>
+                                            <label for="strategic_threshold" class="form-label d-flex align-items-center">
+                                                Limiar de Queda para Aporte
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Se o portfólio cair este percentual em um único mês, o sistema dispara um aporte extra."></i>
+                                            </label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="strategic_threshold" name="strategic_threshold" step="0.1" min="0" max="100" placeholder="Ex: 10.0">
                                                 <span class="input-group-text">%</span>
@@ -188,7 +235,10 @@ $assets = $assetModel->getAllWithDetails();
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="strategic_deposit_percentage" class="form-label">Percentual do Aporte</label>
+                                            <label for="strategic_deposit_percentage" class="form-label d-flex align-items-center">
+                                                Percentual do Aporte
+                                                <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O valor do aporte será calculado como este percentual sobre o patrimônio atual do portfólio no momento da queda."></i>
+                                            </label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="strategic_deposit_percentage" name="strategic_deposit_percentage" step="0.1" min="0" max="100" placeholder="Ex: 10.0">
                                                 <span class="input-group-text">%</span>
@@ -493,11 +543,18 @@ document.getElementById('rebalance_type').addEventListener('change', toggleUseCa
 
 // Inicializa ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
+    // Inicializa todos os tooltips Bootstrap da página
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(function(el) {
+        new bootstrap.Tooltip(el, { html: true, trigger: 'hover focus' });
+    });
+
     toggleSimulationFields();
 });
 
 </script>
 <?php
 $content = ob_get_clean();
+include __DIR__ . '/_simulation_help_modal.php';
 include_once __DIR__ . '/../layouts/main.php';
 ?>

@@ -216,3 +216,36 @@ body {
     .display-6 { font-size: 1.5rem; }
 }
 
+
+/* 11. MODAL HELP & REFINEMENTS */
+#simulationHelpModal .modal-content {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+#simulationHelpModal .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#simulationHelpModal .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+[data-theme='dark'] #simulationHelpModal .bg-light-subtle {
+    background-color: rgba(255,255,255,0.03) !important;
+}
+
+[data-theme='dark'] #simulationHelpModal .alert-light {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: var(--text-muted);
+}
+
+.btn-link.small {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.bg-light-subtle {
+    background-color: #f8f9fa;
+}

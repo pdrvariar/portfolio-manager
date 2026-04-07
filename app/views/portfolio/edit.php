@@ -33,11 +33,17 @@ ob_start();
                         <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label for="name" class="form-label fw-bold">Nome do Portfólio *</label>
+                                <label for="name" class="form-label fw-bold d-flex align-items-center">
+                                    Nome do Portfólio *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Dê um nome claro à sua estratégia (ex: Aposentadoria 2050)."></i>
+                                </label>
                                 <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($portfolio['name']); ?>" required>
                             </div>
                             <div class="col-md-4">
-                                <label for="initial_capital" class="form-label fw-bold">Capital Inicial *</label>
+                                <label for="initial_capital" class="form-label fw-bold d-flex align-items-center">
+                                    Capital Inicial *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O valor em dinheiro que você possui para investir no primeiro dia da simulação."></i>
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-text"><?php echo $portfolio['output_currency']; ?></span>
                                     <input type="number" class="form-control" id="initial_capital" name="initial_capital" step="0.01" min="100" value="<?php echo $portfolio['initial_capital']; ?>" required>
@@ -45,20 +51,32 @@ ob_start();
                             </div>
 
                             <div class="col-md-12">
-                                <label for="description" class="form-label fw-bold">Descrição / Estratégia</label>
+                                <label for="description" class="form-label fw-bold d-flex align-items-center">
+                                    Descrição / Estratégia
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Use este espaço para anotar as premissas ou objetivos desta carteira específica."></i>
+                                </label>
                                 <textarea class="form-control" id="description" name="description" rows="2"><?php echo htmlspecialchars($portfolio['description']); ?></textarea>
                             </div>
 
                             <div class="col-md-4">
-                                <label for="start_date" class="form-label fw-bold">Data Início *</label>
+                                <label for="start_date" class="form-label fw-bold d-flex align-items-center">
+                                    Data Início *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Data do primeiro aporte. O sistema buscará preços históricos a partir deste dia."></i>
+                                </label>
                                 <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $portfolio['start_date']; ?>" required>
                             </div>
                             <div class="col-md-4">
-                                <label for="end_date" class="form-label fw-bold">Data Fim (Opcional)</label>
+                                <label for="end_date" class="form-label fw-bold d-flex align-items-center">
+                                    Data Fim (Opcional)
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Data final do backtest. Se vazio, usará os dados mais recentes disponíveis."></i>
+                                </label>
                                 <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $portfolio['end_date']; ?>">
                             </div>
                             <div class="col-md-4">
-                                <label for="rebalance_frequency" class="form-label fw-bold">Rebalanceamento *</label>
+                                <label for="rebalance_frequency" class="form-label fw-bold d-flex align-items-center">
+                                    Rebalanceamento *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Define de quanto em quanto tempo o sistema deve 'forçar' a volta dos ativos ao peso-alvo original."></i>
+                                </label>
                                 <select class="form-select" id="rebalance_frequency" name="rebalance_frequency" required>
                                     <?php
                                     $freqs = ['monthly' => 'Mensal', 'quarterly' => 'Trimestral', 'biannual' => 'Semestral', 'annual' => 'Anual', 'never' => 'Nunca'];
@@ -69,7 +87,10 @@ ob_start();
                             </div>
 
                             <div class="col-md-4 mb-4">
-                                <label for="output_currency" class="form-label fw-bold">Moeda de Exibição *</label>
+                                <label for="output_currency" class="form-label fw-bold d-flex align-items-center">
+                                    Moeda de Exibição *
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="A moeda em que todos os relatórios e gráficos serão apresentados. O sistema faz a conversão automática se houver ativos em moedas diferentes."></i>
+                                </label>
                                 <select class="form-select" id="output_currency" name="output_currency" required>
                                     <option value="BRL" <?php echo $portfolio['output_currency'] == 'BRL' ? 'selected' : ''; ?>>BRL (Real)</option>
                                     <option value="USD" <?php echo $portfolio['output_currency'] == 'USD' ? 'selected' : ''; ?>>USD (Dólar)</option>
@@ -83,7 +104,12 @@ ob_start();
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="simulation_type" class="form-label fw-bold">Tipo de Simulação *</label>
+                                    <label for="simulation_type" class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                        <span>Tipo de Simulação *</span>
+                                        <button type="button" class="btn btn-link p-0 text-decoration-none small" data-bs-toggle="modal" data-bs-target="#simulationHelpModal">
+                                            <i class="bi bi-question-circle me-1"></i>Como escolher?
+                                        </button>
+                                    </label>
                                     <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
                                         <option value="standard" <?= $portfolio['simulation_type'] == 'standard' ? 'selected' : '' ?>>Padrão (sem aportes)</option>
                                         <option value="monthly_deposit" <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'selected' : '' ?>>Com Aportes Periódicos</option>
@@ -114,7 +140,10 @@ ob_start();
                                     <div class="row align-items-end">
                                         <div class="col-md-3">
                                             <div class="mb-3">
-                                                <label for="deposit_amount" class="form-label">Valor do Aporte</label>
+                                                <label for="deposit_amount" class="form-label d-flex align-items-center">
+                                                    Valor do Aporte
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Valor a ser investido periodicamente segundo a frequência escolhida."></i>
+                                                </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text" id="deposit_currency_label"><?= $portfolio['deposit_currency'] ?? 'BRL' ?></span>
                                                     <input type="number" class="form-control" id="deposit_amount" name="deposit_amount"
@@ -125,7 +154,10 @@ ob_start();
                                         </div>
                                         <div class="col-md-3">
                                             <div class="mb-3">
-                                                <label for="deposit_currency" class="form-label">Moeda do Aporte</label>
+                                                <label for="deposit_currency" class="form-label d-flex align-items-center">
+                                                    Moeda do Aporte
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="A moeda original do seu aporte periódico. Se for diferente da moeda de saída, será convertida pelo câmbio do dia."></i>
+                                                </label>
                                                 <select class="form-select" id="deposit_currency" name="deposit_currency" onchange="document.getElementById('deposit_currency_label').innerText = this.value">
                                                     <option value="BRL" <?= ($portfolio['deposit_currency'] ?? 'BRL') == 'BRL' ? 'selected' : '' ?>>BRL (Real)</option>
                                                     <option value="USD" <?= ($portfolio['deposit_currency'] ?? 'BRL') == 'USD' ? 'selected' : '' ?>>USD (Dólar)</option>
@@ -134,7 +166,10 @@ ob_start();
                                         </div>
                                         <div class="col-md-3">
                                             <div class="mb-3">
-                                                <label for="deposit_frequency" class="form-label">Frequência do Aporte</label>
+                                                <label for="deposit_frequency" class="form-label d-flex align-items-center">
+                                                    Frequência do Aporte
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O intervalo regular em que você injeta capital novo na carteira."></i>
+                                                </label>
                                                 <select class="form-select" id="deposit_frequency" name="deposit_frequency">
                                                     <option value="monthly"   <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'monthly'   ? 'selected' : '' ?>>Mensal</option>
                                                     <option value="bimonthly" <?= ($portfolio['deposit_frequency'] ?? 'monthly') == 'bimonthly' ? 'selected' : '' ?>>Bimestral</option>
@@ -146,7 +181,10 @@ ob_start();
                                         </div>
                                         <div class="col-md-3">
                                             <div class="mb-3">
-                                                <label for="rebalance_type" class="form-label">Tipo de Rebalanceamento</label>
+                                                <label for="rebalance_type" class="form-label d-flex align-items-center">
+                                                    Tipo de Rebalanceamento
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="'Apenas Compras' evita vender o que subiu, usando o aporte para comprar apenas o que está abaixo do alvo. 'Completo' vende e compra para manter os pesos exatos."></i>
+                                                </label>
                                                 <select class="form-select" id="rebalance_type" name="rebalance_type">
                                                     <option value="full" <?= ($portfolio['rebalance_type'] ?? 'full') == 'full' ? 'selected' : '' ?>>Completo (Compra e Venda)</option>
                                                     <option value="buy_only" <?= ($portfolio['rebalance_type'] ?? 'full') == 'buy_only' ? 'selected' : '' ?>>Apenas Compras (Sem Vendas)</option>
@@ -157,7 +195,10 @@ ob_start();
                                             <div class="mb-3">
                                                 <div class="form-check form-switch mb-2">
                                                     <input class="form-check-input" type="checkbox" id="deposit_inflation_adjusted" name="deposit_inflation_adjusted" value="1" <?= ($portfolio['deposit_inflation_adjusted'] ?? 0) ? 'checked' : '' ?>>
-                                                    <label class="form-check-label" for="deposit_inflation_adjusted">Corrigir pela Inflação (IPCA)</label>
+                                                    <label class="form-check-label d-flex align-items-center" for="deposit_inflation_adjusted">
+                                                        Corrigir pela Inflação (IPCA)
+                                                        <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Aumenta o valor do seu aporte mensalmente seguindo o IPCA histórico, preservando o valor real investido."></i>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
@@ -165,7 +206,10 @@ ob_start();
                                             <div class="mb-3">
                                                 <div class="form-check form-switch mb-2">
                                                     <input class="form-check-input" type="checkbox" id="use_cash_assets_for_rebalance" name="use_cash_assets_for_rebalance" value="1" <?= ($portfolio['use_cash_assets_for_rebalance'] ?? 0) ? 'checked' : '' ?>>
-                                                    <label class="form-check-label" for="use_cash_assets_for_rebalance">Usar ativos caixa no rebalanceamento</label>
+                                                    <label class="form-check-label d-flex align-items-center" for="use_cash_assets_for_rebalance">
+                                                        Usar ativos caixa no rebalanceamento
+                                                        <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Permite que os ativos 'Caixa SELIC' ou 'Caixa Dólar' sejam usados para comprar outros ativos da carteira durante o rebalanceamento. Esses ativos caixa devem estar definidos e com peso na sua alocação."></i>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
@@ -194,7 +238,10 @@ ob_start();
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="strategic_threshold" class="form-label">Limiar de Queda para Aporte</label>
+                                                <label for="strategic_threshold" class="form-label d-flex align-items-center">
+                                                    Limiar de Queda para Aporte
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Se o portfólio cair este percentual em um único mês, o sistema dispara um aporte extra."></i>
+                                                </label>
                                                 <div class="input-group">
                                                     <input type="number" class="form-control" id="strategic_threshold" name="strategic_threshold"
                                                            value="<?= htmlspecialchars($portfolio['strategic_threshold'] ?? '') ?>"
@@ -206,7 +253,10 @@ ob_start();
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="strategic_deposit_percentage" class="form-label">Percentual do Aporte</label>
+                                                <label for="strategic_deposit_percentage" class="form-label d-flex align-items-center">
+                                                    Percentual do Aporte
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O valor do aporte será calculado como este percentual sobre o patrimônio atual do portfólio no momento da queda."></i>
+                                                </label>
                                                 <div class="input-group">
                                                     <input type="number" class="form-control" id="strategic_deposit_percentage" name="strategic_deposit_percentage"
                                                            value="<?= htmlspecialchars($portfolio['strategic_deposit_percentage'] ?? '') ?>"
@@ -558,6 +608,12 @@ ob_start();
 
         // Inicializa os campos de simulação ao carregar
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa todos os tooltips Bootstrap da página
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(function(el) {
+                new bootstrap.Tooltip(el, { html: true, trigger: 'hover focus' });
+            });
+
             toggleSimulationFields();
         });
 
@@ -565,5 +621,6 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
+include __DIR__ . '/_simulation_help_modal.php';
 include_once __DIR__ . '/../layouts/main.php';
 ?>
