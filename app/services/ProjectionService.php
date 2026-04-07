@@ -75,8 +75,8 @@ class ProjectionService {
                 [
                     'label' => 'Patrimônio Projetado',
                     'data' => $values,
-                    'borderColor' => '#0d6efd',
-                    'backgroundColor' => 'rgba(13, 110, 253, 0.1)',
+                    'borderColor' => '#4a6cf7',
+                    'backgroundColor' => 'rgba(74, 108, 247, 0.1)',
                     'fill' => true,
                     'tension' => 0.4
                 ],

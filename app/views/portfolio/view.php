@@ -354,7 +354,7 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="display-6 fw-bold text-dark lh-1 mb-1">
+                        <div class="display-6 fw-bold lh-1 mb-1" style="color: var(--hero-initial-icon);">
                             <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
                         </div>
                         <div class="text-muted small mt-2">
@@ -475,9 +475,9 @@ $isSelicMonthlyConflict = (
                         'text'  => 'text-success',
                         'tooltip' => 'CAGR (Compound Annual Growth Rate): taxa de crescimento anual composta. Representa o retorno anualizado consistente que teria gerado o mesmo resultado final.'
                 ],
-                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-dark',
+                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-main',
                  'tooltip' => 'Desvio padrão dos retornos mensais. Mede a imprevisibilidade do portfólio: <strong>quanto maior, mais arriscado</strong>. Valores baixos indicam maior estabilidade.'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-dark',
+                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-main',
                  'tooltip' => 'Relação entre retorno e risco. <strong>Acima de 1</strong> = bom; <strong>acima de 2</strong> = excelente. Indica quanto de retorno foi obtido por unidade de risco assumido.'],
                 ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2), 'class' => 'border-success', 'text' => 'text-success',
                  'tooltip' => 'O <strong>maior retorno positivo</strong> registrado em um único mês durante o período simulado. Reflete o melhor cenário mensal da estratégia.'],
@@ -524,7 +524,7 @@ $isSelicMonthlyConflict = (
             'label' => 'BETA DA CARTEIRA',
             'val' => '<span id="betaValue">--</span>',
             'class' => 'border-dark',
-            'text' => 'text-dark',
+            'text'  => 'text-main',
             'tooltip' => 'O <strong>Beta</strong> mede a sensibilidade do portfólio em relação a um benchmark (ex: IBOV). <br><br><strong>Beta > 1:</strong> Mais volátil que o mercado.<br><strong>Beta = 1:</strong> Mesma volatilidade.<br><strong>Beta < 1:</strong> Menos volátil que o mercado.'
         ];
 
@@ -639,7 +639,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0 overflow-hidden">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
                             <i class="bi bi-graph-up-arrow me-1"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)
@@ -661,7 +661,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex align-items-center">
                             <label for="projectionYears" class="me-2 small fw-bold text-muted text-uppercase" style="white-space: nowrap;">Período:</label>
-                            <select id="projectionYears" class="form-select form-select-sm border-0 bg-light-subtle shadow-sm rounded-pill px-3" style="width: 100px;">
+                            <select id="projectionYears" class="form-select form-select-sm border-0 bg-light-subtle text-main shadow-sm rounded-pill px-3" style="width: 100px;">
                                 <option value="5">5 anos</option>
                                 <option value="10" selected>10 anos</option>
                                 <option value="15">15 anos</option>
@@ -678,20 +678,20 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 <div class="card-body bg-light-subtle">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
+                            <div class="p-3 bg-card rounded-4 border shadow-sm h-100">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio Inicial (Simulado)</div>
                                 <div class="input-group input-group-sm mt-2">
-                                    <span class="input-group-text bg-light border-end-0">
+                                    <span class="input-group-text border-0 bg-light-subtle text-muted border-end-0">
                                         <?= $portfolio['output_currency'] === 'BRL' ? 'R$' : '$' ?>
                                     </span>
-                                    <input type="text" class="form-control border-start-0 bg-light fw-bold" id="projectionInitialValue" 
+                                    <input type="text" class="form-control border-0 bg-light-subtle fw-bold text-main border-start-0" id="projectionInitialValue" 
                                            value="<?= number_format($metrics['final_value'], 2, ',', '.') ?>">
                                 </div>
                                 <div class="smaller text-muted mt-1">Valor atual do portfólio</div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
+                            <div class="p-3 bg-card rounded-4 border shadow-sm h-100">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase" id="labelProjectionYears">Patrimônio em 10 anos</div>
                                 <div class="h4 fw-bold mb-0 text-primary mt-2" id="valueProjectionFinal">
                                     <?php 
@@ -702,7 +702,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="p-3 bg-white rounded-4 border shadow-sm h-100">
+                            <div class="p-3 bg-card rounded-4 border shadow-sm h-100">
                                 <div class="text-muted smaller fw-bold mb-1 text-uppercase">Total Investido (Aportes)</div>
                                 <div class="h4 fw-bold mb-0 text-secondary mt-2" id="valueProjectionInvested">
                                     <?php 
@@ -717,7 +717,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         <canvas id="projectionChart"></canvas>
                     </div>
                 </div>
-                <div class="card-footer bg-white border-top-0 py-3">
+                <div class="card-footer border-top-0 py-3">
                     <div class="alert alert-soft-warning border-0 rounded-4 small mb-0 d-flex align-items-start">
                         <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
                         <div>
@@ -735,7 +735,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Performance Real da Estratégia
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -769,7 +769,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Evolução dos Juros
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -793,7 +793,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Histórico de Aportes
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -816,7 +816,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Composição Histórica
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -831,7 +831,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Retorno por Ano
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -846,7 +846,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                         Retorno por Ano Real (Sem Aportes)
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -862,7 +862,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     </div>
 
     <div class="card shadow-sm border-0 mb-5">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                 Auditoria Mensal
                 <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"

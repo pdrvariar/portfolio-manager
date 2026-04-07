@@ -167,7 +167,8 @@ body {
 [data-theme="dark"] .modal-content { background-color: var(--bg-card); color: var(--text-main); }
 [data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer { border-color: var(--border-color); }
 [data-theme="dark"] .modal-footer.bg-light { background-color: var(--bg-body) !important; }
-[data-theme="dark"] .form-select.bg-light { background-color: var(--bg-body) !important; color: var(--text-main); }
+[data-theme="dark"] .form-select.bg-light, [data-theme="dark"] .form-control.bg-light-subtle, [data-theme="dark"] .input-group-text.bg-light-subtle { background-color: var(--bg-body) !important; color: var(--text-main); }
+[data-theme="dark"] .form-select.bg-light-subtle { background-color: var(--bg-body) !important; color: var(--text-main); }
 
 .btn-action-quick { 
     transition: all 0.3s; border: 1px dashed var(--border-color); 
@@ -247,5 +248,5 @@ body {
 }
 
 .bg-light-subtle {
-    background-color: #f8f9fa;
+    background-color: var(--bg-light-subtle) !important;
 }

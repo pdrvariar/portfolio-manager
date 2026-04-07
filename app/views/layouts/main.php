@@ -180,7 +180,57 @@
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateIcon(newTheme);
+
+            // Update Chart.js defaults if present
+            if (typeof Chart !== 'undefined') {
+                updateChartDefaults(newTheme);
+            }
         });
+
+        function updateChartDefaults(theme) {
+            const isDark = theme === 'dark';
+            const color = isDark ? '#e9ecef' : '#212529';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.color = color;
+                if (Chart.defaults.scale && Chart.defaults.scale.grid) {
+                    Chart.defaults.scale.grid.color = gridColor;
+                }
+                
+                // For Chart.js v3+
+                if (Chart.defaults.plugins && Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                    Chart.defaults.plugins.legend.labels.color = color;
+                }
+
+                // Refresh all charts on page
+                Object.values(Chart.instances).forEach(chart => {
+                    // Update scales
+                    if (chart.options.scales) {
+                        Object.values(chart.options.scales).forEach(scale => {
+                            if (scale.ticks) scale.ticks.color = color;
+                            if (scale.grid) scale.grid.color = gridColor;
+                            if (scale.title) scale.title.color = color;
+                        });
+                    }
+                    // Update plugins
+                    if (chart.options.plugins) {
+                        if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                            chart.options.plugins.legend.labels.color = color;
+                        }
+                        if (chart.options.plugins.title) {
+                            chart.options.plugins.title.color = color;
+                        }
+                    }
+                    chart.update();
+                });
+            }
+        }
+
+        // Initialize Chart defaults
+        if (typeof Chart !== 'undefined') {
+            updateChartDefaults(html.getAttribute('data-theme'));
+        }
 
         // 1. Auto-hide toasts após 5 segundos
         var toastElList = [].slice.call(document.querySelectorAll('.toast'))
