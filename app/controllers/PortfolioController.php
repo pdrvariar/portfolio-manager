@@ -42,7 +42,9 @@ class PortfolioController {
                 'deposit_frequency' => $_POST['deposit_frequency'] ?? null,
                 'strategic_threshold' => !empty($_POST['strategic_threshold']) ? $_POST['strategic_threshold'] : null,
                 'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null,
-                'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0
+                'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
+                'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
+                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
             ];
             
             $portfolioId = $this->portfolioModel->create($data);
@@ -344,7 +346,9 @@ class PortfolioController {
                 'deposit_frequency' => $_POST['deposit_frequency'] ?? null,
                 'strategic_threshold' => !empty($_POST['strategic_threshold']) ? $_POST['strategic_threshold'] : null,
                 'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null,
-                'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0
+                'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
+                'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
+                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
             ];
             
             // 1. Atualiza os metadados (Nome, Capital, etc)

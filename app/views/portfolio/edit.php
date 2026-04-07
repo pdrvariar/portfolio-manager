@@ -161,6 +161,14 @@ ob_start();
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="col-md-3" id="use_cash_assets_container" style="display: none;">
+                                            <div class="mb-3">
+                                                <div class="form-check form-switch mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="use_cash_assets_for_rebalance" name="use_cash_assets_for_rebalance" value="1" <?= ($portfolio['use_cash_assets_for_rebalance'] ?? 0) ? 'checked' : '' ?>>
+                                                    <label class="form-check-label" for="use_cash_assets_for_rebalance">Usar ativos caixa no rebalanceamento</label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <!-- Descrição dinâmica por tipo -->
                                     <div id="desc_monthly_deposit" class="alert alert-info py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'block' : 'none' ?>;">
@@ -358,8 +366,11 @@ ob_start();
                 if (!depositAmount.value) {
                     depositAmount.value = '1000.00';
                 }
+
+                toggleUseCashAssetsField();
             } else if (type === 'strategic_deposit') {
                 document.getElementById('strategic_deposit_fields').style.display = 'block';
+                toggleUseCashAssetsField(); // Ensure it's hidden for strategic
                 // Define valores padrão se estiver vazio
                 const threshold = document.getElementById('strategic_threshold');
                 const percentage = document.getElementById('strategic_deposit_percentage');
@@ -369,8 +380,27 @@ ob_start();
                 if (!percentage.value) {
                     percentage.value = '10.0';
                 }
+            } else {
+                toggleUseCashAssetsField(); // Ensure it's hidden for standard
             }
         }
+
+        function toggleUseCashAssetsField() {
+            const type = document.getElementById('simulation_type').value;
+            const rebalanceType = document.getElementById('rebalance_type').value;
+            const container = document.getElementById('use_cash_assets_container');
+            
+            if (container) {
+                if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'buy_only') {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                    document.getElementById('use_cash_assets_for_rebalance').checked = false;
+                }
+            }
+        }
+
+        document.getElementById('rebalance_type').addEventListener('change', toggleUseCashAssetsField);
 
         function addAsset() {
             const select = document.getElementById('assetSelect');

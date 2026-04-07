@@ -24,6 +24,7 @@ ob_start();
                         <th>Nome</th>
                         <th>Moeda</th>
                         <th>Tipo</th>
+                        <th>Caixa?</th>
                         <th>Fonte</th>
                         <th>Registros</th>
                         <th class="text-end pe-3">Ações</th>
@@ -57,6 +58,13 @@ ob_start();
                         <td><span class="badge bg-soft-info text-info"><?php echo $asset['currency']; ?></span></td>
                         <td><?php echo $asset['asset_type']; ?></td>
                         <td>
+                            <?php if ($asset['is_cash']): ?>
+                                <span class="badge bg-success">Sim</span>
+                            <?php else: ?>
+                                <span class="badge bg-light text-muted">Não</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
                             <span class="badge bg-light text-dark border"><?php echo htmlspecialchars($asset['source'] ?? 'Yahoo'); ?></span>
                         </td>
                         <td>
@@ -64,9 +72,18 @@ ob_start();
                         </td>
                         <td class="text-end pe-3">
                             <div class="btn-group shadow-sm">
-                                <a href="/index.php?url=<?php echo obfuscateUrl('assets/view/' . $asset['id']); ?>" class="btn btn-sm btn-white border px-2" title="Visualizar">
-                                    <i class="bi bi-eye text-primary"></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-white border px-2 js-edit-asset" 
+                                        data-id="<?php echo $asset['id']; ?>" 
+                                        data-name="<?php echo htmlspecialchars($asset['name']); ?>"
+                                        data-code="<?php echo htmlspecialchars($asset['code']); ?>"
+                                        data-currency="<?php echo $asset['currency']; ?>"
+                                        data-type="<?php echo $asset['asset_type']; ?>"
+                                        data-source="<?php echo htmlspecialchars($asset['source'] ?? 'Yahoo'); ?>"
+                                        data-ticker="<?php echo htmlspecialchars($asset['yahoo_ticker'] ?? ''); ?>"
+                                        data-iscash="<?php echo $asset['is_cash'] ? '1' : '0'; ?>"
+                                        title="Editar Ativo">
+                                    <i class="bi bi-pencil text-primary"></i>
+                                </button>
                                 <button type="button" class="btn btn-sm btn-white border px-2 js-update-quotes" data-id="<?php echo $asset['id']; ?>" title="Atualizar Cotações">
                                     <i class="bi bi-arrow-clockwise text-success"></i>
                                 </button>
@@ -83,15 +100,110 @@ ob_start();
     </div>
 </div>
 
+<!-- Modal para Edição de Ativo -->
+<div class="modal fade" id="editAssetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Ativo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAssetForm">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="edit-id">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="name" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Moeda</label>
+                            <select name="currency" id="edit-currency" class="form-select">
+                                <option value="BRL">BRL</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select name="asset_type" id="edit-type" class="form-select">
+                                <option value="COTACAO">Cotação (Ações/ETF)</option>
+                                <option value="TAXA_MENSAL">Taxa Mensal (SELIC)</option>
+                                <option value="INFLACAO">Inflação (IPCA)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fonte de Dados</label>
+                        <select name="source" id="edit-source" class="form-select">
+                            <option value="Yahoo">Yahoo Finance</option>
+                            <option value="BCB">Banco Central (SELIC)</option>
+                            <option value="IBGE">IBGE (IPCA)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Yahoo Ticker (se aplicável)</label>
+                        <input type="text" name="yahoo_ticker" id="edit-ticker" class="form-control">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_cash" id="edit-iscash" class="form-check-input" value="1">
+                        <label class="form-check-label" for="edit-iscash">Usar como Caixa (pode ser vendido em rebalanceamento "Apenas Compras")</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 (function(){
     const csrf = '<?php echo $csrfToken; ?>';
-    const url = '/index.php?url=<?php echo obfuscateUrl('admin/assets/update-quotes'); ?>';
+    const updateQuotesUrl = '/index.php?url=<?php echo obfuscateUrl('admin/assets/update-quotes'); ?>';
+    const updateAssetUrl = '/index.php?url=<?php echo obfuscateUrl('assets/update-api'); ?>';
+    
+    // Modal de Edição
+    const editModal = new bootstrap.Modal(document.getElementById('editAssetModal'));
+    const editForm = document.getElementById('editAssetForm');
+
+    document.querySelectorAll('.js-edit-asset').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('edit-id').value = this.dataset.id;
+            document.getElementById('edit-name').value = this.dataset.name;
+            document.getElementById('edit-currency').value = this.dataset.currency;
+            document.getElementById('edit-type').value = this.dataset.type;
+            document.getElementById('edit-source').value = this.dataset.source;
+            document.getElementById('edit-ticker').value = this.dataset.ticker;
+            document.getElementById('edit-iscash').checked = this.dataset.iscash === '1';
+            editModal.show();
+        });
+    });
+
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(updateAssetUrl, {
+            method: 'POST',
+            body: formData
+        }).then(r => r.json()).then(res => {
+            if (res.success) {
+                window.location.reload();
+            } else {
+                alert(res.message || 'Erro ao atualizar ativo');
+            }
+        }).catch(() => alert('Falha na comunicação com o servidor'));
+    });
+
     document.querySelectorAll('.js-update-quotes').forEach(btn => {
         btn.addEventListener('click', function(){
             const id = this.getAttribute('data-id');
             if (!confirm('Atualizar cotações deste ativo?')) return;
-            fetch(url, {
+            fetch(updateQuotesUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}`
@@ -100,7 +212,7 @@ ob_start();
                     const providerStart = res.provider_start || res.yahoo_start;
                     const providerEnd = res.provider_end || res.yahoo_end;
                     if (confirm(`Divergência detectada. Dados disponíveis de ${providerStart} até ${providerEnd}. Deseja atualizar tudo?`)) {
-                        fetch(url, {
+                        fetch(updateQuotesUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}&confirm_full=1`

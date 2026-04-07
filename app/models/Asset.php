@@ -103,8 +103,8 @@ class Asset {
                 $data['code'] = $this->generateAssetCode($data['name']);
             }
             
-            $sql = "INSERT INTO system_assets (code, name, currency, asset_type, is_active) 
-                    VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO system_assets (code, name, currency, asset_type, is_cash, is_active) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
             
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -112,6 +112,7 @@ class Asset {
                 $data['name'],
                 $data['currency'] ?? 'BRL',
                 $data['asset_type'] ?? 'COTACAO',
+                $data['is_cash'] ?? false,
                 $data['is_active'] ?? true
             ]);
             
@@ -132,7 +133,7 @@ class Asset {
     public function update($id, $data) {
         try {
             $sql = "UPDATE system_assets SET 
-                    name = ?, currency = ?, asset_type = ?, source = ?, yahoo_ticker = ?, is_active = ?
+                    name = ?, currency = ?, asset_type = ?, source = ?, yahoo_ticker = ?, is_cash = ?, is_active = ?
                     WHERE id = ?";
             
             $stmt = $this->db->prepare($sql);
@@ -142,6 +143,7 @@ class Asset {
                 $data['asset_type'],
                 $data['source'] ?? 'Yahoo',
                 $data['yahoo_ticker'] ?? null,
+                $data['is_cash'] ?? false,
                 $data['is_active'] ?? true,
                 $id
             ]);

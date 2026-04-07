@@ -79,8 +79,8 @@ class BacktestService {
     }
 
     private function getPortfolioAssetsData($id) {
-        // ADICIONADO sa.asset_type e sa.currency
-        $sql = "SELECT pa.*, sa.name, sa.currency, sa.code, sa.asset_type 
+        // ADICIONADO sa.asset_type, sa.currency e sa.is_cash
+        $sql = "SELECT pa.*, sa.name, sa.currency, sa.code, sa.asset_type, sa.is_cash 
                 FROM portfolio_assets pa 
                 JOIN system_assets sa ON pa.asset_id = sa.id 
                 WHERE pa.portfolio_id = ?";
@@ -162,6 +162,7 @@ class BacktestService {
         $strategicThreshold = (float)($portfolio['strategic_threshold'] ?? 0) / 100;
         $strategicDepositPercent = (float)($portfolio['strategic_deposit_percentage'] ?? 0) / 100;
         $depositInflationAdjusted = (bool)($portfolio['deposit_inflation_adjusted'] ?? false);
+        $useCashAssetsForRebalance = (bool)($portfolio['use_cash_assets_for_rebalance'] ?? false);
 
         // Carrega dados de câmbio
         $fxEndDate = $portfolio['end_date'] ?? date('Y-m-d');
@@ -572,9 +573,45 @@ class BacktestService {
                 if ($rebalanceType === 'buy_only') {
                     // ============================================
                     // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS (BUY ONLY)
-                    // Nunca vende ativos; usa apenas o caixa acumulado/aportado para comprar os mais desviados (abaixo do alvo)
+                    // Nunca vende ativos (exceto ativos caixa, se configurado); 
+                    // Usa apenas o caixa acumulado/aportado para comprar os mais desviados (abaixo do alvo)
                     // ============================================
-                    $availableToInvest = $selicCashInjected; // No buy_only, usamos apenas o caixa que entrou (SELIC)
+                    $availableToInvest = $selicCashInjected; // No buy_only, usamos inicialmente apenas o caixa que entrou (SELIC)
+
+                    // Se configurado para usar ativos marcados como caixa para rebalanceamento
+                    if ($useCashAssetsForRebalance) {
+                        foreach ($assets as $asset) {
+                            if ($asset['is_cash']) {
+                                $assetId = $asset['asset_id'];
+                                $targetPct = (float)$asset['allocation_percentage'] / 100;
+                                $targetValue = $rebalanceBase * $targetPct;
+                                $currentValue = $currentBalances[$assetId];
+
+                                // Se estiver acima do alvo, vende o excesso para usar como caixa
+                                if ($currentValue > $targetValue) {
+                                    $sellAmount = $currentValue - $targetValue;
+                                    $availableToInvest += $sellAmount;
+                                    $currentBalances[$assetId] = $targetValue;
+                                    
+                                    // Atualiza quantidades do ativo caixa vendido
+                                    $price = (float)($monthData[$assetId] ?? 0);
+                                    if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
+                                        $currentQuantities[$assetId] -= ($sellAmount / $price);
+                                    } else {
+                                        $currentQuantities[$assetId] = $currentBalances[$assetId];
+                                    }
+
+                                    // Registra a venda do ativo caixa
+                                    $trades[$assetId] = [
+                                        'pre_value' => $currentValue,
+                                        'post_value' => $currentBalances[$assetId],
+                                        'delta' => -$sellAmount,
+                                        'type' => 'cash_asset_sell_rebalance'
+                                    ];
+                                }
+                            }
+                        }
+                    }
 
                     if ($availableToInvest > 0.001) {
                         // Calcula o desvio de cada ativo em relação ao seu alvo (Percentual Atual vs Percentual Alvo)
@@ -617,8 +654,7 @@ class BacktestService {
                             $currentBalances[$assetId] += $buy;
                             
                             if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
-                                $deltaQty = $buy / $price;
-                                $currentQuantities[$assetId] += $deltaQty;
+                                $currentQuantities[$assetId] += $buy / $price;
                             } else {
                                 $currentQuantities[$assetId] = $currentBalances[$assetId];
                             }
@@ -627,12 +663,17 @@ class BacktestService {
                             $assetQuantities[$assetId] = $currentQuantities[$assetId];
                             
                             // Registra no trades para visibilidade (apesar de ser apenas compra)
-                            $trades[$assetId] = [
-                                'pre_value' => $currentBalances[$assetId] - $buy,
-                                'post_value' => $currentBalances[$assetId],
-                                'delta' => $buy,
-                                'type' => 'buy_only_rebalance'
-                            ];
+                            if (isset($trades[$assetId])) {
+                                $trades[$assetId]['post_value'] = $currentBalances[$assetId];
+                                $trades[$assetId]['delta'] += $buy;
+                            } else {
+                                $trades[$assetId] = [
+                                    'pre_value' => $currentBalances[$assetId] - $buy,
+                                    'post_value' => $currentBalances[$assetId],
+                                    'delta' => $buy,
+                                    'type' => 'buy_only_rebalance'
+                                ];
+                            }
 
                             $remaining -= $buy;
                         }

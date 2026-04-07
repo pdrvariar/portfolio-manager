@@ -148,6 +148,9 @@ ob_start();
                     <?php echo $inflationAdj; ?>
                     — direcionado ao ativo mais abaixo do percentual-alvo.
                     Sobras acumuladas em Caixa SELIC até o próximo rebalanceamento.
+                    <?php if ($portfolio['use_cash_assets_for_rebalance']): ?>
+                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em déficit.
+                    <?php endif; ?>
                 <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
                     <strong>Aporte em Caixa (SELIC):</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
@@ -155,6 +158,9 @@ ob_start();
                     <?php echo $inflationAdj; ?>
                     — acumulado em Caixa SELIC e
                     investido integralmente a cada rebalanceamento.
+                    <?php if ($portfolio['use_cash_assets_for_rebalance']): ?>
+                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em déficit.
+                    <?php endif; ?>
                 <?php endif; ?>
             </p>
         </div>
