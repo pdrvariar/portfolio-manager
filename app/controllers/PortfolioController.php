@@ -44,6 +44,7 @@ class PortfolioController {
                 'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null,
                 'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
+                'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
                 'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
             ];
             
@@ -348,6 +349,7 @@ class PortfolioController {
                 'strategic_deposit_percentage' => !empty($_POST['strategic_deposit_percentage']) ? $_POST['strategic_deposit_percentage'] : null,
                 'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
+                'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
                 'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
             ];
             

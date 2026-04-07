@@ -188,6 +188,7 @@ ob_start();
                                                 <select class="form-select" id="rebalance_type" name="rebalance_type">
                                                     <option value="full" <?= ($portfolio['rebalance_type'] ?? 'full') == 'full' ? 'selected' : '' ?>>Completo (Compra e Venda)</option>
                                                     <option value="buy_only" <?= ($portfolio['rebalance_type'] ?? 'full') == 'buy_only' ? 'selected' : '' ?>>Apenas Compras (Sem Vendas)</option>
+                                                    <option value="with_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'with_margin' ? 'selected' : '' ?>>Com Margens (Venda se superar X%)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -199,6 +200,20 @@ ob_start();
                                                         Corrigir pela Inflação (IPCA)
                                                         <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Aumenta o valor do seu aporte mensalmente seguindo o IPCA histórico, preservando o valor real investido."></i>
                                                     </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3" id="rebalance_margin_container" style="display: <?= ($portfolio['rebalance_type'] ?? '') == 'with_margin' ? 'block' : 'none' ?>;">
+                                            <div class="mb-3">
+                                                <label for="rebalance_margin" class="form-label d-flex align-items-center">
+                                                    Margem de Venda (%)
+                                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="O ativo só será vendido se seu peso atual superar o peso-alvo em mais do que esta porcentagem. Ex: Alvo 40% com margem 20%, só vende se passar de 48% (40 * 1.20)."></i>
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="rebalance_margin" name="rebalance_margin"
+                                                           value="<?= htmlspecialchars($portfolio['rebalance_margin'] ?? '') ?>"
+                                                           step="0.1" min="0" placeholder="Ex: 20.0">
+                                                    <span class="input-group-text">%</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -438,14 +453,26 @@ ob_start();
         function toggleUseCashAssetsField() {
             const type = document.getElementById('simulation_type').value;
             const rebalanceType = document.getElementById('rebalance_type').value;
-            const container = document.getElementById('use_cash_assets_container');
+            const cashContainer = document.getElementById('use_cash_assets_container');
+            const marginContainer = document.getElementById('rebalance_margin_container');
             
-            if (container) {
+            if (cashContainer) {
                 if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'buy_only') {
-                    container.style.display = 'block';
+                    cashContainer.style.display = 'block';
                 } else {
-                    container.style.display = 'none';
+                    cashContainer.style.display = 'none';
                     document.getElementById('use_cash_assets_for_rebalance').checked = false;
+                }
+            }
+
+            if (marginContainer) {
+                if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'with_margin') {
+                    marginContainer.style.display = 'block';
+                    if (!document.getElementById('rebalance_margin').value) {
+                        document.getElementById('rebalance_margin').value = '20.0';
+                    }
+                } else {
+                    marginContainer.style.display = 'none';
                 }
             }
         }
