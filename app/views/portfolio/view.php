@@ -909,6 +909,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
                             $dateLabel = date('m/Y', strtotime($date));
                             $assetValuesJson = htmlspecialchars(json_encode($data['asset_values']), ENT_QUOTES, 'UTF-8');
+                            $assetValuesBeforeJson = htmlspecialchars(json_encode($data['asset_values_before'] ?? $data['asset_values']), ENT_QUOTES, 'UTF-8');
                             $tradesJson = htmlspecialchars(json_encode($data['trades'] ?? []), ENT_QUOTES, 'UTF-8');
                             $depositInfoJson = htmlspecialchars(json_encode(['amount' => $depositMade, 'type' => $depositType]), ENT_QUOTES, 'UTF-8');
                             $selicCashValue    = $data['selic_cash'] ?? 0;
@@ -975,7 +976,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                 <?php endif; ?>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-sm btn-link text-decoration-none"
-                                            onclick='openDetailsModal("<?= $dateLabel ?>", <?= $assetValuesJson ?>, <?= $currentValue ?>, <?= $tradesJson ?>, <?= $depositInfoJson ?>, <?= $selicCashInfoJson ?>)'>
+                                            onclick='openDetailsModal("<?= $dateLabel ?>", <?= $assetValuesJson ?>, <?= $currentValue ?>, <?= $tradesJson ?>, <?= $depositInfoJson ?>, <?= $selicCashInfoJson ?>, <?= $assetValuesBeforeJson ?>)'>
                                         Ver Ativos <i class="bi bi-chevron-right ms-1"></i>
                                     </button>
                                 </td>
@@ -1414,7 +1415,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <?php endif; ?>
 
         // Funções do Modal, Busca e CSV
-        function openDetailsModal(dateLabel, assetValues, totalValue, trades, depositInfo) {
+        function openDetailsModal(dateLabel, assetValues, totalValue, trades, depositInfo, selicCashInfo, assetValuesBefore) {
             document.getElementById('modalDate').innerText = dateLabel;
             const body = document.getElementById('modalAssetsBody');
             body.innerHTML = '';
@@ -1422,6 +1423,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             const isRebalanceMonth = Object.keys(trades).length > 0;
             const hasDeposit = depositInfo && depositInfo.amount > 0;
             let totalAssetsValue = 0;
+
+            // Calcula o total antes do rebalanceamento para os percentuais
+            let totalValueBefore = 0;
+            if (assetValuesBefore) {
+                totalValueBefore = Object.values(assetValuesBefore).reduce((a, b) => a + b, 0);
+            }
 
             // Configura seção de aportes
             const depositSection = document.getElementById('modalDepositSection');
@@ -1458,21 +1465,30 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
                 totalAssetsValue += finalVal;
 
-                let rebalanceInfo = '';
+                let allocationBeforeInfo = '';
+                let rebalanceInfoText = '';
+
+                if (assetValuesBefore) {
+                    const valBefore = (assetValuesBefore && assetValuesBefore[id]) ? assetValuesBefore[id] : value;
+                    const allocBefore = totalValueBefore > 0 ? (valBefore / totalValueBefore) * 100 : 0;
+                    allocationBeforeInfo = `<div class="text-muted" style="font-size: 0.75rem; color: var(--text-muted) !important;">Alocação Anterior: ${allocBefore.toFixed(2)}%</div>`;
+                }
+
                 if (isRebalanceMonth && trades[id]) {
                     const delta = trades[id].delta;
                     const sign = delta >= 0 ? '+' : '';
-                    rebalanceInfo = `<div class="text-muted small" style="color: var(--text-muted) !important;">Ajuste: ${sign}${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
+                    rebalanceInfoText = `<div class="text-muted small" style="color: var(--text-muted) !important;">Ajuste: ${sign}${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(delta)}</div>`;
                 }
 
                 body.innerHTML += `<tr>
                 <td class="ps-4" style="border-bottom-color: var(--border-color) !important;">
                     <div class="fw-bold text-main" style="color: var(--text-main) !important;">${name}</div>
                     <div class="text-muted smaller" style="color: var(--text-muted) !important;">Meta: ${target.toFixed(2)}%</div>
-                    ${rebalanceInfo}
+                    ${rebalanceInfoText}
                 </td>
                 <td class="text-end align-middle" style="border-bottom-color: var(--border-color) !important;">
                     <div class="fw-bold text-primary" style="color: var(--primary) !important;">${allocationPercent.toFixed(2)}%</div>
+                    ${allocationBeforeInfo}
                 </td>
                 <td class="text-end pe-4 align-middle" style="border-bottom-color: var(--border-color) !important;">
                     <strong class="text-main" style="color: var(--text-main) !important;">${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(finalVal)}</strong>

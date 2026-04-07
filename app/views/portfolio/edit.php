@@ -461,15 +461,17 @@ ob_start();
                     cashContainer.style.display = 'block';
                 } else {
                     cashContainer.style.display = 'none';
-                    document.getElementById('use_cash_assets_for_rebalance').checked = false;
+                    if (document.getElementById('use_cash_assets_for_rebalance')) {
+                        document.getElementById('use_cash_assets_for_rebalance').checked = false;
+                    }
                 }
             }
 
             if (marginContainer) {
-                if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'with_margin') {
+                if (rebalanceType === 'with_margin') {
                     marginContainer.style.display = 'block';
                     if (!document.getElementById('rebalance_margin').value) {
-                        document.getElementById('rebalance_margin').value = '20.0';
+                        document.getElementById('rebalance_margin').value = '10.0';
                     }
                 } else {
                     marginContainer.style.display = 'none';
