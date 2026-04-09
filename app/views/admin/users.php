@@ -12,7 +12,7 @@ ob_start();
 <div class="card shadow-sm border-0 rounded-3">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table id="adminUsersTable" class="table table-hover align-middle mb-0 table-rounded">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">ID</th>
@@ -46,8 +46,8 @@ ob_start();
                         <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                         <td class="text-end pe-3">
                             <div class="btn-group">
-                                <a href="/index.php?url=<?php echo obfuscateUrl('admin/users/edit/' . $user['id']); ?>" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                <button class="btn btn-sm btn-outline-danger" title="Excluir" disabled><i class="bi bi-trash"></i></button>
+                                <a href="/index.php?url=<?php echo obfuscateUrl('admin/users/edit/' . $user['id']); ?>" class="btn btn-sm btn-white border" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <button class="btn btn-sm btn-white border text-danger" title="Excluir" disabled><i class="bi bi-trash"></i></button>
                             </div>
                         </td>
                     </tr>

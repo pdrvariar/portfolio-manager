@@ -194,11 +194,14 @@
 
             if (typeof Chart !== 'undefined') {
                 Chart.defaults.color = color;
-                if (Chart.defaults.scale && Chart.defaults.scale.grid) {
-                    Chart.defaults.scale.grid.color = gridColor;
+                
+                // Configuração global para escalas (v3+)
+                if (Chart.defaults.scale) {
+                    if (Chart.defaults.scale.grid) Chart.defaults.scale.grid.color = gridColor;
+                    if (Chart.defaults.scale.ticks) Chart.defaults.scale.ticks.color = color;
                 }
                 
-                // For Chart.js v3+
+                // For Chart.js v3+ plugins
                 if (Chart.defaults.plugins && Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
                     Chart.defaults.plugins.legend.labels.color = color;
                 }
@@ -207,7 +210,8 @@
                 Object.values(Chart.instances).forEach(chart => {
                     // Update scales
                     if (chart.options.scales) {
-                        Object.values(chart.options.scales).forEach(scale => {
+                        Object.keys(chart.options.scales).forEach(key => {
+                            const scale = chart.options.scales[key];
                             if (scale.ticks) scale.ticks.color = color;
                             if (scale.grid) scale.grid.color = gridColor;
                             if (scale.title) scale.title.color = color;

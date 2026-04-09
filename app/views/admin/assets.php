@@ -16,7 +16,7 @@ ob_start();
 <div class="card shadow-sm border-0 rounded-3">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table id="adminAssetsTable" class="table table-hover align-middle mb-0 table-rounded">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">ID</th>
