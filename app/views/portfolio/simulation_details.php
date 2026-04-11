@@ -275,6 +275,61 @@ function fmtCur(value) {
     }).format(value);
 }
 
+/* ── Pré-cálculo do Custo Médio de Aquisição (Base Total) ───────────────
+ * O Custo de Aquisição não altera com a valorização.
+ * Na compra, soma-se o valor. Na venda, abate-se proporcionalmente.
+ * ─────────────────────────────────────────────────────────────────────── */
+(function preCalculateAcquisitionCosts() {
+    const log = window.simulationAuditLog;
+    if (!log) return;
+
+    // Extrai as datas ordenadas cronologicamente
+    const dates = Object.keys(log).filter(k => k !== '_metadata').sort();
+    const currentCosts = {};
+
+    dates.forEach(date => {
+        const data = log[date];
+        const assetsBefore = data.asset_values_before || {};
+        const trades = data.trades || {};
+        const assets = data.asset_values || {};
+
+        for (const id in assets) {
+            if (currentCosts[id] === undefined) currentCosts[id] = 0;
+
+            const trade = trades[id];
+            if (trade && trade.delta !== undefined) {
+                const delta = parseFloat(trade.delta);
+                if (delta > 0) {
+                    // COMPRA: Aumenta o custo base investido
+                    currentCosts[id] += delta;
+                } else if (delta < 0) {
+                    // VENDA: Reduz o custo proporcionalmente (Efeito do Custo Médio)
+                    const valBefore = parseFloat(assetsBefore[id] || (assets[id] - delta));
+                    if (valBefore > 0) {
+                        const proportionSold = Math.abs(delta) / valBefore;
+                        currentCosts[id] -= (currentCosts[id] * proportionSold);
+                    } else {
+                        currentCosts[id] = 0;
+                    }
+                }
+            } else if (currentCosts[id] === 0 && (assetsBefore[id] === undefined || assetsBefore[id] === 0)) {
+                // Mês 1 / Início: O valor do ativo é o próprio custo inicial
+                currentCosts[id] = parseFloat(assets[id] || 0);
+            }
+        }
+
+        // Injeta o custo calculado no log deste mês para a tabela renderizar
+        data.asset_costs = {};
+        for (const id in currentCosts) {
+            if (assets[id] > 0.01) {
+                data.asset_costs[id] = currentCosts[id];
+            } else {
+                currentCosts[id] = 0; // Zera custo se a posição for liquidada
+            }
+        }
+    });
+})();
+
 /* ── Monta o HTML da linha expandida ─────────────────────────────────────── */
 function buildChildRow(dateKey) {
     const log = window.simulationAuditLog;
@@ -286,6 +341,7 @@ function buildChildRow(dateKey) {
     const assets       = data.asset_values         || {};
     const trades       = data.trades               || {};
     const assetsBefore = data.asset_values_before  || assets;
+    const costs        = data.asset_costs          || {};
     const total        = data.total_value          || 1;
     const deposit      = data.deposit_made         || 0;
     const depositType  = data.deposit_type         || 'none';
@@ -321,13 +377,16 @@ function buildChildRow(dateKey) {
     html += `
     <div class="asset-table-container shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover table-borderless align-middle mb-0 w-100">
+            <table class="table table-sm table-hover table-borderless align-middle mb-0 w-100" style="font-size: 0.85rem;">
                 <thead>
                     <tr>
                         <th class="ps-3 py-2 text-muted fw-semibold">Ativo</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Custo Base Total">Custo Total</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Custo Médio Unitário">Preço Médio</th>
                         <th class="text-end py-2 text-muted fw-semibold">Valor Final</th>
-                        <th class="text-center py-2 text-muted fw-semibold">Aloc. Anterior</th>
-                        <th class="text-center py-2 text-muted fw-semibold">Aloc. Atual</th>
+                        <th class="text-end py-2 text-muted fw-semibold">Resultado</th>
+                        <th class="text-center py-2 text-muted fw-semibold" title="Alocação Anterior">Aloc. Ant.</th>
+                        <th class="text-center py-2 text-muted fw-semibold" title="Alocação Atual">Aloc. Atual</th>
                         <th class="text-center py-2 text-muted fw-semibold">Meta</th>
                         <th class="text-center py-2 text-muted fw-semibold">Desvio</th>
                         <th class="text-end pe-3 py-2 text-muted fw-semibold">Ajuste Rebal.</th>
@@ -342,7 +401,30 @@ function buildChildRow(dateKey) {
         const target = parseFloat(assetTargets[id]) || 0;
         const trade  = trades[id]       || null;
 
-        const finalVal    = trade ? trade.post_value : rawVal;
+        // Se o backend ainda não retornou 'costs', fazemos fallback para o valor bruto
+        const cost        = costs[id] !== undefined ? costs[id] : rawVal;
+        // rawVal é o valor do ativo no fim do mês, refletindo a valorização correta.
+        const finalVal    = rawVal;
+        const profit      = finalVal - cost;
+        const profitColor = Math.abs(profit) < 0.01 ? 'text-muted' : (profit > 0 ? 'text-success' : 'text-danger');
+        const profitSign  = profit > 0 ? '+' : '';
+
+        // Tenta descobrir a quantidade para exibir o Preço Médio (Custo Unitário)
+        const prices     = data.asset_prices     || {};
+        const quantities = data.asset_quantities || {};
+        let qty = 0;
+        if (quantities[id] !== undefined) {
+            qty = parseFloat(quantities[id]);
+        } else if (prices[id] !== undefined && parseFloat(prices[id]) > 0) {
+            qty = finalVal / parseFloat(prices[id]);
+        }
+        
+        let unitCostHtml = '<span class="text-muted smaller" title="Requer quantidade ou preço no backend">—</span>';
+        if (qty > 0) {
+            const unitCost = cost / qty;
+            unitCostHtml = fmtCur(unitCost);
+        }
+
         const allocPct    = total > 0      ? (finalVal / total) * 100      : 0;
         const prevVal     = assetsBefore[id] !== undefined ? assetsBefore[id] : rawVal;
         const allocBefore = totalBefore > 0 ? (prevVal  / totalBefore) * 100 : 0;
@@ -363,12 +445,15 @@ function buildChildRow(dateKey) {
         html += `
             <tr>
                 <td class="ps-3 py-2 fw-medium text-dark">${name}</td>
+                <td class="text-end py-2 text-muted">${fmtCur(cost)}</td>
+                <td class="text-end py-2 text-muted fw-medium">${unitCostHtml}</td>
                 <td class="text-end py-2 fw-semibold">${fmtCur(finalVal)}</td>
-                <td class="text-center py-2 small text-muted">${allocBefore.toFixed(2)}%</td>
+                <td class="text-end py-2 fw-semibold ${profitColor}">${profitSign}${fmtCur(profit)}</td>
+                <td class="text-center py-2 text-muted">${allocBefore.toFixed(2)}%</td>
                 <td class="text-center py-2">
-                    <span class="badge bg-primary bg-opacity-10 text-primary px-2">${allocPct.toFixed(2)}%</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-1">${allocPct.toFixed(2)}%</span>
                 </td>
-                <td class="text-center py-2 small text-muted">${target.toFixed(2)}%</td>
+                <td class="text-center py-2 text-muted">${target.toFixed(2)}%</td>
                 <td class="text-center py-2 fw-medium ${devColor}">
                     ${deviation > 0 ? '+' : ''}${deviation.toFixed(2)}%
                 </td>
