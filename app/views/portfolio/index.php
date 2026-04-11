@@ -64,7 +64,8 @@ ob_start();
                         </td>
                         <td class="text-end pe-3">
                             <div class="btn-group shadow-sm">
-                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Visualizar"><i class="bi bi-graph-up text-primary"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Resultados"><i class="bi bi-graph-up text-primary"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Detalhes da Simulação"><i class="bi bi-list-check text-info"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
                                 

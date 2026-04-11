@@ -365,6 +365,45 @@ class PortfolioController {
         }
     }
 
+    public function simulationDetails() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+
+        if (!$id) {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $portfolio = $this->portfolioModel->findById($id);
+        if (!$portfolio) {
+            Session::setFlash('error', 'Portfólio não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $assets = $this->portfolioModel->getPortfolioAssets($id);
+        $simulationModel = new SimulationResult();
+        $latest = $simulationModel->getLatest($id);
+
+        if (!$latest) {
+            Session::setFlash('warning', 'Nenhuma simulação encontrada para este portfólio. Execute uma simulação primeiro.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+            exit;
+        }
+
+        $chartData = json_decode($latest['chart_data'], true);
+        
+        // Mapeamento de IDs para nomes de ativos para uso na view (JSON)
+        $assetNames = [];
+        $assetTargets = [];
+        foreach ($assets as $asset) {
+            $assetNames[$asset['asset_id']] = $asset['name'];
+            $assetTargets[$asset['asset_id']] = $asset['allocation_percentage'];
+        }
+
+        require_once __DIR__ . '/../views/portfolio/simulation_details.php';
+    }
+
     public function apiProjection() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
