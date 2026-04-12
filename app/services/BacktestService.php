@@ -649,16 +649,16 @@ class BacktestService {
             $assetValuesBefore = [];
             foreach ($assets as $asset) {
                 $assetId = $asset['asset_id'];
-                // Se for o primeiro mês, o valor 'before' é o aporte inicial proporcional
+                // Se for o primeiro mês, o valor 'before' é o aporte inicial proporcional valorizado
                 if ($index === 0) {
-                    $assetValuesBefore[$assetId] = $initialCapital * ($asset['allocation_percentage'] / 100);
+                    $assetValuesBefore[$assetId] = $currentBalances[$assetId];
                 } else {
                     // Para meses subsequentes, pegamos o saldo final do mês anterior (após qualquer rebalanceamento anterior)
                     $assetValuesBefore[$assetId] = $results[$prevDateForStrategy]['asset_values'][$assetId] ?? $currentBalances[$assetId];
                 }
             }
 
-            if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
+            if ($rebalanceFreq > 0 && $index % $rebalanceFreq == 0) {
                 $wasRebalanced = true;
 
                 // Para tipos com caixa SELIC: inclui o caixa no total do rebalanceamento e o zera
