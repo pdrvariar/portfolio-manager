@@ -170,6 +170,7 @@ private $assetModel;
                 'name' => sanitize($_POST['name']),
                 'currency' => sanitize($_POST['currency']),
                 'asset_type' => sanitize($_POST['asset_type']),
+                'tax_group' => sanitize($_POST['tax_group'] ?? 'RENDA_FIXA'),
                 'source' => sanitize($_POST['source'] ?? 'Yahoo'),
                 'yahoo_ticker' => sanitize($_POST['yahoo_ticker'] ?? ''),
                 'is_cash' => isset($_POST['is_cash']) ? 1 : 0,

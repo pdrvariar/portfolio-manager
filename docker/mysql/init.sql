@@ -28,6 +28,7 @@ CREATE TABLE system_assets (
     name VARCHAR(100) NOT NULL,
     currency VARCHAR(3) NOT NULL, 
     asset_type VARCHAR(20) NOT NULL, 
+    tax_group ENUM('RENDA_FIXA', 'ETF_BR', 'CRIPTOMOEDA', 'FUNDO_IMOBILIARIO', 'ETF_US', 'NAO_APLICAVEL') DEFAULT 'RENDA_FIXA',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -104,15 +105,15 @@ CREATE TABLE simulation_asset_details (
 INSERT INTO users (username, full_name, email, password, is_admin, status) 
 VALUES ('admin', 'Administrador do Sistema', 'admin@portfolio.com', '$2y$10$WAogU2u/zEPt4IAfozFKGOvSIxMMd3vBQPz2NCI6Ehf6Q8AGPPFxa', TRUE, 'active');
 
-INSERT INTO system_assets (code, name, currency, asset_type, source) VALUES
-('BTC-USD', 'Bitcoin', 'USD', 'COTACAO', 'Yahoo'),
-('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO', 'Yahoo'),
-('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO', 'Yahoo'),
-('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL', 'SELIC'),
-('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL', 'SELIC'),
-('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO', 'Yahoo'),
-('SP500', 'S&P 500', 'USD', 'COTACAO', 'Yahoo'),
-('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO', 'Yahoo');
+INSERT INTO system_assets (code, name, currency, asset_type, source, tax_group) VALUES
+('BTC-USD', 'Bitcoin', 'USD', 'COTACAO', 'Yahoo', 'CRIPTOMOEDA'),
+('BVSP-IBOVESPA', 'Ibovespa', 'BRL', 'COTACAO', 'Yahoo', 'ETF_BR'),
+('IFIX', 'Índice de Fundos Imobiliários', 'BRL', 'COTACAO', 'Yahoo', 'FUNDO_IMOBILIARIO'),
+('SELIC', 'Taxa Selic', 'BRL', 'TAXA_MENSAL', 'SELIC', 'RENDA_FIXA'),
+('IRX-RF-USA', 'Tesouro EUA Curto Prazo', 'USD', 'TAXA_MENSAL', 'SELIC', 'RENDA_FIXA'),
+('USD-BRL', 'Dólar Americano', 'BRL', 'CAMBIO', 'Yahoo', 'RENDA_FIXA'),
+('SP500', 'S&P 500', 'USD', 'COTACAO', 'Yahoo', 'ETF_US'),
+('XAU-OURO', 'Ouro (Gold)', 'USD', 'COTACAO', 'Yahoo', 'CRIPTOMOEDA');
 
 ALTER TABLE portfolios
     ADD COLUMN simulation_type ENUM('standard', 'monthly_deposit', 'strategic_deposit') DEFAULT 'standard',

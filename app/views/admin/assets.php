@@ -24,6 +24,7 @@ ob_start();
                         <th>Nome</th>
                         <th>Moeda</th>
                         <th>Tipo</th>
+                        <th>Grupo IR</th>
                         <th>Caixa?</th>
                         <th>Fonte</th>
                         <th>Registros</th>
@@ -58,6 +59,9 @@ ob_start();
                         <td><span class="badge bg-soft-info text-info"><?php echo $asset['currency']; ?></span></td>
                         <td><?php echo $asset['asset_type']; ?></td>
                         <td>
+                            <span class="badge bg-light text-dark border small"><?php echo $asset['tax_group'] ?? 'RENDA_FIXA'; ?></span>
+                        </td>
+                        <td>
                             <?php if ($asset['is_cash']): ?>
                                 <span class="badge bg-success">Sim</span>
                             <?php else: ?>
@@ -78,6 +82,7 @@ ob_start();
                                         data-code="<?php echo htmlspecialchars($asset['code']); ?>"
                                         data-currency="<?php echo $asset['currency']; ?>"
                                         data-type="<?php echo $asset['asset_type']; ?>"
+                                        data-taxgroup="<?php echo $asset['tax_group'] ?? 'RENDA_FIXA'; ?>"
                                         data-source="<?php echo htmlspecialchars($asset['source'] ?? 'Yahoo'); ?>"
                                         data-ticker="<?php echo htmlspecialchars($asset['yahoo_ticker'] ?? ''); ?>"
                                         data-iscash="<?php echo $asset['is_cash'] ? '1' : '0'; ?>"
@@ -101,18 +106,23 @@ ob_start();
 </div>
 
 <!-- Modal para Edição de Ativo -->
-<div class="modal fade" id="editAssetModal" tabindex="-1">
+<div class="modal fade" id="editAssetModal" tabindex="-1" aria-labelledby="editAssetModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Editar Ativo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="editAssetModalLabel">Editar Ativo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="editAssetForm">
                 <div class="modal-body">
                     <input type="hidden" name="id" id="edit-id">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
                     
+                    <div class="mb-3">
+                        <label class="form-label">Código do Ativo</label>
+                        <input type="text" id="edit-code" class="form-control" readonly disabled>
+                        <small class="text-muted">O código não pode ser alterado por segurança.</small>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Nome</label>
                         <input type="text" name="name" id="edit-name" class="form-control" required>
@@ -133,6 +143,17 @@ ob_start();
                                 <option value="INFLACAO">Inflação (IPCA)</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Grupo Imposto de Renda</label>
+                        <select name="tax_group" id="edit-taxgroup" class="form-select">
+                            <option value="RENDA_FIXA">Renda Fixa</option>
+                            <option value="ETF_BR">ETF Brasil</option>
+                            <option value="CRIPTOMOEDA">Criptomoeda</option>
+                            <option value="FUNDO_IMOBILIARIO">Fundo Imobiliário (FII)</option>
+                            <option value="ETF_US">ETF EUA</option>
+                            <option value="NAO_APLICAVEL">Não Aplicável</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Fonte de Dados</label>
@@ -160,52 +181,71 @@ ob_start();
     </div>
 </div>
 
+<?php
+$content = ob_get_clean();
+$additional_js = '
 <script>
 (function(){
-    const csrf = '<?php echo $csrfToken; ?>';
-    const updateQuotesUrl = '/index.php?url=<?php echo obfuscateUrl('admin/assets/update-quotes'); ?>';
-    const updateAssetUrl = '/index.php?url=<?php echo obfuscateUrl('assets/update-api'); ?>';
+    const csrf = \'' . $csrfToken . '\';
+    const updateQuotesUrl = \'/index.php?url=' . obfuscateUrl('admin/assets/update-quotes') . '\';
+    const updateAssetUrl = \'/index.php?url=' . obfuscateUrl('api/assets/update') . '\';
     
     // Modal de Edição
-    const editModal = new bootstrap.Modal(document.getElementById('editAssetModal'));
-    const editForm = document.getElementById('editAssetForm');
+    const editModal = new bootstrap.Modal(document.getElementById(\'editAssetModal\'));
+    const editForm = document.getElementById(\'editAssetForm\');
 
-    document.querySelectorAll('.js-edit-asset').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.getElementById('edit-id').value = this.dataset.id;
-            document.getElementById('edit-name').value = this.dataset.name;
-            document.getElementById('edit-currency').value = this.dataset.currency;
-            document.getElementById('edit-type').value = this.dataset.type;
-            document.getElementById('edit-source').value = this.dataset.source;
-            document.getElementById('edit-ticker').value = this.dataset.ticker;
-            document.getElementById('edit-iscash').checked = this.dataset.iscash === '1';
+    document.querySelectorAll(\'.js-edit-asset\').forEach(btn => {
+        btn.addEventListener(\'click\', function() {
+            document.getElementById(\'edit-id\').value = this.dataset.id;
+            document.getElementById(\'edit-code\').value = this.dataset.code;
+            document.getElementById(\'edit-name\').value = this.dataset.name;
+            document.getElementById(\'edit-currency\').value = this.dataset.currency;
+            document.getElementById(\'edit-type\').value = this.dataset.type;
+            document.getElementById(\'edit-taxgroup\').value = this.dataset.taxgroup;
+            document.getElementById(\'edit-source\').value = this.dataset.source;
+            document.getElementById(\'edit-ticker\').value = this.dataset.ticker;
+            document.getElementById(\'edit-iscash\').checked = this.dataset.iscash === \'1\';
             editModal.show();
         });
     });
 
-    editForm.addEventListener('submit', function(e) {
+    editForm.addEventListener(\'submit\', function(e) {
         e.preventDefault();
+        const submitBtn = this.querySelector(\'button[type="submit"]\');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = \'<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...\';
+        
         const formData = new FormData(this);
         
         fetch(updateAssetUrl, {
-            method: 'POST',
+            method: \'POST\',
             body: formData
         }).then(r => r.json()).then(res => {
             if (res.success) {
+                editModal.hide();
                 window.location.reload();
             } else {
-                alert(res.message || 'Erro ao atualizar ativo');
+                alert(res.message || \'Erro ao atualizar ativo\');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
-        }).catch(() => alert('Falha na comunicação com o servidor'));
+        }).catch(err => {
+            console.error(\'Erro:\', err);
+            alert(\'Falha na comunicação com o servidor\');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
     });
 
-    document.querySelectorAll('.js-update-quotes').forEach(btn => {
-        btn.addEventListener('click', function(){
-            const id = this.getAttribute('data-id');
-            if (!confirm('Atualizar cotações deste ativo?')) return;
+    document.querySelectorAll(\'.js-update-quotes\').forEach(btn => {
+        btn.addEventListener(\'click\', function(){
+            const id = this.getAttribute(\'data-id\');
+            if (!confirm(\'Atualizar cotações deste ativo?\')) return;
             fetch(updateQuotesUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                method: \'POST\',
+                headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
                 body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}`
             }).then(r => r.json()).then(res => {
                 if (res && res.requires_full_refresh) {
@@ -213,25 +253,23 @@ ob_start();
                     const providerEnd = res.provider_end || res.yahoo_end;
                     if (confirm(`Divergência detectada. Dados disponíveis de ${providerStart} até ${providerEnd}. Deseja atualizar tudo?`)) {
                         fetch(updateQuotesUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            method: \'POST\',
+                            headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
                             body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}&confirm_full=1`
                         }).then(r2 => r2.json()).then(res2 => {
-                            alert(res2.message || 'Operação concluída.');
+                            alert(res2.message || \'Operação concluída.\');
                             window.location.reload();
-                        }).catch(() => alert('Falha ao confirmar atualização completa.'));
+                        }).catch(() => alert(\'Falha ao confirmar atualização completa.\'));
                     }
                 } else {
-                    alert((res && res.message) ? res.message : 'Operação concluída.');
+                    alert((res && res.message) ? res.message : \'Operação concluída.\');
                     window.location.reload();
                 }
-            }).catch(() => alert('Falha ao atualizar cotações.'));
+            }).catch(() => alert(\'Falha ao atualizar cotações.\'));
         });
     });
 })();
 </script>
-
-<?php
-$content = ob_get_clean();
+';
 include_once __DIR__ . '/../layouts/main.php';
 ?>
