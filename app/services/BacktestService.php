@@ -228,13 +228,54 @@ class BacktestService {
 
         if ($isFirstDateBeforeStart) {
             $lastFxRate = $fxData[$firstAvailableDate] ?? null;
+
+            // ADICIONADO: Ponto zero (investimento inicial)
+            $initialAssetPrices = [];
+            $initialAssetRawPrices = [];
+            foreach ($assets as $asset) {
+                $assetId = $asset['asset_id'];
+                $rawPrice = (float)($historicalData[$firstAvailableDate][$assetId] ?? 0);
+                $initialAssetRawPrices[$assetId] = $rawPrice;
+
+                $convertedPrice = $rawPrice;
+                if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $lastFxRate > 0) {
+                    $convertedPrice = $rawPrice * $lastFxRate;
+                } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $lastFxRate > 0) {
+                    $convertedPrice = $rawPrice / $lastFxRate;
+                }
+                $initialAssetPrices[$assetId] = $convertedPrice;
+            }
+
+            $results[$firstAvailableDate] = [
+                'total_value' => $initialCapital,
+                'total_before_deposit' => $initialCapital,
+                'asset_values' => $currentBalances,
+                'asset_values_before' => $currentBalances,
+                'asset_prices' => $initialAssetPrices,
+                'asset_raw_prices' => $initialAssetRawPrices,
+                'asset_quantities' => $currentQuantities,
+                'rebalanced' => false,
+                'trades' => [],
+                'deposit_made' => 0,
+                'deposit_type' => 'initial',
+                'deposit_details' => [],
+                'total_deposits_to_date' => 0,
+                'fx_rate' => $lastFxRate,
+                'strategy_value' => $initialCapital,
+                'strategy_variation' => 0,
+                'selic_cash' => 0,
+                'selic_cash_earnings' => 0,
+                'selic_cash_injected' => 0,
+                'is_initial_point' => true
+            ];
+
             // Removemos a data base da lista de iteração da simulação e re-indexamos
             // para que $index comece em 0, garantindo que a lógica de rebalanceamento
             // e de variação da estratégia funcione corretamente.
             array_shift($dates);
         }
 
-        $prevDateForStrategy = null; // rastreia a data anterior sem depender de índice numérico
+        $prevDateForStrategy = $isFirstDateBeforeStart ? $firstAvailableDate : null;
         $adjustedDepositAmount = $depositAmount;
         $accumulatedIpca = 1.0;
 

@@ -68,20 +68,30 @@ ob_start();
                 ksort($auditLog);
 
                 foreach ($auditLog as $date => $data):
+                    $isInitialPoint = $data['is_initial_point'] ?? false;
                     $currentValue       = $data['total_value'];
                     $totalBeforeDeposit = $data['total_before_deposit'] ?? $currentValue;
-                    $variation          = $prevValue > 0
-                        ? (($totalBeforeDeposit / $prevValue) - 1) * 100
-                        : 0;
+                    
+                    if ($isInitialPoint) {
+                        $variation = 0;
+                    } else {
+                        $variation = $prevValue > 0
+                            ? (($totalBeforeDeposit / $prevValue) - 1) * 100
+                            : 0;
+                    }
+
                     $rebalanced  = $data['rebalanced'] ?? false;
                     $depositMade = $data['deposit_made'] ?? 0;
                     $dateLabel   = date('m/Y', strtotime($date));
                 ?>
-                <tr data-date="<?= htmlspecialchars($date) ?>">
+                <tr data-date="<?= htmlspecialchars($date) ?>" class="<?= $isInitialPoint ? 'tr-initial-point' : '' ?>">
 
                     <!-- Mês/Ano — data-order usa ISO para ordenação cronológica correta -->
                     <td data-order="<?= $date ?>">
                         <span class="fw-bold"><?= $dateLabel ?></span>
+                        <?php if ($isInitialPoint): ?>
+                            <br><span class="badge-initial-capital">Capital Inicial</span>
+                        <?php endif; ?>
                     </td>
 
                     <!-- Saldo Total — data-order com valor numérico -->
@@ -93,14 +103,20 @@ ob_start();
 
                     <!-- Variação -->
                     <td data-order="<?= $variation ?>">
-                        <span class="badge fs-6 px-2 py-1 <?= $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger' ?>">
-                            <?= ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.') ?>%
-                        </span>
+                        <?php if ($isInitialPoint): ?>
+                            <span class="text-muted small">—</span>
+                        <?php else: ?>
+                            <span class="badge fs-6 px-2 py-1 <?= $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger' ?>">
+                                <?= ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.') ?>%
+                            </span>
+                        <?php endif; ?>
                     </td>
 
                     <!-- Aporte -->
                     <td data-order="<?= $depositMade ?>">
-                        <?php if ($depositMade > 0): ?>
+                        <?php if ($isInitialPoint): ?>
+                            <span class="text-muted small">—</span>
+                        <?php elseif ($depositMade > 0): ?>
                             <span class="text-success small fw-semibold">
                                 <i class="bi bi-plus-circle-fill me-1"></i>
                                 <?= formatCurrency($depositMade, $portfolio['output_currency']) ?>
@@ -112,7 +128,11 @@ ob_start();
 
                     <!-- Status -->
                     <td class="text-center">
-                        <?php if ($rebalanced): ?>
+                        <?php if ($isInitialPoint): ?>
+                            <span class="badge bg-light text-dark border rounded-pill px-3">
+                                <i class="bi bi-flag-fill me-1 text-primary"></i>Mantido
+                            </span>
+                        <?php elseif ($rebalanced): ?>
                             <span class="badge rounded-pill bg-soft-info">
                                 <i class="bi bi-arrow-repeat me-1"></i>Rebalanceado
                             </span>
@@ -123,13 +143,16 @@ ob_start();
 
                     <!-- Botão expandir -->
                     <td class="text-center">
-                        <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle btn-expand"
+                        <button class="btn btn-sm <?= $isInitialPoint ? 'btn-primary' : 'btn-outline-secondary' ?> border-0 rounded-circle btn-expand"
                                 title="Ver detalhes dos ativos em <?= $dateLabel ?>">
                             <i class="bi bi-chevron-down"></i>
                         </button>
                     </td>
                 </tr>
-                <?php $prevValue = $currentValue; endforeach; ?>
+                <?php 
+                    $prevValue = $currentValue; 
+                endforeach; 
+                ?>
             </tbody>
 
             <!-- Filtros por coluna no rodapé da tabela -->
@@ -308,12 +331,15 @@ function fmtCur(value, currency) {
             if (currentCosts[id] === undefined) currentCosts[id] = 0;
             if (accumulatedRealized[id] === undefined) accumulatedRealized[id] = 0;
 
+            const isInitialPoint = data.is_initial_point || false;
             const trade = trades[id];
             const delta = (trade && trade.delta !== undefined) ? parseFloat(trade.delta) : 0;
 
-            // 1. Inicialização do custo (Primeiro mês ou quando o ativo estava zerado)
-            if (currentCosts[id] === 0) {
-                if (delta > 0) {
+            // 1. Inicialização do custo (Ponto inicial ou primeiro mês ou quando o ativo estava zerado)
+            if (currentCosts[id] === 0 || isInitialPoint) {
+                if (isInitialPoint) {
+                    currentCosts[id] = parseFloat(assets[id] || 0);
+                } else if (delta > 0) {
                     currentCosts[id] = delta;
                 } else if (parseFloat(assets[id] || 0) > 0) {
                     // Tenta encontrar o valor investido inicial (aporte inicial)
