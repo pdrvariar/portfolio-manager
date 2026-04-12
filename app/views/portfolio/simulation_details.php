@@ -6,6 +6,7 @@
  * @var array $chartData  Dados da simulação decodificados
  * @var array $assetNames Mapeamento de ID para Nome
  * @var array $assetTargets Mapeamento de ID para Meta
+ * @var array $assetCurrencies Mapeamento de ID para Moeda
  */
 
 $title = 'Detalhes da Simulação: ' . htmlspecialchars($portfolio['name']);
@@ -268,13 +269,15 @@ window.simulationAuditLog = <?= json_encode(
 
 const assetNames    = <?= json_encode($assetNames,   JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetTargets  = <?= json_encode($assetTargets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const assetCurrencies = <?= json_encode($assetCurrencies, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const outputCurrency = <?= json_encode($portfolio['output_currency'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
 /* ── Helper: formata moeda ───────────────────────────────────────────────── */
-function fmtCur(value) {
+function fmtCur(value, currency) {
+    const targetCurrency = currency || outputCurrency;
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: outputCurrency,
+        currency: targetCurrency,
         minimumFractionDigits: 2
     }).format(value);
 }
@@ -413,6 +416,9 @@ function buildChildRow(dateKey) {
                     <tr>
                         <th class="ps-3 py-2 text-muted fw-semibold">Ativo</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Quantidade">Qtd.</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Preço do ativo na moeda original">Preço Ativo</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Cotação do Dólar (USD-BRL)">Cotação USD</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Preço do ativo convertido para a moeda do portfólio">Preço Conv.</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Preço Médio Unitário">P. Médio</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Custo Base Total">Custo Total</th>
                         <th class="text-end py-2 text-muted fw-semibold">Valor Final</th>
@@ -442,7 +448,9 @@ function buildChildRow(dateKey) {
 
         // Tenta descobrir a quantidade para exibir o Preço Médio (Custo Unitário)
         const prices     = data.asset_prices     || {};
+        const rawPrices  = data.asset_raw_prices || {};
         const quantities = data.asset_quantities || {};
+        const fxRate     = data.fx_rate          || 0;
         let qty = 0;
         
         // Prioridade 1: Quantidade já vinda do backend (mais preciso)
@@ -466,6 +474,11 @@ function buildChildRow(dateKey) {
         if (qty > 0) {
             qtyHtml = `<span class="text-dark fw-medium">${qty.toLocaleString('pt-BR', { maximumFractionDigits: 6 })}</span>`;
         }
+
+        // Novos campos solicitados
+        const assetCurrency = assetCurrencies[id] || 'BRL';
+        const rawPriceValue = rawPrices[id] || 0;
+        const convPriceValue = prices[id] || 0;
 
         let unitCostHtml = '<span class="text-muted smaller" title="Requer quantidade ou preço no backend">—</span>';
         if (unitCost > 0) {
@@ -512,6 +525,9 @@ function buildChildRow(dateKey) {
             <tr>
                 <td class="ps-3 py-2 fw-medium text-dark">${name}</td>
                 <td class="text-end py-2">${qtyHtml}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Preço do ativo na moeda original (${assetCurrency})">${fmtCur(rawPriceValue, assetCurrency)}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Cotação do Dólar no período">${fxRate > 0 ? fxRate.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) : '—'}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Preço do ativo convertido para ${outputCurrency}">${fmtCur(convPriceValue)}</td>
                 <td class="text-end py-2 text-muted fw-medium">${unitCostHtml}</td>
                 <td class="text-end py-2 text-muted">${fmtCur(cost)}</td>
                 <td class="text-end py-2 fw-semibold">${fmtCur(finalVal)}</td>

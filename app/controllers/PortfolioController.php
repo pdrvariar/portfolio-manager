@@ -396,9 +396,11 @@ class PortfolioController {
         // Mapeamento de IDs para nomes de ativos para uso na view (JSON)
         $assetNames = [];
         $assetTargets = [];
+        $assetCurrencies = [];
         foreach ($assets as $asset) {
             $assetNames[$asset['asset_id']] = $asset['name'];
             $assetTargets[$asset['asset_id']] = $asset['allocation_percentage'];
+            $assetCurrencies[$asset['asset_id']] = $asset['currency'];
         }
 
         require_once __DIR__ . '/../views/portfolio/simulation_details.php';

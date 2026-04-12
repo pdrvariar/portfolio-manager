@@ -206,6 +206,10 @@ class BacktestService {
             $initialAssetValue = $initialCapital * ($asset['allocation_percentage'] / 100);
             $currentBalances[$assetId] = $initialAssetValue;
             
+            // BUSCA PREÇO INICIAL
+            $initialPrice = (float)($historicalData[$firstAvailableDate][$assetId] ?? 0);
+            $initialFxRate = $fxData[$firstAvailableDate] ?? null;
+
             // Converter o preço inicial para a moeda do portfólio para calcular a quantidade correta
             $convertedInitialPrice = $initialPrice;
             if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $initialFxRate > 0) {
@@ -240,6 +244,7 @@ class BacktestService {
             $totalMonthValue = 0;
             $assetValues = [];
             $assetPrices = [];
+            $assetRawPrices = [];
             $assetQuantities = [];
             $assetPurchases = []; // Detalha o que foi comprado no mês (aporte)
 
@@ -291,6 +296,7 @@ class BacktestService {
                     $convertedPrice = $dbValue / $currentFxRate;
                 }
                 $assetPrices[$assetId] = $convertedPrice;
+                $assetRawPrices[$assetId] = $dbValue;
 
                 $totalMonthValue += $currentBalances[$assetId];
             }
@@ -841,6 +847,7 @@ class BacktestService {
             'asset_values' => $assetValues,
             'asset_values_before' => $assetValuesBefore, // NOVO: Valores antes do rebalanceamento
             'asset_prices' => $assetPrices,
+            'asset_raw_prices' => $assetRawPrices,
             'asset_quantities' => $assetQuantities,
             'rebalanced' => $wasRebalanced,
             'trades' => $trades,
