@@ -400,9 +400,10 @@ function buildChildRow(dateKey) {
     const data         = log[dateKey];
     const assets       = data.asset_values         || {};
     const trades       = data.trades               || {};
-    const assetsBefore = data.asset_values_before  || assets;
-    const costs        = data.asset_costs          || {};
     const total        = data.total_value          || 1;
+    const assetsBefore = data.asset_values_before  || assets;
+    const totalBefore  = data.total_before_deposit || total;
+    const costs        = data.asset_costs          || {};
     const deposit      = data.deposit_made         || 0;
     const depositType  = data.deposit_type         || 'none';
     const isRebalance  = Object.keys(trades).length > 0;
@@ -451,6 +452,7 @@ function buildChildRow(dateKey) {
                         <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Latente (Não Realizado)">L/P Latente</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Realizado na Venda">L/P Venda</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Realizado Acumulado">L/P Acum.</th>
+                        <th class="text-center py-2 text-muted fw-semibold" title="Alocação Anterior ao Rebalanceamento">% Anterior</th>
                         <th class="text-center py-2 text-muted fw-semibold" title="Alocação Atual">% Atual</th>
                         <th class="text-center py-2 text-muted fw-semibold">Meta</th>
                         <th class="text-center py-2 text-muted fw-semibold">Desvio</th>
@@ -532,6 +534,8 @@ function buildChildRow(dateKey) {
             }
         }
 
+        const valBefore   = assetsBefore[id] || 0;
+        const allocBefore = totalBefore > 0 ? (valBefore / totalBefore) * 100 : 0;
         const allocPct    = total > 0      ? (finalVal / total) * 100      : 0;
         const deviation   = allocPct - target;
 
@@ -560,6 +564,9 @@ function buildChildRow(dateKey) {
                 <td class="text-end py-2 fw-semibold ${profitColor}">${profitSign}${fmtCur(profit)}</td>
                 <td class="text-end py-2">${realizedHtml}</td>
                 <td class="text-end py-2">${accumHtml}</td>
+                <td class="text-center py-2">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-1">${allocBefore.toFixed(2)}%</span>
+                </td>
                 <td class="text-center py-2">
                     <span class="badge bg-primary bg-opacity-10 text-primary px-1">${allocPct.toFixed(2)}%</span>
                 </td>

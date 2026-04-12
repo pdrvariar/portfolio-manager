@@ -649,13 +649,9 @@ class BacktestService {
             $assetValuesBefore = [];
             foreach ($assets as $asset) {
                 $assetId = $asset['asset_id'];
-                // Se for o primeiro mês, o valor 'before' é o aporte inicial proporcional valorizado
-                if ($index === 0) {
-                    $assetValuesBefore[$assetId] = $currentBalances[$assetId];
-                } else {
-                    // Para meses subsequentes, pegamos o saldo final do mês anterior (após qualquer rebalanceamento anterior)
-                    $assetValuesBefore[$assetId] = $results[$prevDateForStrategy]['asset_values'][$assetId] ?? $currentBalances[$assetId];
-                }
+                // O valor "antes" deve refletir a valorização das quantidades do mês anterior pelo preço atual
+                // Isso garante que o % Anterior some 100% e reflita a situação exata pré-rebalanceamento
+                $assetValuesBefore[$assetId] = $currentBalances[$assetId];
             }
 
             if ($rebalanceFreq > 0 && $index % $rebalanceFreq == 0) {
