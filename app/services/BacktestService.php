@@ -164,6 +164,7 @@ class BacktestService {
         $strategicDepositPercent = (float)($portfolio['strategic_deposit_percentage'] ?? 0) / 100;
         $depositInflationAdjusted = (bool)($portfolio['deposit_inflation_adjusted'] ?? false);
         $useCashAssetsForRebalance = (bool)($portfolio['use_cash_assets_for_rebalance'] ?? false);
+        $profitTaxRate = !empty($portfolio['profit_tax_rate']) ? (float)$portfolio['profit_tax_rate'] / 100 : null;
 
         // Carrega dados de câmbio
         $fxEndDate = $portfolio['end_date'] ?? date('Y-m-d');
@@ -196,6 +197,11 @@ class BacktestService {
         $portfolioWithoutDeposits = $initialCapital;
         $strategyOnlyValues = []; // Armazena valores excluindo aportes
 
+        // NOVO: Controle de custo para cálculo de imposto
+        $currentCosts = [];
+        $accumulatedTaxPaid = 0;
+        $taxPaidThisMonth = 0;
+
         // Inicialização do saldo e quantidades
         // O primeiro registro em historicalData pode ser anterior à data de início (base de cálculo)
         $firstAvailableDate = $dates[0];
@@ -205,6 +211,7 @@ class BacktestService {
             $assetId = $asset['asset_id'];
             $initialAssetValue = $initialCapital * ($asset['allocation_percentage'] / 100);
             $currentBalances[$assetId] = $initialAssetValue;
+            $currentCosts[$assetId] = $initialAssetValue; // Custo inicial é a alocação inicial
             
             // BUSCA PREÇO INICIAL
             $initialPrice = (float)($historicalData[$firstAvailableDate][$assetId] ?? 0);
@@ -342,6 +349,7 @@ class BacktestService {
                 $totalMonthValue += $currentBalances[$assetId];
             }
 
+            $taxPaidThisMonth = 0; // Reset mensal
             $lastFxRate = $currentFxRate;
 
             // Aplica rendimento SELIC ao caixa (para tipos smart_deposit e selic_cash_deposit)
@@ -687,10 +695,25 @@ class BacktestService {
                             if ($currentValue > $toleranceLimit) {
                                 // Vende apenas o que exceder o ALVO
                                 $sellAmount = $currentValue - $targetValue;
-                                $availableToInvest += $sellAmount;
-                                $currentBalances[$assetId] = $targetValue;
+                                
+                                // Cálculo de Imposto sobre o Lucro
+                                if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                                    $proportionSold = $sellAmount / $currentValue;
+                                    $costSold = $currentCosts[$assetId] * $proportionSold;
+                                    $profit = $sellAmount - $costSold;
+                                    
+                                    if ($profit > 0) {
+                                        $tax = $profit * $profitTaxRate;
+                                        $taxPaidThisMonth += $tax;
+                                        $accumulatedTaxPaid += $tax;
+                                        $sellAmount -= $tax; // Deduz o imposto do valor que será reinvestido
+                                    }
+                                    $currentCosts[$assetId] -= $costSold;
+                                }
 
-                                // Atualiza quantidades
+                                $availableToInvest += $sellAmount;
+                                $currentBalances[$assetId] = $currentValue - ($sellAmount + ($tax ?? 0)); // Ajusta para o valor pós-venda (antes de reinvestir)
+                                // Nota: o reinvestimento vai acontecer abaixo no buy loop
                                 $price = (float)($monthData[$assetId] ?? 0);
                                 if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
                                     // Converte o preço para a moeda do portfólio para calcular a quantidade correta
@@ -727,8 +750,24 @@ class BacktestService {
 
                                 if ($currentValue > $targetValue) {
                                     $sellAmount = $currentValue - $targetValue;
+                                    
+                                    // Cálculo de Imposto sobre o Lucro
+                                    if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                                        $proportionSold = $sellAmount / $currentValue;
+                                        $costSold = $currentCosts[$assetId] * $proportionSold;
+                                        $profit = $sellAmount - $costSold;
+                                        
+                                        if ($profit > 0) {
+                                            $tax = $profit * $profitTaxRate;
+                                            $taxPaidThisMonth += $tax;
+                                            $accumulatedTaxPaid += $tax;
+                                            $sellAmount -= $tax;
+                                        }
+                                        $currentCosts[$assetId] -= $costSold;
+                                    }
+
                                     $availableToInvest += $sellAmount;
-                                    $currentBalances[$assetId] = $targetValue;
+                                    $currentBalances[$assetId] = $currentValue - ($sellAmount + ($tax ?? 0));
                                     
                                     $price = (float)($monthData[$assetId] ?? 0);
                                     if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
@@ -790,6 +829,7 @@ class BacktestService {
                             
                             $price = (float)($monthData[$assetId] ?? 0);
                             $currentBalances[$assetId] += $buy;
+                            $currentCosts[$assetId] += $buy; // Aumenta o custo na compra
                             
                             if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
                                 // Converte o preço para a moeda do portfólio para calcular a quantidade correta
@@ -830,6 +870,39 @@ class BacktestService {
                     // LÓGICA DE REBALANCEAMENTO: COMPLETO (REBALANCEAMENTO PADRÃO)
                     // Vende o que está acima e compra o que está abaixo do alvo
                     // ============================================
+                    
+                    // 1. Primeiro as vendas para apurar lucro/imposto
+                    foreach ($assets as $asset) {
+                        $assetId = $asset['asset_id'];
+                        $targetAllocation = (float)$asset['allocation_percentage'] / 100;
+                        $postValue = $rebalanceBase * $targetAllocation;
+                        $preValue = $currentBalances[$assetId];
+
+                        if ($preValue > $postValue) {
+                            $sellAmount = $preValue - $postValue;
+                            if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                                $proportionSold = $sellAmount / $preValue;
+                                $costSold = $currentCosts[$assetId] * $proportionSold;
+                                $profit = $sellAmount - $costSold;
+                                if ($profit > 0) {
+                                    $tax = $profit * $profitTaxRate;
+                                    $taxPaidThisMonth += $tax;
+                                    $accumulatedTaxPaid += $tax;
+                                    // No rebalanceamento completo, o imposto reduz o rebalanceBase (patrimônio total)
+                                    $rebalanceBase -= $tax;
+                                }
+                                $currentCosts[$assetId] -= $costSold;
+                            } else {
+                                // Se não tem imposto, apenas reduz o custo proporcionalmente
+                                if ($currentCosts[$assetId] > 0) {
+                                    $proportionSold = $sellAmount / $preValue;
+                                    $currentCosts[$assetId] -= $currentCosts[$assetId] * $proportionSold;
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Agora aplica o rebalanceamento real com a base (possivelmente) reduzida pelo imposto
                     foreach ($assets as $asset) {
                         $assetId = $asset['asset_id'];
                         $preValue = $currentBalances[$assetId];
@@ -837,6 +910,11 @@ class BacktestService {
 
                         $targetAllocation = (float)$asset['allocation_percentage'] / 100;
                         $postValue = $rebalanceBase * $targetAllocation;
+
+                        // Se for compra, aumenta o custo
+                        if ($postValue > $preValue) {
+                            $currentCosts[$assetId] += ($postValue - $preValue);
+                        }
 
                         // Calcula nova quantidade após rebalanceamento
                         $postQty = $preQty;
@@ -898,7 +976,10 @@ class BacktestService {
             'strategy_variation' => $strategyVariation,
             'selic_cash' => $selicCash,
             'selic_cash_earnings' => $selicCashEarnings,
-            'selic_cash_injected' => $selicCashInjected
+            'selic_cash_injected' => $selicCashInjected,
+            'tax_paid' => $taxPaidThisMonth,
+            'accumulated_tax_paid' => $accumulatedTaxPaid,
+            'asset_costs' => $currentCosts
         ];
 
         // Atualiza a referência da data anterior para o cálculo da variação da estratégia

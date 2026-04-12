@@ -406,6 +406,7 @@ function buildChildRow(dateKey) {
     const costs        = data.asset_costs          || {};
     const deposit      = data.deposit_made         || 0;
     const depositType  = data.deposit_type         || 'none';
+    const taxPaid      = data.tax_paid             || 0;
     const isRebalance  = Object.keys(trades).length > 0;
 
     const depositLabels = {
@@ -418,12 +419,18 @@ function buildChildRow(dateKey) {
     let html = '<div class="child-row-wrapper">';
 
     /* ── Barra de resumo do mês ── */
-    if (deposit > 0 || isRebalance) {
+    if (deposit > 0 || isRebalance || taxPaid > 0) {
         html += '<div class="d-flex flex-wrap gap-2 mb-3 pb-3 border-bottom align-items-center" style="border-color: var(--border-color) !important;">';
         if (deposit > 0) {
             html += `<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">
                 <i class="bi bi-cash-coin me-1"></i>
                 ${depositLabels[depositType] || 'Aporte'}: ${fmtCur(deposit)}
+            </span>`;
+        }
+        if (taxPaid > 0) {
+            html += `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1" title="Imposto sobre o Lucro Realizado nas vendas deste mês">
+                <i class="bi bi-bank me-1"></i>
+                Imposto Pago: ${fmtCur(taxPaid)}
             </span>`;
         }
         if (isRebalance) {

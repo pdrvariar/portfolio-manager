@@ -45,7 +45,8 @@ class PortfolioController {
                 'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
                 'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
-                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
+                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0,
+                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null
             ];
             
             $portfolioId = $this->portfolioModel->create($data);
@@ -350,7 +351,8 @@ class PortfolioController {
                 'deposit_inflation_adjusted' => isset($_POST['deposit_inflation_adjusted']) ? 1 : 0,
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
                 'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
-                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0
+                'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0,
+                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null
             ];
             
             // 1. Atualiza os metadados (Nome, Capital, etc)

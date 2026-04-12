@@ -28,8 +28,8 @@ class Portfolio {
             start_date, end_date, rebalance_frequency, output_currency, cloned_from,
             simulation_type, rebalance_type, rebalance_margin, deposit_amount, deposit_currency, deposit_frequency,
             strategic_threshold, strategic_deposit_percentage, deposit_inflation_adjusted, 
-            use_cash_assets_for_rebalance, is_system_default) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            use_cash_assets_for_rebalance, profit_tax_rate, is_system_default) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -52,6 +52,7 @@ class Portfolio {
             $data['strategic_deposit_percentage'] ?? null,
             $data['deposit_inflation_adjusted'] ?? 0,
             $data['use_cash_assets_for_rebalance'] ?? 0,
+            $data['profit_tax_rate'] ?? null,
             $data['is_system_default'] ?? 0
         ]);
 
@@ -86,7 +87,8 @@ class Portfolio {
             'strategic_threshold' => $original['strategic_threshold'],
             'strategic_deposit_percentage' => $original['strategic_deposit_percentage'],
             'deposit_inflation_adjusted' => $original['deposit_inflation_adjusted'],
-            'use_cash_assets_for_rebalance' => $original['use_cash_assets_for_rebalance'] ?? 0
+            'use_cash_assets_for_rebalance' => $original['use_cash_assets_for_rebalance'] ?? 0,
+            'profit_tax_rate' => $original['profit_tax_rate'] ?? null
         ]);
 
         // Copiar alocações de ativos
@@ -130,7 +132,8 @@ class Portfolio {
             strategic_threshold = ?,
             strategic_deposit_percentage = ?,
             deposit_inflation_adjusted = ?,
-            use_cash_assets_for_rebalance = ?
+            use_cash_assets_for_rebalance = ?,
+            profit_tax_rate = ?
             WHERE id = ?";
 
         $stmt = $this->db->prepare($sql);
@@ -152,6 +155,7 @@ class Portfolio {
             $data['strategic_deposit_percentage'] ?? null,
             $data['deposit_inflation_adjusted'] ?? 0,
             $data['use_cash_assets_for_rebalance'] ?? 0,
+            $data['profit_tax_rate'] ?? null,
             $data['id']
         ]);
     }

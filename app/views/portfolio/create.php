@@ -114,6 +114,29 @@ $assets = $assetModel->getAllWithDetails();
                                 </select>
                             </div>
                         </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    Imposto sobre o Lucro
+                                    <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Se ativado, o sistema calculará o imposto devido sobre o lucro realizado em cada venda (rebalanceamento)."></i>
+                                </label>
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body p-2 d-flex align-items-center">
+                                        <div class="form-check form-switch mb-0 ms-2">
+                                            <input class="form-check-input" type="checkbox" id="enable_tax" onchange="toggleTaxField()">
+                                            <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto</label>
+                                        </div>
+                                        <div id="tax_input_container" class="ms-auto" style="display: none; width: 120px;">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="profit_tax_rate" name="profit_tax_rate" step="0.1" min="0" max="100" placeholder="0.0" value="15.0">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Campos para Aportes Periódicos / Direcionado / Caixa SELIC -->
@@ -563,6 +586,20 @@ function toggleUseCashAssetsField() {
         }
     } else {
         marginContainer.style.display = 'none';
+    }
+}
+
+function toggleTaxField() {
+    const enableTax = document.getElementById('enable_tax').checked;
+    const container = document.getElementById('tax_input_container');
+    const input = document.getElementById('profit_tax_rate');
+    
+    if (enableTax) {
+        container.style.display = 'block';
+        if (!input.value) input.value = '15.0';
+    } else {
+        container.style.display = 'none';
+        input.value = ''; // Envia null/vazio para o servidor
     }
 }
 
