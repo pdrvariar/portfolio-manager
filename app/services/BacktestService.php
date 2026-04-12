@@ -206,10 +206,15 @@ class BacktestService {
             $initialAssetValue = $initialCapital * ($asset['allocation_percentage'] / 100);
             $currentBalances[$assetId] = $initialAssetValue;
             
-            // Determina a quantidade inicial baseada no preço da PRIMEIRA data disponível
-            // Se tivermos uma data anterior ao início, usamos ela como preço de compra
-            $initialPrice = (float)($historicalData[$firstAvailableDate][$assetId] ?? 0);
-            $currentQuantities[$assetId] = $initialPrice > 0 ? ($initialAssetValue / $initialPrice) : 0;
+            // Converter o preço inicial para a moeda do portfólio para calcular a quantidade correta
+            $convertedInitialPrice = $initialPrice;
+            if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $initialFxRate > 0) {
+                $convertedInitialPrice = $initialPrice * $initialFxRate;
+            } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $initialFxRate > 0) {
+                $convertedInitialPrice = $initialPrice / $initialFxRate;
+            }
+
+            $currentQuantities[$assetId] = $convertedInitialPrice > 0 ? ($initialAssetValue / $convertedInitialPrice) : 0;
             
             // Se a primeira data for a base de cálculo, já preenchemos lastPrices
             if ($isFirstDateBeforeStart) {
@@ -244,7 +249,6 @@ class BacktestService {
                 $factor = (float)($asset['performance_factor'] ?? 1.0);
                 $monthlyReturn = 0;
 
-                $assetPrices[$assetId] = $dbValue;
 
                 if ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO') {
                     $monthlyReturn = ($dbValue * $factor) / 100;
@@ -278,6 +282,16 @@ class BacktestService {
 
                 $assetValues[$assetId] = $currentBalances[$assetId];
                 $assetQuantities[$assetId] = $currentQuantities[$assetId];
+
+                // NOVO: Preço convertido para a moeda do portfólio para exibição no log
+                $convertedPrice = $dbValue;
+                if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                    $convertedPrice = $dbValue * $currentFxRate;
+                } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                    $convertedPrice = $dbValue / $currentFxRate;
+                }
+                $assetPrices[$assetId] = $convertedPrice;
+
                 $totalMonthValue += $currentBalances[$assetId];
             }
 
@@ -350,14 +364,23 @@ class BacktestService {
                         // Atualiza quantidade comprada/vendida
                         if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                             $price = (float)($monthData[$assetId] ?? 0);
-                            if ($price > 0) {
-                                $newQty = $newBalance / $price;
+                            
+                            // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                            $convertedPrice = $price;
+                            if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                $convertedPrice = $price * $currentFxRate;
+                            } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                $convertedPrice = $price / $currentFxRate;
+                            }
+
+                            if ($convertedPrice > 0) {
+                                $newQty = $newBalance / $convertedPrice;
                                 $deltaQty = $newQty - $currentQuantities[$assetId];
                                 $currentQuantities[$assetId] = $newQty;
                                 $assetPurchases[$assetId] = [
                                     'amount' => $amountToAsset,
                                     'quantity' => $deltaQty,
-                                    'price' => $price
+                                    'price' => $convertedPrice
                                 ];
                             }
                         } else {
@@ -404,14 +427,23 @@ class BacktestService {
                             // Atualiza quantidade comprada/vendida
                             if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                                 $price = (float)($monthData[$assetId] ?? 0);
-                                if ($price > 0) {
-                                    $newQty = $newBalance / $price;
+
+                                // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                                $convertedPrice = $price;
+                                if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                    $convertedPrice = $price * $currentFxRate;
+                                } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                    $convertedPrice = $price / $currentFxRate;
+                                }
+
+                                if ($convertedPrice > 0) {
+                                    $newQty = $newBalance / $convertedPrice;
                                     $deltaQty = $newQty - $currentQuantities[$assetId];
                                     $currentQuantities[$assetId] = $newQty;
                                     $assetPurchases[$assetId] = [
                                         'amount' => $amountToAsset,
                                         'quantity' => $deltaQty,
-                                        'price' => $price
+                                        'price' => $convertedPrice
                                     ];
                                 }
                             } else {
@@ -488,13 +520,21 @@ class BacktestService {
                         $assetValues[$assetId] = $currentBalances[$assetId];
 
                         if ($asset['asset_type'] !== 'TAXA_MENSAL' && $price > 0) {
-                            $deltaQty = $buy / $price;
+                            // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                            $convertedPrice = $price;
+                            if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                $convertedPrice = $price * $currentFxRate;
+                            } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                $convertedPrice = $price / $currentFxRate;
+                            }
+
+                            $deltaQty = $convertedPrice > 0 ? $buy / $convertedPrice : 0;
                             $currentQuantities[$assetId] += $deltaQty;
                             $assetQuantities[$assetId] = $currentQuantities[$assetId];
                             $assetPurchases[$assetId] = [
                                 'amount'   => $buy,
                                 'quantity' => $deltaQty,
-                                'price'    => $price
+                                'price'    => $convertedPrice
                             ];
                         } else {
                             $currentQuantities[$assetId] = $currentBalances[$assetId];
@@ -559,7 +599,17 @@ class BacktestService {
             // Lógica de Rebalanceamento (existente)
             $wasRebalanced = false;
             $trades = [];
-            $assetValuesBefore = $currentBalances; // Captura os saldos ATUAIS (em moeda) antes do rebalanceamento
+            $assetValuesBefore = [];
+            foreach ($assets as $asset) {
+                $assetId = $asset['asset_id'];
+                // Se for o primeiro mês, o valor 'before' é o aporte inicial proporcional
+                if ($index === 0) {
+                    $assetValuesBefore[$assetId] = $initialCapital * ($asset['allocation_percentage'] / 100);
+                } else {
+                    // Para meses subsequentes, pegamos o saldo final do mês anterior (após qualquer rebalanceamento anterior)
+                    $assetValuesBefore[$assetId] = $results[$prevDateForStrategy]['asset_values'][$assetId] ?? $currentBalances[$assetId];
+                }
+            }
 
             if ($rebalanceFreq > 0 && $index > 0 && $index % $rebalanceFreq == 0) {
                 $wasRebalanced = true;
@@ -600,7 +650,15 @@ class BacktestService {
                                 // Atualiza quantidades
                                 $price = (float)($monthData[$assetId] ?? 0);
                                 if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
-                                    $currentQuantities[$assetId] = $currentBalances[$assetId] / $price;
+                                    // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                                    $convertedPrice = $price;
+                                    if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                        $convertedPrice = $price * $currentFxRate;
+                                    } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                        $convertedPrice = $price / $currentFxRate;
+                                    }
+                                    
+                                    $currentQuantities[$assetId] = $convertedPrice > 0 ? $currentBalances[$assetId] / $convertedPrice : 0;
                                 } else {
                                     $currentQuantities[$assetId] = $currentBalances[$assetId];
                                 }
@@ -631,7 +689,15 @@ class BacktestService {
                                     
                                     $price = (float)($monthData[$assetId] ?? 0);
                                     if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
-                                        $currentQuantities[$assetId] -= ($sellAmount / $price);
+                                        // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                                        $convertedPrice = $price;
+                                        if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                            $convertedPrice = $price * $currentFxRate;
+                                        } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                            $convertedPrice = $price / $currentFxRate;
+                                        }
+                                        
+                                        $currentQuantities[$assetId] = $convertedPrice > 0 ? $currentBalances[$assetId] / $convertedPrice : 0;
                                     } else {
                                         $currentQuantities[$assetId] = $currentBalances[$assetId];
                                     }
@@ -683,7 +749,15 @@ class BacktestService {
                             $currentBalances[$assetId] += $buy;
                             
                             if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO' && $price > 0) {
-                                $currentQuantities[$assetId] = $currentBalances[$assetId] / $price;
+                                // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                                $convertedPrice = $price;
+                                if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                    $convertedPrice = $price * $currentFxRate;
+                                } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                    $convertedPrice = $price / $currentFxRate;
+                                }
+
+                                $currentQuantities[$assetId] = $convertedPrice > 0 ? $currentBalances[$assetId] / $convertedPrice : 0;
                             } else {
                                 $currentQuantities[$assetId] = $currentBalances[$assetId];
                             }
@@ -725,7 +799,16 @@ class BacktestService {
                         $postQty = $preQty;
                         if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
                             $price = (float)($monthData[$assetId] ?? 0);
-                            $postQty = $price > 0 ? ($postValue / $price) : 0;
+                            
+                            // Converte o preço para a moeda do portfólio para calcular a quantidade correta
+                            $convertedPrice = $price;
+                            if ($portfolioCurrency === 'BRL' && $asset['currency'] === 'USD' && $currentFxRate > 0) {
+                                $convertedPrice = $price * $currentFxRate;
+                            } elseif ($portfolioCurrency === 'USD' && $asset['currency'] === 'BRL' && $currentFxRate > 0) {
+                                $convertedPrice = $price / $currentFxRate;
+                            }
+
+                            $postQty = $convertedPrice > 0 ? ($postValue / $convertedPrice) : 0;
                         } else {
                             $postQty = $postValue;
                         }
