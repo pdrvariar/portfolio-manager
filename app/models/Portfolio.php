@@ -205,8 +205,8 @@ class Portfolio {
     }
     
     public function getPortfolioAssets($portfolioId) {
-        // Adicionado sa.currency para que a view.php consiga exibir a moeda
-        $sql = "SELECT sa.id as asset_id, sa.name, sa.currency, pa.allocation_percentage, pa.performance_factor, pa.id 
+        // Adicionado sa.currency e sa.tax_group para que a view.php e simulation_details.php consigam exibir as informações
+        $sql = "SELECT sa.id as asset_id, sa.name, sa.currency, sa.tax_group, pa.allocation_percentage, pa.performance_factor, pa.id 
                 FROM portfolio_assets pa
                 JOIN system_assets sa ON pa.asset_id = sa.id
                 WHERE pa.portfolio_id = ?";

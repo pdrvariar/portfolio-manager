@@ -399,10 +399,12 @@ class PortfolioController {
         $assetNames = [];
         $assetTargets = [];
         $assetCurrencies = [];
+        $assetTaxGroups = [];
         foreach ($assets as $asset) {
             $assetNames[$asset['asset_id']] = $asset['name'];
             $assetTargets[$asset['asset_id']] = $asset['allocation_percentage'];
             $assetCurrencies[$asset['asset_id']] = $asset['currency'];
+            $assetTaxGroups[$asset['asset_id']] = $asset['tax_group'] ?? 'RENDA_FIXA';
         }
 
         require_once __DIR__ . '/../views/portfolio/simulation_details.php';

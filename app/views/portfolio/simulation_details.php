@@ -293,6 +293,7 @@ window.simulationAuditLog = <?= json_encode(
 const assetNames    = <?= json_encode($assetNames,   JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetTargets  = <?= json_encode($assetTargets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetCurrencies = <?= json_encode($assetCurrencies, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const assetTaxGroups  = <?= json_encode($assetTaxGroups ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const outputCurrency = <?= json_encode($portfolio['output_currency'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
 /* ── Helper: formata moeda ───────────────────────────────────────────────── */
@@ -313,10 +314,29 @@ function fmtCur(value, currency) {
     const log = window.simulationAuditLog;
     if (!log) return;
 
+    // DEBUG: Verificação dos dados iniciais
+    console.log("Audit Log carregado:", Object.keys(log).length, "registros");
+    console.log("Grupos de Imposto carregados:", assetTaxGroups);
+    window._debug_tax_logged = false;
+
     // Extrai as datas ordenadas cronologicamente
     const dates = Object.keys(log).filter(k => k !== '_metadata').sort();
     const currentCosts = {};
     const accumulatedRealized = {};
+    
+    // Controle de prejuízos acumulados por grupo de imposto (tax_group)
+    const groupTaxResults = {
+        // Ex: 'ETF_BR': { accumulatedLoss: 0, accumulatedProfit: 0, taxRate: 0.15 }
+    };
+
+    // Alíquotas por grupo (Pode ser expandido conforme necessidade)
+    const TAX_RATES = {
+        'ETF_BR': 0.15,
+        'CRIPTOMOEDA': 0.15,
+        'FUNDO_IMOBILIARIO': 0.20,
+        'ETF_US': 0.15,
+        'RENDA_FIXA': 0 // Não aplicável regra de compensação aqui conforme pedido
+    };
 
     dates.forEach(date => {
         const data = log[date];
@@ -326,6 +346,9 @@ function fmtCur(value, currency) {
 
         data.realized_profits = {};
         data.accumulated_realized_profits = {};
+        
+        // Resultados do mês por grupo para cálculo de IR
+        const monthlyGroupResults = {};
 
         for (const id in assets) {
             if (currentCosts[id] === undefined) currentCosts[id] = 0;
@@ -334,6 +357,19 @@ function fmtCur(value, currency) {
             const isInitialPoint = data.is_initial_point || false;
             const trade = trades[id];
             const delta = (trade && trade.delta !== undefined) ? parseFloat(trade.delta) : 0;
+            const rawTaxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
+            
+            // Normalização de Grupos de IR conforme solicitado pelo usuário
+            // ACAO_BR -> ETF_BR
+            // ETF_USA -> ETF_US
+            let taxGroup = rawTaxGroup;
+            if (taxGroup === 'ACAO_BR') taxGroup = 'ETF_BR';
+            if (taxGroup === 'ETF_USA') taxGroup = 'ETF_US';
+
+            // DEBUG: Verificando se encontrou o grupo para este ativo
+            if (date === dates[0]) {
+                console.log(`Ativo #${id} (${assetNames[id] || '?'}) -> Grupo: ${taxGroup}`);
+            }
 
             // 1. Inicialização do custo (Ponto inicial ou primeiro mês ou quando o ativo estava zerado)
             if (currentCosts[id] === 0 || isInitialPoint) {
@@ -359,7 +395,7 @@ function fmtCur(value, currency) {
                 } else if (delta < 0) {
                     // VENDA: Apura Lucro/Prejuízo Realizado sobre o valor de mercado atualizado
                     // (O valor pré-venda é igual ao saldo final do mês + o volume que foi sacado)
-                    const preTradeValue = parseFloat(assets[id] || 0) - delta;
+                    const preTradeValue = parseFloat(assets[id] || 0) + Math.abs(delta);
                     if (preTradeValue > 0) {
                         const proportionSold = Math.min(1, Math.abs(delta) / preTradeValue);
                         const costSold = currentCosts[id] * proportionSold;
@@ -367,6 +403,12 @@ function fmtCur(value, currency) {
                         
                         data.realized_profits[id] = realizedProfit;
                         accumulatedRealized[id] += realizedProfit;
+                        
+                        // Soma ao resultado mensal do grupo para IR
+                        if (taxGroup !== 'RENDA_FIXA') {
+                            if (monthlyGroupResults[taxGroup] === undefined) monthlyGroupResults[taxGroup] = 0;
+                            monthlyGroupResults[taxGroup] += realizedProfit;
+                        }
                         
                         currentCosts[id] = Math.max(0, currentCosts[id] - costSold);
                     } else {
@@ -377,6 +419,79 @@ function fmtCur(value, currency) {
             
             data.accumulated_realized_profits[id] = accumulatedRealized[id];
         }
+
+        // CÁLCULO DE IR POR GRUPO (Com compensação de prejuízo)
+        data.tax_summary = {};
+        
+        // Garante que todos os grupos que já tiveram movimentação ou tem saldo acumulado apareçam
+        const allGroups = new Set([...Object.keys(monthlyGroupResults), ...Object.keys(groupTaxResults)]);
+
+    for (const group of allGroups) {
+        if (!groupTaxResults[group]) {
+            groupTaxResults[group] = { accumulatedLoss: 0, accumulatedResult: 0 };
+        }
+
+        const monthProfit = monthlyGroupResults[group] || 0;
+        let taxableProfit = 0;
+        let taxToPay = 0;
+        const prevLoss = groupTaxResults[group].accumulatedLoss;
+        const prevResult = groupTaxResults[group].accumulatedResult;
+
+        // Atualiza o resultado total acumulado do grupo
+        groupTaxResults[group].accumulatedResult += monthProfit;
+
+            if (monthProfit > 0) {
+                // Se teve lucro, abate do prejuízo acumulado
+                if (prevLoss < 0) {
+                    const absLoss = Math.abs(prevLoss);
+                    if (monthProfit > absLoss) {
+                        taxableProfit = monthProfit - absLoss;
+                        groupTaxResults[group].accumulatedLoss = 0;
+                    } else {
+                        taxableProfit = 0;
+                        groupTaxResults[group].accumulatedLoss += monthProfit;
+                    }
+                } else {
+                    taxableProfit = monthProfit;
+                }
+                
+                const rate = TAX_RATES[group] || 0.15;
+                taxToPay = taxableProfit * rate;
+            } else if (monthProfit < 0) {
+                // Se teve prejuízo, aumenta o prejuízo acumulado
+                groupTaxResults[group].accumulatedLoss += monthProfit;
+                taxableProfit = 0;
+                taxToPay = 0;
+            } else {
+                // Se não teve lucro nem prejuízo no mês (monthProfit === 0)
+                taxableProfit = 0;
+                taxToPay = 0;
+            }
+
+        // Só adiciona ao resumo se houver algo relevante para mostrar:
+        // Lucro no mês OU prejuízo no mês OU prejuízo acumulado de meses anteriores OU saldo acumulado significativo
+        const hasActivity = Math.abs(monthProfit) > 0.000001;
+        const hasPrevLoss = prevLoss < -0.000001;
+        const hasAccResult = Math.abs(groupTaxResults[group].accumulatedResult) > 0.000001;
+        const hasAccLoss = groupTaxResults[group].accumulatedLoss < -0.000001;
+
+        if (hasActivity || hasPrevLoss || hasAccResult || hasAccLoss) {
+            data.tax_summary[group] = {
+                profit: monthProfit,
+                prev_loss: prevLoss,
+                taxable: taxableProfit,
+                tax: taxToPay,
+                new_loss: groupTaxResults[group].accumulatedLoss,
+                accumulated_result: groupTaxResults[group].accumulatedResult
+            };
+        }
+    }
+
+    // DEBUG: Log do primeiro mês com tax_summary
+    if (Object.keys(data.tax_summary).length > 0 && !window._debug_tax_logged) {
+        console.log("Exemplo de tax_summary no mês " + date + ":", data.tax_summary);
+        window._debug_tax_logged = true;
+    }
 
         // Injeta o custo calculado no log deste mês para a tabela renderizar
         data.asset_costs = {};
@@ -439,6 +554,132 @@ function buildChildRow(dateKey) {
             </span>`;
         }
         html += '</div>';
+    }
+
+    /* ── Destaque de L/P ACUMULADO por grupo de IR ── */
+    if (data.tax_summary && Object.keys(data.tax_summary).length > 0) {
+        html += `<div class="mb-4 bg-light bg-opacity-50 p-3 rounded-3 border">
+            <div class="row align-items-center mb-2">
+                <div class="col">
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-graph-up-arrow me-2 text-primary"></i>L/P ACUM. por Grupo de IR
+                        <small class="ms-2 text-muted fw-normal" style="font-size: 0.75rem;">(Considera prejuízos acumulados para abatimento)</small>
+                    </h6>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-3">`;
+        
+        for (const [group, info] of Object.entries(data.tax_summary)) {
+            // Exibimos o Saldo Acumulado (accumulated_result) do grupo até este mês
+            const accResult = info.accumulated_result || 0;
+            const isNegative = accResult < -0.01;
+            const icon = isNegative ? 'bi-dash-circle' : 'bi-plus-circle';
+            
+            html += `
+                <div class="d-flex align-items-center bg-white px-3 py-2 rounded border shadow-sm" style="min-width: 180px;">
+                    <div class="me-3">
+                        <i class="bi ${icon} fs-5 ${isNegative ? 'text-danger' : 'text-success'}"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted smaller text-uppercase fw-bold" style="font-size: 0.65rem;">${group.replace(/_/g, ' ')}</div>
+                        <div class="fw-bold ${isNegative ? 'text-danger' : 'text-success'}">
+                            ${accResult > 0.01 ? '+' : ''}${fmtCur(accResult)}
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        html += `</div>
+        </div>`;
+    }
+
+    /* ── Resumo de Imposto de Renda por Grupo ── */
+    if (data.tax_summary && Object.keys(data.tax_summary).length > 0) {
+        html += `<div class="mb-4">
+            <h6 class="fw-bold mb-3 text-dark d-flex align-items-center">
+                <i class="bi bi-calculator me-2 text-primary"></i>Resumo de Imposto de Renda (IR) do Mês
+                <small class="ms-auto text-muted fw-normal" style="font-size: 0.75rem;">Regra: Compensação de prejuízos acumulados por grupo</small>
+            </h6>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">`;
+        
+        for (const [group, info] of Object.entries(data.tax_summary)) {
+            const hasLoss = info.new_loss < -0.01;
+            const statusClass = info.tax > 0 ? 'border-danger' : (hasLoss ? 'border-danger' : 'border-success');
+            const bgClass = info.tax > 0 ? 'bg-danger' : (hasLoss ? 'bg-danger' : 'bg-success');
+            const hexColor = info.tax > 0 ? '#dc3545' : (hasLoss ? '#dc3545' : '#198754');
+            
+            const accResult = info.accumulated_result || 0;
+            const accColor = accResult >= 0 ? 'text-success' : 'text-danger';
+
+            html += `
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid ${hexColor} !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="fw-bold text-dark small text-uppercase">${group.replace(/_/g, ' ')}</span>
+                                <span class="badge ${bgClass} bg-opacity-10 ${info.tax > 0 || hasLoss ? 'text-danger' : 'text-success'} border ${statusClass} smaller">
+                                    ${info.tax > 0 ? 'Imposto a Pagar' : (hasLoss ? 'Prejuízo Acumulado' : 'Sem Imposto')}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted smaller">Saldo Acumulado:</span>
+                                    <span class="fw-bold smaller ${accColor}">${accResult > 0 ? '+' : ''}${fmtCur(accResult)}</span>
+                                </div>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar ${accResult >= 0 ? 'bg-success' : 'bg-danger'}" role="progressbar" style="width: 100%"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted smaller">L/P no Mês:</span>
+                                <span class="fw-medium smaller ${info.profit >= 0 ? 'text-success' : 'text-danger'}">${info.profit > 0 ? '+' : ''}${fmtCur(info.profit)}</span>
+                            </div>`;
+            
+            if (info.prev_loss < -0.01) {
+                html += `
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted smaller">Prejuízo a Compensar:</span>
+                                <span class="text-danger smaller fw-medium">${fmtCur(info.prev_loss)}</span>
+                            </div>`;
+            }
+            
+            if (info.taxable > 0) {
+                html += `
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted smaller">Base Tributável:</span>
+                                <span class="text-dark smaller fw-bold">${fmtCur(info.taxable)}</span>
+                            </div>`;
+            }
+
+            if (info.tax > 0) {
+                html += `
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                                <span class="fw-bold text-dark small">Imposto Estimado:</span>
+                                <span class="fw-bold text-danger">${fmtCur(info.tax)}</span>
+                            </div>`;
+            } else if (info.new_loss < -0.01) {
+                html += `
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                                <span class="fw-bold text-dark small">Novo Saldo Devedor:</span>
+                                <span class="fw-bold text-danger">${fmtCur(Math.abs(info.new_loss))}</span>
+                            </div>`;
+            } else {
+                html += `
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top text-success small fw-medium">
+                                <span>Isento / Sem lucro tributável</span>
+                            </div>`;
+            }
+
+            html += `
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        html += `   </div>
+        </div>`;
     }
 
     /* ── Tabela de ativos (Similar ao Ver Ativos) ── */
