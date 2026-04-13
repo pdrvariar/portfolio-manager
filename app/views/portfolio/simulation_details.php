@@ -482,7 +482,9 @@ function fmtCur(value, currency) {
                 taxable: taxableProfit,
                 tax: taxToPay,
                 new_loss: groupTaxResults[group].accumulatedLoss,
-                accumulated_result: groupTaxResults[group].accumulatedResult
+                accumulated_result: groupTaxResults[group].accumulatedResult,
+                // Novo campo específico para mostrar o "Crédito de Prejuízo" acumulado (estoque de prejuízo para compensação)
+                credit_loss: Math.abs(groupTaxResults[group].accumulatedLoss)
             };
         }
     }
@@ -534,18 +536,12 @@ function buildChildRow(dateKey) {
     let html = '<div class="child-row-wrapper">';
 
     /* ── Barra de resumo do mês ── */
-    if (deposit > 0 || isRebalance || taxPaid > 0) {
+    if (deposit > 0 || isRebalance) {
         html += '<div class="d-flex flex-wrap gap-2 mb-3 pb-3 border-bottom align-items-center" style="border-color: var(--border-color) !important;">';
         if (deposit > 0) {
             html += `<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">
                 <i class="bi bi-cash-coin me-1"></i>
                 ${depositLabels[depositType] || 'Aporte'}: ${fmtCur(deposit)}
-            </span>`;
-        }
-        if (taxPaid > 0) {
-            html += `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1" title="Imposto sobre o Lucro Realizado nas vendas deste mês">
-                <i class="bi bi-bank me-1"></i>
-                Imposto Pago: ${fmtCur(taxPaid)}
             </span>`;
         }
         if (isRebalance) {
@@ -580,10 +576,18 @@ function buildChildRow(dateKey) {
                     <div class="me-3">
                         <i class="bi ${icon} fs-5 ${isNegative ? 'text-danger' : 'text-success'}"></i>
                     </div>
-                    <div>
+                    <div class="flex-grow-1">
                         <div class="text-muted smaller text-uppercase fw-bold" style="font-size: 0.65rem;">${group.replace(/_/g, ' ')}</div>
-                        <div class="fw-bold ${isNegative ? 'text-danger' : 'text-success'}">
-                            ${accResult > 0.01 ? '+' : ''}${fmtCur(accResult)}
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <div class="fw-bold ${isNegative ? 'text-danger' : 'text-success'} me-2">
+                                ${accResult > 0.01 ? '+' : ''}${fmtCur(accResult)}
+                            </div>
+                            ${info.credit_loss > 0.01 ? `
+                            <div class="text-danger border-start ps-2" title="Prejuízo acumulado disponível para abatimento de IR">
+                                <span style="font-size: 0.65rem;" class="fw-bold">PREJUÍZO PARA COMPENSAÇÃO:</span>
+                                <span class="smaller fw-bold">${fmtCur(-info.credit_loss)}</span>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>`;
@@ -627,9 +631,15 @@ function buildChildRow(dateKey) {
                                     <span class="text-muted smaller">Saldo Acumulado:</span>
                                     <span class="fw-bold smaller ${accColor}">${accResult > 0 ? '+' : ''}${fmtCur(accResult)}</span>
                                 </div>
-                                <div class="progress" style="height: 4px;">
+                                <div class="progress mb-2" style="height: 4px;">
                                     <div class="progress-bar ${accResult >= 0 ? 'bg-success' : 'bg-danger'}" role="progressbar" style="width: 100%"></div>
                                 </div>
+                                ${info.credit_loss > 0.01 ? `
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-danger smaller fw-bold"><i class="bi bi-patch-minus-fill me-1"></i>Prejuízo Acumulado (Crédito):</span>
+                                    <span class="text-danger smaller fw-bold">${fmtCur(-info.credit_loss)}</span>
+                                </div>
+                                ` : ''}
                             </div>
 
                             <div class="d-flex justify-content-between mb-1">

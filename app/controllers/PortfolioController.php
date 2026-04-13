@@ -228,6 +228,23 @@ class PortfolioController {
         if ($latest && isset($latest['chart_data'])) {
             $chartData = json_decode($latest['chart_data'], true);
 
+            // Calcula o total de impostos pagos ao longo da simulação
+            $totalTaxPaid = 0;
+            if (isset($chartData['audit_log'])) {
+                foreach ($chartData['audit_log'] as $date => $data) {
+                    if ($date === '_metadata') continue;
+                    
+                    if (isset($data['tax_summary'])) {
+                        foreach ($data['tax_summary'] as $groupInfo) {
+                            $totalTaxPaid += $groupInfo['tax'] ?? 0;
+                        }
+                    } elseif (isset($data['tax_paid'])) {
+                        $totalTaxPaid += $data['tax_paid'];
+                    }
+                }
+            }
+            $metrics['total_tax_paid'] = $totalTaxPaid;
+
             // === FIX: Garante que o ponto 0 (capital inicial) exista no gráfico de evolução ===
             // Aplica tanto em simulações antigas (sem ponto 0) quanto novas.
             $initialCapitalValue = (float)$portfolio['initial_capital'];

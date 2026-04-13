@@ -338,7 +338,8 @@ $isSelicMonthlyConflict = (
     $heroHasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
     ?>
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <!-- Patrimônio Inicial -->
+        <div class="col-md-3">
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
                  style="background: var(--hero-initial-bg);">
                 <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-05" style="pointer-events:none;">
@@ -357,7 +358,7 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="display-6 fw-bold lh-1 mb-1" style="color: var(--hero-initial-icon);">
+                        <div class="fs-2 fw-bold lh-1 mb-1" style="color: var(--hero-initial-icon);">
                             <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
                         </div>
                         <div class="text-muted small mt-2">
@@ -369,7 +370,7 @@ $isSelicMonthlyConflict = (
         </div>
 
         <!-- Total de Aportes -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <?php if ($heroHasDeposits): ?>
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
                  style="background: var(--hero-deposits-bg);">
@@ -385,7 +386,7 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="display-6 fw-bold text-success lh-1 mb-1">
+                        <div class="fs-2 fw-bold text-success lh-1 mb-1">
                             <?php echo formatCurrency($metrics['total_deposits'], $portfolio['output_currency']); ?>
                         </div>
                         <div class="text-muted small mt-2">
@@ -410,7 +411,7 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="display-6 fw-bold text-muted lh-1 mb-1">—</div>
+                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">—</div>
                         <div class="text-muted small mt-2">
                             <i class="bi bi-dash-circle me-1"></i> Sem aportes periódicos
                         </div>
@@ -420,8 +421,39 @@ $isSelicMonthlyConflict = (
             <?php endif; ?>
         </div>
 
+        <!-- Total de Impostos -->
+        <div class="col-md-3">
+            <?php 
+            $heroTotalTax = $metrics['total_tax_paid'] ?? 0;
+            $hasTax = $heroTotalTax > 0;
+            ?>
+            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+                 style="background: <?= $hasTax ? 'var(--hero-tax-bg)' : 'linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%)' ?>;">
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $hasTax ? 'bg-danger' : 'bg-secondary' ?>">
+                            <i class="bi bi-calculator me-1"></i> Total de Impostos
+                        </span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                title="Soma de todos os impostos estimados pagos ao longo da simulação.<br><br>Leva em conta a <strong>compensação de prejuízos acumulados</strong> por grupo de ativos.">
+                            <i class="bi bi-info-circle-fill fs-6"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <div class="fs-2 fw-bold lh-1 mb-1 <?= $hasTax ? 'text-danger' : 'text-muted' ?>">
+                            <?= $hasTax ? formatCurrency($heroTotalTax, $portfolio['output_currency']) : '—' ?>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-receipt me-1"></i> <?= $hasTax ? 'Impostos sobre lucro' : 'Sem impostos no período' ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Patrimônio Final -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <?php
             $heroFinalValue = $metrics['final_value'] ?? $metrics['total_value'] ?? $portfolio['initial_capital'];
             $heroTotalReturn = $metrics['total_return'] ?? 0;
@@ -442,7 +474,7 @@ $isSelicMonthlyConflict = (
                     </div>
                     <?php if ($latest): ?>
                     <div>
-                        <div class="display-6 fw-bold lh-1 mb-1 <?= $heroPositive ? 'text-primary' : 'text-danger' ?>">
+                        <div class="fs-2 fw-bold lh-1 mb-1 <?= $heroPositive ? 'text-primary' : 'text-danger' ?>">
                             <?php echo formatCurrency($heroFinalValue, $portfolio['output_currency']); ?>
                         </div>
                         <div class="mt-2 d-flex align-items-center gap-2">
@@ -454,7 +486,7 @@ $isSelicMonthlyConflict = (
                     </div>
                     <?php else: ?>
                     <div>
-                        <div class="display-6 fw-bold text-muted lh-1 mb-1">—</div>
+                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">—</div>
                         <div class="text-muted small mt-2"><i class="bi bi-play-circle me-1"></i> Execute a simulação</div>
                     </div>
                     <?php endif; ?>
