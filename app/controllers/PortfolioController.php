@@ -46,7 +46,8 @@ class PortfolioController {
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
                 'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
                 'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0,
-                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null
+                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null,
+                'profit_tax_rates_json' => !empty($_POST['profit_tax_rates']) ? json_encode($_POST['profit_tax_rates']) : null
             ];
             
             $portfolioId = $this->portfolioModel->create($data);
@@ -369,7 +370,8 @@ class PortfolioController {
                 'rebalance_type' => $_POST['rebalance_type'] ?? 'full',
                 'rebalance_margin' => !empty($_POST['rebalance_margin']) ? (float)str_replace(',', '.', $_POST['rebalance_margin']) : null,
                 'use_cash_assets_for_rebalance' => isset($_POST['use_cash_assets_for_rebalance']) ? 1 : 0,
-                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null
+                'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null,
+                'profit_tax_rates_json' => !empty($_POST['profit_tax_rates']) ? json_encode($_POST['profit_tax_rates']) : null
             ];
             
             // 1. Atualiza os metadados (Nome, Capital, etc)

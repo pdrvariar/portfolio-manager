@@ -165,6 +165,12 @@ class BacktestService {
         $depositInflationAdjusted = (bool)($portfolio['deposit_inflation_adjusted'] ?? false);
         $useCashAssetsForRebalance = (bool)($portfolio['use_cash_assets_for_rebalance'] ?? false);
         $profitTaxRate = !empty($portfolio['profit_tax_rate']) ? (float)$portfolio['profit_tax_rate'] / 100 : null;
+        $profitTaxRates = !empty($portfolio['profit_tax_rates_json']) ? json_decode($portfolio['profit_tax_rates_json'], true) : [];
+        
+        // Converte as alíquotas do JSON para decimais (0.15, 0.20, etc)
+        foreach ($profitTaxRates as $key => $val) {
+            $profitTaxRates[$key] = (float)$val / 100;
+        }
 
         // Carrega dados de câmbio
         $fxEndDate = $portfolio['end_date'] ?? date('Y-m-d');
@@ -725,11 +731,16 @@ class BacktestService {
                                     
                                     $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
                                     
-                                    if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
-                                        $tax = $profit * 0.15; // Alíquota padrão de 15%
-                                        $taxPaidThisMonth += $tax;
-                                        $accumulatedTaxPaid += $tax;
-                                        $sellAmount -= $tax; // Deduz o imposto do valor que será reinvestido
+                                    if ($profit > 0) {
+                                        // Busca a alíquota específica para o grupo, ou usa a genérica, ou o padrão de 15%
+                                        $currentTaxRate = $profitTaxRates[$taxGroup] ?? ($profitTaxRate ?? 0.15);
+                                        
+                                        if ($currentTaxRate > 0) {
+                                            $tax = $profit * $currentTaxRate;
+                                            $taxPaidThisMonth += $tax;
+                                            $accumulatedTaxPaid += $tax;
+                                            $sellAmount -= $tax; // Deduz o imposto do valor que será reinvestido
+                                        }
                                     }
                                     $currentCosts[$assetId] -= $costSold;
                                 }
@@ -782,11 +793,15 @@ class BacktestService {
                                         
                                         $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
                                         
-                                        if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
-                                            $tax = $profit * 0.15;
-                                            $taxPaidThisMonth += $tax;
-                                            $accumulatedTaxPaid += $tax;
-                                            $sellAmount -= $tax;
+                                        if ($profit > 0) {
+                                            $currentTaxRate = $profitTaxRates[$taxGroup] ?? ($profitTaxRate ?? 0.15);
+                                            
+                                            if ($currentTaxRate > 0) {
+                                                $tax = $profit * $currentTaxRate;
+                                                $taxPaidThisMonth += $tax;
+                                                $accumulatedTaxPaid += $tax;
+                                                $sellAmount -= $tax;
+                                            }
                                         }
                                         $currentCosts[$assetId] -= $costSold;
                                     }
@@ -925,12 +940,16 @@ class BacktestService {
                                 
                                 $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
                                 
-                                if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
-                                    $tax = $profit * 0.15;
-                                    $taxPaidThisMonth += $tax;
-                                    $accumulatedTaxPaid += $tax;
-                                    // No rebalanceamento completo, o imposto reduz o rebalanceBase (patrimônio total)
-                                    $rebalanceBase -= $tax;
+                                if ($profit > 0) {
+                                    $currentTaxRate = $profitTaxRates[$taxGroup] ?? ($profitTaxRate ?? 0.15);
+                                    
+                                    if ($currentTaxRate > 0) {
+                                        $tax = $profit * $currentTaxRate;
+                                        $taxPaidThisMonth += $tax;
+                                        $accumulatedTaxPaid += $tax;
+                                        // No rebalanceamento completo, o imposto reduz o rebalanceBase (patrimônio total)
+                                        $rebalanceBase -= $tax;
+                                    }
                                 }
                                 $currentCosts[$assetId] -= $costSold;
                             }

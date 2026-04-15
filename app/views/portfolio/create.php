@@ -122,16 +122,43 @@ $assets = $assetModel->getAllWithDetails();
                                     <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Se ativado, o sistema calculará o imposto devido sobre o lucro realizado em cada venda (rebalanceamento)."></i>
                                 </label>
                                 <div class="card bg-light border-0 rounded-3">
-                                    <div class="card-body p-2 d-flex align-items-center">
-                                        <div class="form-check form-switch mb-0 ms-2">
+                                    <div class="card-body p-2">
+                                        <div class="form-check form-switch mb-2 ms-2">
                                             <input class="form-check-input" type="checkbox" id="enable_tax" onchange="toggleTaxField()">
                                             <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto</label>
                                         </div>
-                                        <div id="tax_input_container" class="ms-auto" style="display: none; width: 120px;">
-                                            <div class="input-group input-group-sm">
-                                                <input type="number" class="form-control" id="profit_tax_rate" name="profit_tax_rate" step="0.1" min="0" max="100" placeholder="0.0" value="15.0">
-                                                <span class="input-group-text">%</span>
+                                        <div id="tax_input_container" style="display: none;">
+                                            <hr class="my-2 opacity-10">
+                                            <?php 
+                                                $defaultRates = [
+                                                    'CRIPTOMOEDA' => '15.0',
+                                                    'ETF_US' => '15.0',
+                                                    'ETF_BR' => '15.0',
+                                                    'RENDA_FIXA' => '20.0',
+                                                    'FUNDO_IMOBILIARIO' => '20.0'
+                                                ];
+                                                
+                                                foreach ($defaultRates as $group => $defaultRate):
+                                                    $label = str_replace('_', ' ', $group);
+                                            ?>
+                                            <div class="row align-items-center mb-2 g-2">
+                                                <div class="col-7">
+                                                    <span class="small text-muted fw-bold ms-2"><?= $label ?></span>
+                                                </div>
+                                                <div class="col-5">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" class="form-control tax-rate-input" 
+                                                               name="profit_tax_rates[<?= $group ?>]" 
+                                                               step="0.1" min="0" max="100" 
+                                                               value="<?= $defaultRate ?>">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <?php endforeach; ?>
+                                            
+                                            <!-- Campo oculto para compatibilidade -->
+                                            <input type="hidden" id="profit_tax_rate" name="profit_tax_rate" value="">
                                         </div>
                                     </div>
                                 </div>
@@ -659,14 +686,14 @@ function toggleUseCashAssetsField() {
 function toggleTaxField() {
     const enableTax = document.getElementById('enable_tax').checked;
     const container = document.getElementById('tax_input_container');
-    const input = document.getElementById('profit_tax_rate');
-    
+    const inputs = document.querySelectorAll('.tax-rate-input');
+            
     if (enableTax) {
         container.style.display = 'block';
-        if (!input.value) input.value = '15.0';
     } else {
         container.style.display = 'none';
-        input.value = ''; // Envia null/vazio para o servidor
+        inputs.forEach(input => input.value = ''); // Envia null/vazio para o servidor
+        document.getElementById('profit_tax_rate').value = '';
     }
 }
 

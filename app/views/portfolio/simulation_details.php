@@ -330,13 +330,22 @@ function fmtCur(value, currency) {
     };
 
     // Alíquotas por grupo (Pode ser expandido conforme necessidade)
-    const TAX_RATES = {
-        'ETF_BR': 0.15,
-        'CRIPTOMOEDA': 0.15,
-        'FUNDO_IMOBILIARIO': 0.20,
-        'ETF_US': 0.15,
-        'RENDA_FIXA': 0 // Não aplicável regra de compensação aqui conforme pedido
-    };
+    const TAX_RATES = <?php 
+        $defaultRates = [
+            'CRIPTOMOEDA' => 0.15,
+            'ETF_US' => 0.15,
+            'ETF_BR' => 0.15,
+            'RENDA_FIXA' => 0.20,
+            'FUNDO_IMOBILIARIO' => 0.20
+        ];
+        $configuredRates = !empty($portfolio['profit_tax_rates_json']) ? json_decode($portfolio['profit_tax_rates_json'], true) : [];
+        $finalRates = [];
+        foreach ($defaultRates as $group => $default) {
+            $val = isset($configuredRates[$group]) ? (float)$configuredRates[$group] / 100 : ($portfolio['profit_tax_rate'] ? (float)$portfolio['profit_tax_rate'] / 100 : $default);
+            $finalRates[$group] = $val;
+        }
+        echo json_encode($finalRates);
+    ?>;
 
     dates.forEach(date => {
         const data = log[date];
@@ -364,10 +373,6 @@ function fmtCur(value, currency) {
             const rawTaxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
             
             let taxGroup = rawTaxGroup;
-            if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
-                // Para ETFs de Renda Variável, a alíquota é 15%
-                TAX_RATES[taxGroup] = 0.15;
-            }
 
             // DEBUG: Verificando se encontrou o grupo para este ativo
             if (date === dates[0]) {

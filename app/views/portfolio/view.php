@@ -1213,13 +1213,22 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             const dates = Object.keys(log).sort();
             const currentCosts = {};
             const groupTaxResults = {};
-            const TAX_RATES = {
-                'ETF_BR': 0.15,
-                'CRIPTOMOEDA': 0.15,
-                'FUNDO_IMOBILIARIO': 0.20,
-                'ETF_US': 0.15,
-                'RENDA_FIXA': 0
-            };
+            const TAX_RATES = <?php 
+                $defaultRates = [
+                    'CRIPTOMOEDA' => 0.15,
+                    'ETF_US' => 0.15,
+                    'ETF_BR' => 0.15,
+                    'RENDA_FIXA' => 0.20,
+                    'FUNDO_IMOBILIARIO' => 0.20
+                ];
+                $configuredRates = !empty($portfolio['profit_tax_rates_json']) ? json_decode($portfolio['profit_tax_rates_json'], true) : [];
+                $finalRates = [];
+                foreach ($defaultRates as $group => $default) {
+                    $val = isset($configuredRates[$group]) ? (float)$configuredRates[$group] / 100 : ($portfolio['profit_tax_rate'] ? (float)$portfolio['profit_tax_rate'] / 100 : $default);
+                    $finalRates[$group] = $val;
+                }
+                echo json_encode($finalRates);
+            ?>;
 
             dates.forEach(date => {
                 const data = log[date];
@@ -1238,9 +1247,6 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     const depositDelta = (deposit && deposit.amount !== undefined) ? parseFloat(deposit.amount) : 0;
                     const delta = tradeDelta + depositDelta;
                     let taxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
-                    if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
-                        TAX_RATES[taxGroup] = 0.15;
-                    }
 
                     if (currentCosts[id] === 0 || isInitialPoint) {
                         if (isInitialPoint) {
