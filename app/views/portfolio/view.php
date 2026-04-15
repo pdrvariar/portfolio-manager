@@ -1215,11 +1215,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             const groupTaxResults = {};
             const TAX_RATES = {
                 'ETF_BR': 0.15,
-                'ACAO_BR': 0.15,
                 'CRIPTOMOEDA': 0.15,
                 'FUNDO_IMOBILIARIO': 0.20,
                 'ETF_US': 0.15,
-                'ETF_USA': 0.15,
                 'RENDA_FIXA': 0
             };
 
@@ -1240,8 +1238,6 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     const depositDelta = (deposit && deposit.amount !== undefined) ? parseFloat(deposit.amount) : 0;
                     const delta = tradeDelta + depositDelta;
                     let taxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
-                    if (taxGroup === 'ACAO_BR') taxGroup = 'ETF_BR';
-                    if (taxGroup === 'ETF_USA') taxGroup = 'ETF_US';
                     if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
                         TAX_RATES[taxGroup] = 0.15;
                     }

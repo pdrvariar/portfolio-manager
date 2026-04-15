@@ -363,12 +363,7 @@ function fmtCur(value, currency) {
             const delta = tradeDelta + depositDelta;
             const rawTaxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
             
-            // Normalização de Grupos de IR conforme solicitado pelo usuário
-            // ACAO_BR -> ETF_BR
-            // ETF_USA -> ETF_US
             let taxGroup = rawTaxGroup;
-            if (taxGroup === 'ACAO_BR') taxGroup = 'ETF_BR';
-            if (taxGroup === 'ETF_USA') taxGroup = 'ETF_US';
             if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
                 // Para ETFs de Renda Variável, a alíquota é 15%
                 TAX_RATES[taxGroup] = 0.15;
