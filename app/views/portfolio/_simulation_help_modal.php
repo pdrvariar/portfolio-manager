@@ -51,20 +51,23 @@
                             <div class="bg-success text-white rounded-3 p-2 me-3">
                                 <i class="bi bi-bullseye fs-4"></i>
                             </div>
-                            <h5 class="card-title mb-0">Aporte Direcionado (Smart)</h5>
+                            <h5 class="card-title mb-0">Aporte Direcionado ao Alvo (Smart)</h5>
                         </div>
-                        <p class="card-text text-muted">A estratégia mais eficiente para manter o equilíbrio sem precisar vender ativos (evita impostos).</p>
+                        <p class="card-text text-muted">A estratégia mais eficiente para manter o equilíbrio sem precisar vender ativos (evita impostos e taxas).</p>
                         <div class="row g-3 small mb-3">
                             <div class="col-md-6">
                                 <div class="p-2 border rounded bg-white h-100">
-                                    <strong>Como funciona:</strong> Todo o dinheiro do aporte vai primeiro para o ativo que está <strong>mais longe do seu alvo</strong> (o que caiu mais ou subiu menos).
+                                    <strong class="text-success"><i class="bi bi-check2-circle me-1"></i>Como funciona:</strong> Todo o dinheiro do aporte vai primeiro para o ativo que está <strong>mais longe do seu alvo</strong> (o que caiu mais ou subiu menos).
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="p-2 border rounded bg-white h-100">
-                                    <strong>Vantagem:</strong> Você reequilibra a carteira "pela compra", focando sempre no que está barato em relação à sua meta original.
+                                    <strong class="text-success"><i class="bi bi-graph-up-arrow me-1"></i>Vantagem:</strong> Você reequilibra a carteira "pela compra", focando sempre no que está barato em relação à sua meta original.
                                 </div>
                             </div>
+                        </div>
+                        <div class="alert alert-info py-2 small mb-0 border-0">
+                            <i class="bi bi-info-circle me-1"></i> Se o aporte for maior que o necessário para equilibrar o primeiro ativo, o restante vai para o segundo mais defasado, e assim sucessivamente.
                         </div>
                     </div>
                 </div>
@@ -79,7 +82,15 @@
                             <h5 class="card-title mb-0">Aporte em Caixa (SELIC)</h5>
                         </div>
                         <p class="card-text text-muted">Simula o acúmulo de capital em uma reserva de liquidez antes de investir nos ativos principais.</p>
-                        <p class="small text-muted">O aporte entra em uma conta "Caixa" que rende a <strong>Taxa SELIC</strong> diária. O dinheiro só é investido nos ativos da carteira quando ocorre um <strong>Rebalanceamento</strong>.</p>
+                        <div class="p-3 bg-white rounded border small mb-3">
+                            <p class="mb-2"><strong>Fluxo de Investimento:</strong></p>
+                            <ol class="mb-0 ps-3">
+                                <li>O aporte entra em uma conta "Caixa" que rende a <strong>Taxa SELIC</strong> diária.</li>
+                                <li>O dinheiro fica rendendo de forma segura e líquida.</li>
+                                <li>O montante acumulado só é investido nos ativos da carteira quando ocorre um <strong>Rebalanceamento</strong> (Mensal, Trimestral, etc).</li>
+                            </ol>
+                        </div>
+                        <p class="small text-muted mb-0"><i class="bi bi-lightbulb me-1"></i> Ideal para simular estratégias onde você não quer investir "picado" todo mês, mas sim em janelas específicas.</p>
                     </div>
                 </div>
 
@@ -102,15 +113,31 @@
 
                 <hr class="my-4">
 
-                <h6 class="fw-bold mb-3"><i class="bi bi-gear-wide-connected me-2"></i>Entendendo os Ajustes</h6>
+                <h6 class="fw-bold mb-3"><i class="bi bi-gear-wide-connected me-2"></i>Entendendo os Ajustes de Rebalanceamento</h6>
                 <div class="row g-4 small">
                     <div class="col-md-6">
-                        <p class="mb-1 fw-bold text-primary">Rebalanceamento "Apenas Compras"</p>
-                        <p class="text-muted">Ao marcar esta opção, o sistema nunca venderá ativos para atingir o alvo. Ele apenas usará o dinheiro novo (aportes) para equilibrar. Útil para simular a fase de acúmulo.</p>
+                        <div class="h-100 p-3 bg-white border rounded">
+                            <p class="mb-1 fw-bold text-primary"><i class="bi bi-arrow-down-square me-1"></i>Apenas Compras</p>
+                            <p class="text-muted mb-0">O sistema nunca venderá ativos para atingir o alvo. Ele usará apenas o dinheiro novo (aportes) para comprar o que está "atrás". Se não houver aporte suficiente, a carteira pode permanecer desbalanceada.</p>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <p class="mb-1 fw-bold text-primary">Correção pela Inflação (IPCA)</p>
-                        <p class="text-muted">Faz com que o valor do seu aporte aumente todos os meses conforme a inflação oficial (IPCA), mantendo o poder de compra real do seu investimento ao longo de décadas.</p>
+                        <div class="h-100 p-3 bg-white border rounded">
+                            <p class="mb-1 fw-bold text-primary"><i class="bi bi-arrow-left-right me-1"></i>Completo (Compra e Venda)</p>
+                            <p class="text-muted mb-0">Força o retorno exato aos pesos-alvo. Se um ativo subiu muito, o sistema vende o excesso (gerando lucro/imposto) e compra os que estão abaixo. É a forma mais rigorosa de controle de risco.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="h-100 p-3 bg-white border rounded">
+                            <p class="mb-1 fw-bold text-primary"><i class="bi bi-bounding-box me-1"></i>Com Margem (Global ou Ativo)</p>
+                            <p class="text-muted mb-0">Evita giros desnecessários. O sistema só rebalanceia se o desvio for maior que a margem (ex: 10%). Se o ativo flutuar pouco, nada é feito, economizando em taxas e impostos.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="h-100 p-3 bg-white border rounded">
+                            <p class="mb-1 fw-bold text-primary"><i class="bi bi-graph-up me-1"></i>Correção pela Inflação (IPCA)</p>
+                            <p class="text-muted mb-0">O valor do seu aporte aumenta mensalmente conforme o IPCA. Se você começa aportando R$ 1.000 e a inflação foi 1% no mês, no próximo o aporte será R$ 1.010. Mantém seu esforço de poupança real.</p>
+                        </div>
                     </div>
                 </div>
             </div>

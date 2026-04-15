@@ -176,21 +176,24 @@ ob_start();
 
                         <!-- Campos para Aportes Periódicos / Direcionado / Caixa SELIC -->
                         <?php $showDepositFields = in_array($portfolio['simulation_type'], ['monthly_deposit', 'smart_deposit', 'selic_cash_deposit']); ?>
-                        <div id="monthly_deposit_fields" class="simulation-fields" style="display: <?= $showDepositFields ? 'block' : 'none' ?>;">
+                        <div id="monthly_deposit_fields" class="simulation-fields" style="display: <?= ($showDepositFields || $portfolio['simulation_type'] == 'standard') ? 'block' : 'none' ?>;">
                             <div class="card border-primary mb-3">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                     <?php
                                     $headerTextsPhp = [
-                                        'monthly_deposit'    => '<i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos',
+                                        'standard'           => '<i class="bi bi-gear me-2"></i>Configuração da Simulação',
+                                        'monthly_deposit'    => '<i class="bi bi-calendar-plus me-2"></i>Configuração — Aportes Periódicos',
+                                        'strategic_deposit'  => '<i class="bi bi-lightning-charge me-2"></i>Configuração — Aportes Estratégicos',
                                         'smart_deposit'      => '<i class="bi bi-bullseye me-2"></i>Configuração — Aporte Direcionado ao Alvo',
                                         'selic_cash_deposit' => '<i class="bi bi-piggy-bank me-2"></i>Configuração — Aporte em Caixa (SELIC)'
                                     ];
-                                    $currentHeader = $headerTextsPhp[$portfolio['simulation_type']] ?? $headerTextsPhp['monthly_deposit'];
+                                    $currentHeader = $headerTextsPhp[$portfolio['simulation_type']] ?? $headerTextsPhp['standard'];
                                     ?>
                                     <h6 class="mb-0" id="deposit_card_header"><?= $currentHeader ?></h6>
+                                    <span class="badge bg-white text-primary rounded-pill small">Dica UEX</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row align-items-end">
+                                    <div class="row align-items-end mb-3" id="deposit_inputs_row" style="display: <?= $showDepositFields ? 'flex' : 'none' ?>;">
                                         <div class="col-md-3">
                                             <div class="mb-3">
                                                 <label for="deposit_amount" class="form-label d-flex align-items-center">
@@ -284,14 +287,50 @@ ob_start();
                                         </div>
                                     </div>
                                     <!-- Descrição dinâmica por tipo -->
-                                    <div id="desc_monthly_deposit" class="alert alert-info py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'block' : 'none' ?>;">
-                                        <i class="bi bi-info-circle me-1"></i> Os aportes serão distribuídos entre todos os ativos proporcionalmente ao peso-alvo (com rebalanceamento a cada aporte).
+                                    <div id="desc_standard" class="alert alert-light border shadow-sm py-3 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'standard' ? 'block' : 'none' ?>;">
+                                        <div class="d-flex">
+                                            <i class="bi bi-info-circle-fill text-primary fs-5 me-3"></i>
+                                            <div>
+                                                <strong class="d-block mb-1">Estratégia Buy & Hold</strong>
+                                                O capital inicial é investido uma única vez. A carteira evolui apenas pela variação dos preços e pelos rebalanceamentos periódicos que você definir. Ideal para comparar o desempenho puro dos ativos escolhidos.
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="desc_smart_deposit" class="alert alert-success py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'block' : 'none' ?>;">
-                                        <i class="bi bi-bullseye me-1"></i> O aporte é direcionado ao ativo mais abaixo do percentual-alvo. Quando atingir o alvo, o restante vai para o próximo mais desviado, e assim por diante. Sobras são acumuladas em Caixa SELIC e usadas integralmente no próximo rebalanceamento.
+                                    <div id="desc_monthly_deposit" class="alert alert-info border shadow-sm py-3 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'block' : 'none' ?>;">
+                                        <div class="d-flex">
+                                            <i class="bi bi-calendar-check-fill text-info fs-5 me-3"></i>
+                                            <div>
+                                                <strong class="d-block mb-1">Aportes Regulares</strong>
+                                                Simula o hábito de poupar mensalmente. O valor do aporte é distribuído entre todos os ativos seguindo o peso-alvo. É a forma clássica de acumulação de patrimônio (Dollar Cost Averaging).
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="desc_selic_cash_deposit" class="alert alert-secondary py-2 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'block' : 'none' ?>;">
-                                        <i class="bi bi-piggy-bank me-1"></i> Todo o aporte vai para o Caixa (SELIC), rendendo a taxa SELIC até o próximo rebalanceamento, quando é integralmente investido nos ativos da carteira.
+                                    <div id="desc_smart_deposit" class="alert alert-success border shadow-sm py-3 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'block' : 'none' ?>;">
+                                        <div class="d-flex">
+                                            <i class="bi bi-bullseye text-success fs-5 me-3"></i>
+                                            <div>
+                                                <strong class="d-block mb-1">Rebalanceamento "Pela Compra"</strong>
+                                                A estratégia mais inteligente: o aporte é usado para comprar o ativo que está mais "barato" (mais longe do alvo). Isso evita vendas desnecessárias e reduz custos com impostos, mantendo a carteira equilibrada organicamente.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="desc_selic_cash_deposit" class="alert alert-secondary border shadow-sm py-3 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'block' : 'none' ?>;">
+                                        <div class="d-flex">
+                                            <i class="bi bi-piggy-bank-fill text-secondary fs-5 me-3"></i>
+                                            <div>
+                                                <strong class="d-block mb-1">Acúmulo em Liquidez</strong>
+                                                O aporte mensal é guardado em um "Caixa" rendendo SELIC. O montante total acumulado só entra na carteira nos meses de rebalanceamento. Útil para simular quem prefere fazer grandes compras periódicas em vez de pequenas compras mensais.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="desc_strategic_deposit" class="alert alert-warning border shadow-sm py-3 small mb-0" style="display: <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'block' : 'none' ?>;">
+                                        <div class="d-flex">
+                                            <i class="bi bi-lightning-charge-fill text-warning fs-5 me-3"></i>
+                                            <div>
+                                                <strong class="d-block mb-1">Aproveitando as Quedas (Buy the Dip)</strong>
+                                                O sistema monitora o mercado e só injeta capital novo se houver uma queda brusca (definida pelo limiar). Simula a "reserva de oportunidade" sendo usada para comprar ativos em momentos de pessimismo.
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -456,22 +495,32 @@ ob_start();
             });
 
             // Esconde todas as descrições dinâmicas
-            ['desc_monthly_deposit', 'desc_smart_deposit', 'desc_selic_cash_deposit'].forEach(id => {
+            ['desc_standard', 'desc_monthly_deposit', 'desc_smart_deposit', 'desc_selic_cash_deposit', 'desc_strategic_deposit'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
 
             const depositHeaderTexts = {
-                'monthly_deposit':    '<i class="bi bi-calendar-plus me-2"></i>Configuração de Aportes Periódicos',
+                'standard':           '<i class="bi bi-gear me-2"></i>Configuração da Simulação',
+                'monthly_deposit':    '<i class="bi bi-calendar-plus me-2"></i>Configuração — Aportes Periódicos',
+                'strategic_deposit':  '<i class="bi bi-lightning-charge me-2"></i>Configuração — Aportes Estratégicos',
                 'smart_deposit':      '<i class="bi bi-bullseye me-2"></i>Configuração — Aporte Direcionado ao Alvo',
                 'selic_cash_deposit': '<i class="bi bi-piggy-bank me-2"></i>Configuração — Aporte em Caixa (SELIC)'
             };
 
-            if (type === 'monthly_deposit' || type === 'smart_deposit' || type === 'selic_cash_deposit') {
+            const descEl = document.getElementById('desc_' + type);
+            if (descEl) descEl.style.display = 'block';
+
+            if (type === 'monthly_deposit' || type === 'smart_deposit' || type === 'selic_cash_deposit' || type === 'standard') {
                 document.getElementById('monthly_deposit_fields').style.display = 'block';
-                document.getElementById('deposit_card_header').innerHTML = depositHeaderTexts[type] || depositHeaderTexts['monthly_deposit'];
-                const descEl = document.getElementById('desc_' + type);
-                if (descEl) descEl.style.display = 'block';
+                document.getElementById('deposit_card_header').innerHTML = depositHeaderTexts[type] || depositHeaderTexts['standard'];
+                
+                const depositInputsRow = document.getElementById('deposit_inputs_row');
+                if (type === 'standard') {
+                    if (depositInputsRow) depositInputsRow.style.display = 'none';
+                } else {
+                    if (depositInputsRow) depositInputsRow.style.display = 'flex';
+                }
 
                 // Exibir seletor de tipo de rebalanceamento apenas para smart_deposit e selic_cash_deposit
                 const rtContainer = document.getElementById('rebalance_type').closest('.col-md-3');
