@@ -211,7 +211,8 @@ ob_start();
                                                 <select class="form-select" id="rebalance_type" name="rebalance_type">
                                                     <option value="full" <?= ($portfolio['rebalance_type'] ?? 'full') == 'full' ? 'selected' : '' ?>>Completo (Compra e Venda)</option>
                                                     <option value="buy_only" <?= ($portfolio['rebalance_type'] ?? 'full') == 'buy_only' ? 'selected' : '' ?>>Apenas Compras (Sem Vendas)</option>
-                                                    <option value="with_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'with_margin' ? 'selected' : '' ?>>Com Margens (Venda se superar X%)</option>
+                                                    <option value="with_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'with_margin' ? 'selected' : '' ?>>Com Margem Global (Venda se superar X%)</option>
+                                                    <option value="custom_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'custom_margin' ? 'selected' : '' ?>>Com Margens Customizadas por Ativo</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -399,6 +400,8 @@ ob_start();
                 name: "<?php echo htmlspecialchars($pa['name']); ?>",
                 allocation: <?php echo (float)$pa['allocation_percentage']; ?>,
                 factor: <?php echo (float)$pa['performance_factor']; ?>,
+                rebalance_margin_down: <?php echo $pa['rebalance_margin_down'] !== null ? (float)$pa['rebalance_margin_down'] : 'null'; ?>,
+                rebalance_margin_up: <?php echo $pa['rebalance_margin_up'] !== null ? (float)$pa['rebalance_margin_up'] : 'null'; ?>,
                 min_date: "<?php echo $min; ?>",
                 max_date: "<?php echo $max; ?>"
             },
@@ -480,7 +483,7 @@ ob_start();
             const marginContainer = document.getElementById('rebalance_margin_container');
             
             if (cashContainer) {
-                if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'buy_only') {
+                if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && (rebalanceType === 'buy_only' || rebalanceType === 'custom_margin')) {
                     cashContainer.style.display = 'block';
                 } else {
                     cashContainer.style.display = 'none';
@@ -500,6 +503,9 @@ ob_start();
                     marginContainer.style.display = 'none';
                 }
             }
+            
+            // Sempre que mudar o tipo de rebalanceamento, atualizamos a tabela para mostrar/esconder margens customizadas
+            updateTable();
         }
 
         function toggleTaxField() {
@@ -542,6 +548,8 @@ ob_start();
                 name: opt.getAttribute('data-name'),
                 allocation: parseFloat(allocationInput.value),
                 factor: parseFloat(factorInput.value) || 1.0,
+                rebalance_margin_down: null,
+                rebalance_margin_up: null,
                 min_date: opt.getAttribute('data-min'),
                 max_date: opt.getAttribute('data-max')
             });
@@ -561,13 +569,55 @@ ob_start();
         function updateTable() {
             const tbody = document.getElementById('assetsBody');
             const totalSpan = document.getElementById('totalAllocation');
+            const rebalanceType = document.getElementById('rebalance_type').value;
+            const isCustomMargin = rebalanceType === 'custom_margin';
             let total = 0;
+
+            // Atualiza o header da tabela se necessário
+            const headerRow = tbody.closest('table').querySelector('thead tr');
+            if (headerRow) {
+                const marginHeader = headerRow.querySelector('.margin-header');
+                if (isCustomMargin) {
+                    if (!marginHeader) {
+                        const th = document.createElement('th');
+                        th.className = 'margin-header';
+                        th.innerHTML = 'Margens de Rebalanceamento (%) <i class="bi bi-info-circle-fill ms-1 text-muted info-tooltip" data-bs-toggle="tooltip" title="Define o range onde não haverá rebalanceamento. Ex: Alvo 50% com margem -4% e +5%, não rebalanceia se estiver entre 46% e 55%."></i>';
+                        headerRow.insertBefore(th, headerRow.cells[headerRow.cells.length - 1]);
+                    }
+                } else if (marginHeader) {
+                    marginHeader.remove();
+                }
+            }
 
             tbody.innerHTML = '';
 
             assets.forEach(asset => {
                 total += asset.allocation;
                 const dateInfo = asset.min_date ? `<div class="asset-range-info"><i class="bi bi-calendar-check me-1"></i>Histórico: ${formatDateLabel(asset.min_date)} a ${formatDateLabel(asset.max_date)}</div>` : '';
+
+                let marginFields = '';
+                if (isCustomMargin) {
+                    marginFields = `
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Min</span>
+                                    <input type="number" name="assets[${asset.asset_id}][rebalance_margin_down]"
+                                        value="${asset.rebalance_margin_down !== null ? asset.rebalance_margin_down : ''}" step="any" class="form-control"
+                                        placeholder="-X.X" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_down', this.value)">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Max</span>
+                                    <input type="number" name="assets[${asset.asset_id}][rebalance_margin_up]"
+                                        value="${asset.rebalance_margin_up !== null ? asset.rebalance_margin_up : ''}" step="any" class="form-control"
+                                        placeholder="+X.X" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_up', this.value)">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                }
 
                 tbody.innerHTML += `
             <tr>
@@ -588,6 +638,7 @@ ob_start();
                         value="${asset.factor}" step="0.01" class="form-control form-control-sm"
                         oninput="updateAssetData(${asset.asset_id}, 'factor', this.value)">
                 </td>
+                ${marginFields}
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeAsset(${asset.id})"><i class="bi bi-trash"></i></button>
                     <input type="hidden" name="assets[${asset.asset_id}][asset_id]" value="${asset.asset_id}">
@@ -599,6 +650,12 @@ ob_start();
             totalSpan.innerText = total.toFixed(2);
             checkTotal(total);
             validatePortfolioRange(); // Valida as datas após qualquer mudança na lista
+            
+            // Re-inicializa tooltips se houver
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
         }
 
         function updateAssetData(assetId, field, value) {
@@ -606,10 +663,14 @@ ob_start();
             if (asset) {
                 if (field === 'allocation') asset.allocation = parseFloat(value) || 0;
                 else if (field === 'factor') asset.factor = parseFloat(value) || 0;
+                else if (field === 'rebalance_margin_down') asset.rebalance_margin_down = value === '' ? null : parseFloat(value);
+                else if (field === 'rebalance_margin_up') asset.rebalance_margin_up = value === '' ? null : parseFloat(value);
 
-                let total = assets.reduce((sum, a) => sum + a.allocation, 0);
-                document.getElementById('totalAllocation').innerText = total.toFixed(2);
-                checkTotal(total);
+                if (field === 'allocation') {
+                    let total = assets.reduce((sum, a) => sum + a.allocation, 0);
+                    document.getElementById('totalAllocation').innerText = total.toFixed(2);
+                    checkTotal(total);
+                }
             }
         }
 

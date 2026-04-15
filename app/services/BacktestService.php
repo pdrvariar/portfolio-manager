@@ -686,26 +686,34 @@ class BacktestService {
                     $selicCash = 0; // Caixa é integralmente investido no rebalanceamento
                 }
 
-                if ($rebalanceType === 'buy_only' || $rebalanceType === 'with_margin') {
+                if ($rebalanceType === 'buy_only' || $rebalanceType === 'with_margin' || $rebalanceType === 'custom_margin') {
                     // ============================================
-                    // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS OU COM MARGENS
+                    // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS OU COM MARGENS (GLOBAL OU CUSTOMIZADA)
                     // ============================================
                     
                     // Inicializa caixa disponível com o que foi injetado (SELIC)
                     $availableToInvest = $selicCashInjected;
 
                     // Se for rebalanceamento COM MARGENS, identifica excessos além da margem e vende primeiro
-                    if ($rebalanceType === 'with_margin') {
+                    if ($rebalanceType === 'with_margin' || $rebalanceType === 'custom_margin') {
                         foreach ($assets as $asset) {
                             $assetId = $asset['asset_id'];
                             $targetPct = (float)$asset['allocation_percentage'] / 100;
                             $targetValue = $rebalanceBase * $targetPct;
                             $currentValue = $currentBalances[$assetId];
 
-                            // Margem de tolerância: Alvo * (1 + margem)
-                            $toleranceLimit = $targetValue * (1 + $rebalanceMargin);
+                            // Margem de tolerância: Alvo + margem_up (em pontos percentuais)
+                            $toleranceLimit = 0;
+                            if ($rebalanceType === 'with_margin') {
+                                // Margem Global: Alvo * (1 + margem)
+                                $toleranceLimit = $targetValue * (1 + $rebalanceMargin);
+                            } else {
+                                // Margem Customizada: Alvo + MargemUp (ex: 50% + 5% = 55%)
+                                $marginUpPct = isset($asset['rebalance_margin_up']) ? (float)$asset['rebalance_margin_up'] / 100 : 0;
+                                $toleranceLimit = $rebalanceBase * ($targetPct + $marginUpPct);
+                            }
 
-                            if ($currentValue > $toleranceLimit) {
+                            if ($currentValue > $toleranceLimit + 0.001) {
                                 // Vende apenas o que exceder o ALVO
                                 $sellAmount = $currentValue - $targetValue;
                                 
@@ -823,6 +831,19 @@ class BacktestService {
                             $currentValue = $currentBalances[$assetId];
                             
                             $deficit = max(0.0, $targetValue - $currentValue);
+                            
+                            // Se for rebalanceamento com margens customizadas, só compra se estiver abaixo da margem inferior
+                            if ($rebalanceType === 'custom_margin') {
+                                $marginDownPct = isset($asset['rebalance_margin_down']) ? (float)$asset['rebalance_margin_down'] / 100 : 0;
+                                // Margem inferior: Alvo - margem_down (ex: 50% - 4% = 46%)
+                                $buyThreshold = $rebalanceBase * ($targetPct + $marginDownPct); // rebalance_margin_down já vem negativo ou é somado algebricamente?
+                                // De acordo com o exemplo do usuário: DIVO11 - 50. Margem -4%. Range: [46%, 55%].
+                                // Se o usuário digitou "-4" no campo, fazemos targetPct + (-4/100).
+                                if ($currentValue > $buyThreshold - 0.001) {
+                                    $deficit = 0; // Não precisa comprar pois está dentro do range
+                                }
+                            }
+                            
                             $relDev = $targetValue > 0 ? ($targetValue - $currentValue) / $targetValue : 0;
 
                             $deviations[] = [

@@ -206,7 +206,9 @@ class Portfolio {
     
     public function getPortfolioAssets($portfolioId) {
         // Adicionado sa.currency e sa.tax_group para que a view.php e simulation_details.php consigam exibir as informações
-        $sql = "SELECT sa.id as asset_id, sa.name, sa.currency, sa.tax_group, pa.allocation_percentage, pa.performance_factor, pa.id 
+        $sql = "SELECT sa.id as asset_id, sa.name, sa.currency, sa.tax_group, 
+                       pa.allocation_percentage, pa.performance_factor, pa.id,
+                       pa.rebalance_margin_down, pa.rebalance_margin_up
                 FROM portfolio_assets pa
                 JOIN system_assets sa ON pa.asset_id = sa.id
                 WHERE pa.portfolio_id = ?";
@@ -265,8 +267,8 @@ class Portfolio {
             $this->db->prepare($sqlDelete)->execute([$portfolioId]);
 
             // Insere novas alocações
-            $sqlInsert = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor) 
-                      VALUES (?, ?, ?, ?)";
+            $sqlInsert = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor, rebalance_margin_down, rebalance_margin_up) 
+                      VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sqlInsert);
 
             foreach ($assets as $asset) {
@@ -274,7 +276,9 @@ class Portfolio {
                     $portfolioId,
                     $asset['asset_id'],
                     $asset['allocation'],
-                    $asset['performance_factor'] ?? 1.0
+                    $asset['performance_factor'] ?? 1.0,
+                    $asset['rebalance_margin_down'] ?? null,
+                    $asset['rebalance_margin_up'] ?? null
                 ]);
             }
 
@@ -297,8 +301,8 @@ class Portfolio {
             $sqlDelete = "DELETE FROM portfolio_assets WHERE portfolio_id = ?";
             $this->db->prepare($sqlDelete)->execute([$portfolioId]);
 
-            $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
-                VALUES (?, ?, ?, ?)";
+            $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor, rebalance_margin_down, rebalance_margin_up)
+                VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
 
             foreach ($assets as $key => $assetData) {
@@ -313,7 +317,9 @@ class Portfolio {
                     $portfolioId,
                     $assetId,
                     $allocation,
-                    $assetData['performance_factor'] ?? 1.0
+                    $assetData['performance_factor'] ?? 1.0,
+                    !empty($assetData['rebalance_margin_down']) ? (float)str_replace(',', '.', $assetData['rebalance_margin_down']) : null,
+                    !empty($assetData['rebalance_margin_up']) ? (float)str_replace(',', '.', $assetData['rebalance_margin_up']) : null
                 ]);
             }
 

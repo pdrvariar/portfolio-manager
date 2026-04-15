@@ -195,7 +195,8 @@ $assets = $assetModel->getAllWithDetails();
                                             <select class="form-select" id="rebalance_type" name="rebalance_type">
                                                 <option value="full">Completo (Compra e Venda)</option>
                                                 <option value="buy_only">Apenas Compras (Sem Vendas)</option>
-                                                <option value="with_margin">Com Margens (Venda se superar X%)</option>
+                                                <option value="with_margin">Com Margem Global (Venda se superar X%)</option>
+                                                <option value="custom_margin">Com Margens Customizadas por Ativo</option>
                                             </select>
                                         </div>
                                     </div>
@@ -386,6 +387,8 @@ function addAsset() {
         name: opt.getAttribute('data-name'),
         allocation: parseFloat(allocationInput.value) || 0,
         factor: parseFloat(factorInput.value) || 1.0,
+        rebalance_margin_down: null,
+        rebalance_margin_up: null,
         // Sênior: Metadados para validação de UEX
         min_date: opt.getAttribute('data-min'),
         max_date: opt.getAttribute('data-max')
@@ -409,7 +412,25 @@ function removeAsset(id) {
 
 function updateAssetsTable() {
     const tbody = document.getElementById('assetsBody');
+    const rebalanceType = document.getElementById('rebalance_type').value;
+    const isCustomMargin = rebalanceType === 'custom_margin';
     tbody.innerHTML = '';
+    
+    // Atualiza o header da tabela se necessário
+    const headerRow = tbody.closest('table').querySelector('thead tr');
+    if (headerRow) {
+        const marginHeader = headerRow.querySelector('.margin-header');
+        if (isCustomMargin) {
+            if (!marginHeader) {
+                const th = document.createElement('th');
+                th.className = 'margin-header';
+                th.innerHTML = 'Margens de Rebalanceamento (%) <i class="bi bi-info-circle-fill ms-1 text-muted info-tooltip" data-bs-toggle="tooltip" title="Define o range onde não haverá rebalanceamento. Ex: Alvo 50% com margem -4% e +5%, não rebalanceia se estiver entre 46% e 55%."></i>';
+                headerRow.insertBefore(th, headerRow.cells[headerRow.cells.length - 1]);
+            }
+        } else if (marginHeader) {
+            marginHeader.remove();
+        }
+    }
     
     assets.forEach(asset => {
         // Formatação sênior de data (AAAA-MM-DD -> MM/AAAA)
@@ -418,6 +439,30 @@ function updateAssetsTable() {
             const parts = dateStr.split('-');
             return parts.length >= 2 ? `${parts[1]}/${parts[0]}` : dateStr;
         };
+
+        let marginFields = '';
+        if (isCustomMargin) {
+            marginFields = `
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Min</span>
+                            <input type="number" name="assets[${asset.asset_id}][rebalance_margin_down]"
+                                value="${asset.rebalance_margin_down !== null ? asset.rebalance_margin_down : ''}" step="any" class="form-control"
+                                placeholder="-X.X" oninput="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_down', this.value)">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Max</span>
+                            <input type="number" name="assets[${asset.asset_id}][rebalance_margin_up]"
+                                value="${asset.rebalance_margin_up !== null ? asset.rebalance_margin_up : ''}" step="any" class="form-control"
+                                placeholder="+X.X" oninput="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_up', this.value)">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </td>
+            `;
+        }
 
         const row = tbody.insertRow();
         row.innerHTML = `
@@ -432,18 +477,35 @@ function updateAssetsTable() {
                 <input type="number" class="form-control form-control-sm allocation-input" 
                        value="${asset.allocation}" step="any" 
                        onchange="updateAssetAllocation(${asset.id}, this.value)">
+                <input type="hidden" name="assets[${asset.asset_id}][asset_id]" value="${asset.asset_id}">
+                <input type="hidden" name="assets[${asset.asset_id}][allocation]" value="${asset.allocation}">
             </td>
             <td>
                 <input type="number" class="form-control form-control-sm" 
                        value="${asset.factor}" step="0.01"
                        onchange="updateAssetFactor(${asset.id}, this.value)">
+                <input type="hidden" name="assets[${asset.asset_id}][performance_factor]" value="${asset.factor}">
             </td>
+            ${marginFields}
             <td class="text-center">
                 <button type="button" class="btn btn-sm btn-outline-danger border-0" 
                         onclick="removeAsset(${asset.id})"><i class="bi bi-trash"></i></button>
             </td>
         `;
     });
+    
+    // Re-inicializa tooltips se houver
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+}
+
+function updateAssetCustomMargin(id, field, value) {
+    const asset = assets.find(a => a.id === id);
+    if (asset) {
+        asset[field] = value === '' ? null : parseFloat(value);
+    }
 }
 
 function updateAssetAllocation(id, value) {
@@ -451,6 +513,7 @@ function updateAssetAllocation(id, value) {
     if (asset) {
         asset.allocation = parseFloat(value) || 0;
         updateTotal();
+        updateAssetsTable(); // Atualiza os inputs hidden também
     }
 }
 
@@ -458,6 +521,7 @@ function updateAssetFactor(id, value) {
     const asset = assets.find(a => a.id === id);
     if (asset) {
         asset.factor = parseFloat(value) || 1.0;
+        updateAssetsTable(); // Atualiza os inputs hidden também
     }
 }
 
@@ -569,7 +633,7 @@ function toggleUseCashAssetsField() {
     const marginContainer = document.getElementById('rebalance_margin_container');
     
     // Controle do container de ativos caixa
-    if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && rebalanceType === 'buy_only') {
+    if ((type === 'smart_deposit' || type === 'selic_cash_deposit') && (rebalanceType === 'buy_only' || rebalanceType === 'custom_margin')) {
         cashContainer.style.display = 'block';
     } else {
         cashContainer.style.display = 'none';
@@ -587,6 +651,9 @@ function toggleUseCashAssetsField() {
     } else {
         marginContainer.style.display = 'none';
     }
+    
+    // Sempre que mudar o tipo de rebalanceamento, atualizamos a tabela para mostrar/esconder margens customizadas
+    updateAssetsTable();
 }
 
 function toggleTaxField() {
