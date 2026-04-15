@@ -675,7 +675,7 @@ class BacktestService {
                 $assetValuesBefore[$assetId] = $currentBalances[$assetId];
             }
 
-            if ($rebalanceFreq > 0 && $index % $rebalanceFreq == 0) {
+            if ($rebalanceFreq > 0 && ($index + 1) % $rebalanceFreq == 0) {
                 $wasRebalanced = true;
 
                 // Para tipos com caixa SELIC: inclui o caixa no total do rebalanceamento e o zera
@@ -1221,6 +1221,9 @@ class BacktestService {
         //  - Para trimestral: aportes em index 0, 3, 6, 9, ...
         //  - Para semestral:  aportes em index 0, 6, 12, ...
         //  - Para anual:      aportes em index 0, 12, 24, ...
+        //
+        // Rebalanceamento: segue lógica de final de período (($index+1) % freq == 0).
+        // Aportes: seguem lógica de início de período ($index % freq == 0).
 
         $frequencyMap = [
             'monthly'   => 1,
