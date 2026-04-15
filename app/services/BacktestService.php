@@ -200,7 +200,12 @@ class BacktestService {
         // NOVO: Controle de custo para cálculo de imposto
         $currentCosts = [];
         $accumulatedTaxPaid = 0;
-        $taxPaidThisMonth = 0;
+        
+        // Mapeamento de grupos de IR por ativo para o backend
+        $assetTaxGroups = [];
+        foreach ($assets as $asset) {
+            $assetTaxGroups[$asset['asset_id']] = $asset['tax_group'] ?? 'RENDA_FIXA';
+        }
 
         // Inicialização do saldo e quantidades
         // O primeiro registro em historicalData pode ser anterior à data de início (base de cálculo)
@@ -350,6 +355,10 @@ class BacktestService {
             }
 
             $taxPaidThisMonth = 0; // Reset mensal
+            
+            // Controle de IR por grupo neste mês (para compensação de prejuízo se implementado no futuro)
+            $monthlyGroupResults = [];
+
             $lastFxRate = $currentFxRate;
 
             // Aplica rendimento SELIC ao caixa (para tipos smart_deposit e selic_cash_deposit)
@@ -415,6 +424,8 @@ class BacktestService {
                         $amountToAsset = $newBalance - $currentBalances[$assetId];
 
                         $currentBalances[$assetId] = $newBalance;
+                        $currentCosts[$assetId] += $amountToAsset; // Atualiza o custo investido
+                        $assetPurchases[$assetId] = ['amount' => $amountToAsset]; // Registra detalhes do aporte
 
                         // Atualiza quantidade comprada/vendida
                         if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
@@ -478,6 +489,8 @@ class BacktestService {
                             $amountToAsset = $newBalance - $currentBalances[$assetId];
 
                             $currentBalances[$assetId] = $newBalance;
+                            $currentCosts[$assetId] += $amountToAsset; // Atualiza o custo investido
+                            $assetPurchases[$assetId] = ['amount' => $amountToAsset]; // Registra detalhes do aporte
 
                             // Atualiza quantidade comprada/vendida
                             if ($asset['asset_type'] !== 'TAXA_MENSAL' && $asset['asset_type'] !== 'INFLACAO') {
@@ -696,14 +709,16 @@ class BacktestService {
                                 // Vende apenas o que exceder o ALVO
                                 $sellAmount = $currentValue - $targetValue;
                                 
-                                // Cálculo de Imposto sobre o Lucro
-                                if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                                // Cálculo de Imposto sobre o Lucro (Backend)
+                                if ($currentCosts[$assetId] > 0) {
                                     $proportionSold = $sellAmount / $currentValue;
                                     $costSold = $currentCosts[$assetId] * $proportionSold;
                                     $profit = $sellAmount - $costSold;
                                     
-                                    if ($profit > 0) {
-                                        $tax = $profit * $profitTaxRate;
+                                    $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
+                                    
+                                    if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
+                                        $tax = $profit * 0.15; // Alíquota padrão de 15%
                                         $taxPaidThisMonth += $tax;
                                         $accumulatedTaxPaid += $tax;
                                         $sellAmount -= $tax; // Deduz o imposto do valor que será reinvestido
@@ -751,14 +766,16 @@ class BacktestService {
                                 if ($currentValue > $targetValue) {
                                     $sellAmount = $currentValue - $targetValue;
                                     
-                                    // Cálculo de Imposto sobre o Lucro
-                                    if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                                    // Cálculo de Imposto sobre o Lucro (Backend)
+                                    if ($currentCosts[$assetId] > 0) {
                                         $proportionSold = $sellAmount / $currentValue;
                                         $costSold = $currentCosts[$assetId] * $proportionSold;
                                         $profit = $sellAmount - $costSold;
                                         
-                                        if ($profit > 0) {
-                                            $tax = $profit * $profitTaxRate;
+                                        $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
+                                        
+                                        if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
+                                            $tax = $profit * 0.15;
                                             $taxPaidThisMonth += $tax;
                                             $accumulatedTaxPaid += $tax;
                                             $sellAmount -= $tax;
@@ -880,24 +897,21 @@ class BacktestService {
 
                         if ($preValue > $postValue) {
                             $sellAmount = $preValue - $postValue;
-                            if ($profitTaxRate !== null && $currentCosts[$assetId] > 0) {
+                            if ($currentCosts[$assetId] > 0) {
                                 $proportionSold = $sellAmount / $preValue;
                                 $costSold = $currentCosts[$assetId] * $proportionSold;
                                 $profit = $sellAmount - $costSold;
-                                if ($profit > 0) {
-                                    $tax = $profit * $profitTaxRate;
+                                
+                                $taxGroup = $assetTaxGroups[$assetId] ?? 'RENDA_FIXA';
+                                
+                                if ($profit > 0 && $taxGroup !== 'RENDA_FIXA') {
+                                    $tax = $profit * 0.15;
                                     $taxPaidThisMonth += $tax;
                                     $accumulatedTaxPaid += $tax;
                                     // No rebalanceamento completo, o imposto reduz o rebalanceBase (patrimônio total)
                                     $rebalanceBase -= $tax;
                                 }
                                 $currentCosts[$assetId] -= $costSold;
-                            } else {
-                                // Se não tem imposto, apenas reduz o custo proporcionalmente
-                                if ($currentCosts[$assetId] > 0) {
-                                    $proportionSold = $sellAmount / $preValue;
-                                    $currentCosts[$assetId] -= $currentCosts[$assetId] * $proportionSold;
-                                }
                             }
                         }
                     }
@@ -990,7 +1004,8 @@ class BacktestService {
     $results['_metadata'] = [
         'simulation_type' => $simulationType,
         'total_deposits' => $totalDeposits,
-        'initial_capital' => $initialCapital
+        'initial_capital' => $initialCapital,
+        'total_tax_paid' => $accumulatedTaxPaid
     ];
 
     return $results;
@@ -1104,7 +1119,8 @@ class BacktestService {
             'interest_earned' => $interestEarned,
             'final_without_deposits' => $finalWithoutDeposits,
             'max_monthly_gain' => $maxMonthlyGain * 100,
-            'max_monthly_loss' => $maxMonthlyLoss * 100
+            'max_monthly_loss' => $maxMonthlyLoss * 100,
+            'total_tax_paid' => $metadata['total_tax_paid'] ?? 0
         ];
     }
 
@@ -1142,13 +1158,13 @@ class BacktestService {
     }
 
     private function saveResults($portfolioId, $metrics, $chartData, $endDate) {
-        // CORREÇÃO: Agora salva todas as métricas, incluindo ROI e aportes
+        // CORREÇÃO: Agora salva todas as métricas, incluindo ROI, aportes e impostos
         $sql = "INSERT INTO simulation_results 
             (portfolio_id, simulation_date, total_value, annual_return, volatility, 
             max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
             interest_earned, roi, strategy_return, strategy_annual_return, 
-            max_monthly_gain, max_monthly_loss) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            max_monthly_gain, max_monthly_loss, total_tax_paid) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -1168,7 +1184,8 @@ class BacktestService {
             $metrics['strategy_return'] ?? 0,
             $metrics['strategy_annual_return'] ?? 0,
             $metrics['max_monthly_gain'] ?? 0,
-            $metrics['max_monthly_loss'] ?? 0
+            $metrics['max_monthly_loss'] ?? 0,
+            $metrics['total_tax_paid'] ?? 0
         ]);
         return $this->db->lastInsertId();
     }

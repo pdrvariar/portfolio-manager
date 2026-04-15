@@ -427,11 +427,11 @@ $isSelicMonthlyConflict = (
             $heroTotalTax = $metrics['total_tax_paid'] ?? 0;
             $hasTax = $heroTotalTax > 0;
             ?>
-            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+            <div id="tax-paid-card" class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
                  style="background: <?= $hasTax ? 'var(--hero-tax-bg)' : 'linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%)' ?>;">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $hasTax ? 'bg-danger' : 'bg-secondary' ?>">
+                        <span id="tax-paid-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $hasTax ? 'bg-danger' : 'bg-secondary' ?>">
                             <i class="bi bi-calculator me-1"></i> Total de Impostos
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -441,10 +441,10 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="fs-2 fw-bold lh-1 mb-1 <?= $hasTax ? 'text-danger' : 'text-muted' ?>">
+                        <div id="tax-paid-value" class="fs-2 fw-bold lh-1 mb-1 <?= $hasTax ? 'text-danger' : 'text-muted' ?>">
                             <?= $hasTax ? formatCurrency($heroTotalTax, $portfolio['output_currency']) : '—' ?>
                         </div>
-                        <div class="text-muted small mt-2">
+                        <div id="tax-paid-label" class="text-muted small mt-2">
                             <i class="bi bi-receipt me-1"></i> <?= $hasTax ? 'Impostos sobre lucro' : 'Sem impostos no período' ?>
                         </div>
                     </div>
@@ -459,11 +459,11 @@ $isSelicMonthlyConflict = (
             $heroTotalReturn = $metrics['total_return'] ?? 0;
             $heroPositive = $heroTotalReturn >= 0;
             ?>
-            <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
+            <div id="final-value-card" class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
                  style="background: var(<?= $heroPositive ? '--hero-final-pos-bg' : '--hero-final-neg-bg' ?>);">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $heroPositive ? 'bg-primary' : 'bg-danger' ?>">
+                        <span id="final-value-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $heroPositive ? 'bg-primary' : 'bg-danger' ?>">
                             <i class="bi bi-graph-up-arrow me-1"></i> Patrimônio Final
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -474,11 +474,11 @@ $isSelicMonthlyConflict = (
                     </div>
                     <?php if ($latest): ?>
                     <div>
-                        <div class="fs-2 fw-bold lh-1 mb-1 <?= $heroPositive ? 'text-primary' : 'text-danger' ?>">
+                        <div id="final-value-amount" class="fs-2 fw-bold lh-1 mb-1 <?= $heroPositive ? 'text-primary' : 'text-danger' ?>">
                             <?php echo formatCurrency($heroFinalValue, $portfolio['output_currency']); ?>
                         </div>
                         <div class="mt-2 d-flex align-items-center gap-2">
-                            <span class="badge rounded-pill <?= $heroPositive ? 'bg-success' : 'bg-danger' ?> fs-6 px-3 py-2">
+                            <span id="total-return-badge" class="badge rounded-pill <?= $heroPositive ? 'bg-success' : 'bg-danger' ?> fs-6 px-3 py-2">
                                 <?= ($heroPositive ? '+' : '') . number_format($heroTotalReturn, 2, ',', '.') ?>%
                             </span>
                             <span class="text-muted small">retorno total</span>
@@ -577,7 +577,7 @@ $isSelicMonthlyConflict = (
                             </button>
                             <?php endif; ?>
                         </div>
-                        <h3 class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
+                        <h3 id="<?= ($m['label'] == 'ROI (com aportes)') ? 'roi-value' : '' ?>" class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
                         <?php if ($m['label'] == 'BETA DA CARTEIRA'): ?>
                             <div class="mt-2 small text-muted">
                                 <span id="betaBenchmarkName">Selecione um benchmark</span>
@@ -1188,10 +1188,156 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         const chartData = <?php echo json_encode($chartData); ?>;
         const assetNames = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.htmlspecialchars($a['name']).'",'; ?>};
         const assetTargets = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": '.$a['allocation_percentage'].','; ?>};
+        const assetTaxGroups = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.($a['tax_group'] ?? 'RENDA_FIXA').'",'; ?>};
+        const outputCurrency = '<?php echo $portfolio['output_currency']; ?>';
 
-        // Remove metadados do log de auditoria para gráficos
+        // Remove metadados do log de auditoria para gráficos e cálculos
         const auditLog = { ...chartData.audit_log };
         delete auditLog._metadata;
+
+        /* ── Helper: formata moeda ───────────────────────────────────────────────── */
+        function fmtCur(value, currency) {
+            const targetCurrency = currency || outputCurrency;
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: targetCurrency,
+                minimumFractionDigits: 2
+            }).format(value);
+        }
+
+        /* ── Cálculo de Impostos e Atualização do Hero ────────────────────────── */
+        (function processTaxAndHero() {
+            const log = auditLog;
+            if (!log) return;
+
+            const dates = Object.keys(log).sort();
+            const currentCosts = {};
+            const groupTaxResults = {};
+            const TAX_RATES = {
+                'ETF_BR': 0.15,
+                'ACAO_BR': 0.15,
+                'CRIPTOMOEDA': 0.15,
+                'FUNDO_IMOBILIARIO': 0.20,
+                'ETF_US': 0.15,
+                'ETF_USA': 0.15,
+                'RENDA_FIXA': 0
+            };
+
+            dates.forEach(date => {
+                const data = log[date];
+                const assets = data.asset_values || {};
+                const trades = data.trades || {};
+                const depositDetails = data.deposit_details || {};
+                data.tax_summary = {};
+                const monthlyGroupResults = {};
+
+                for (const id in assets) {
+                    if (currentCosts[id] === undefined) currentCosts[id] = 0;
+                    const isInitialPoint = data.is_initial_point || false;
+                    const trade = trades[id];
+                    const deposit = depositDetails[id];
+                    const tradeDelta = (trade && trade.delta !== undefined) ? parseFloat(trade.delta) : 0;
+                    const depositDelta = (deposit && deposit.amount !== undefined) ? parseFloat(deposit.amount) : 0;
+                    const delta = tradeDelta + depositDelta;
+                    let taxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
+                    if (taxGroup === 'ACAO_BR') taxGroup = 'ETF_BR';
+                    if (taxGroup === 'ETF_USA') taxGroup = 'ETF_US';
+                    if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
+                        TAX_RATES[taxGroup] = 0.15;
+                    }
+
+                    if (currentCosts[id] === 0 || isInitialPoint) {
+                        if (isInitialPoint) {
+                            currentCosts[id] = parseFloat(assets[id] || 0);
+                        } else if (delta > 0) {
+                            currentCosts[id] = delta;
+                        } else if (parseFloat(assets[id] || 0) > 0) {
+                            const assetValueBefore = parseFloat(data.asset_values_before ? data.asset_values_before[id] : 0);
+                            currentCosts[id] = assetValueBefore > 0 ? assetValueBefore : parseFloat(assets[id] || 0);
+                        }
+                    } else {
+                        if (delta > 0) {
+                            currentCosts[id] += delta;
+                        } else if (delta < 0) {
+                            const sellAmount = Math.abs(delta);
+                            const preTradeValue = parseFloat(assets[id] || 0) + sellAmount;
+                            if (preTradeValue > 0) {
+                                const proportionSold = Math.min(1, sellAmount / preTradeValue);
+                                const costSold = currentCosts[id] * proportionSold;
+                                const realizedProfit = sellAmount - costSold;
+                                if (taxGroup !== 'RENDA_FIXA') {
+                                    if (monthlyGroupResults[taxGroup] === undefined) monthlyGroupResults[taxGroup] = 0;
+                                    monthlyGroupResults[taxGroup] += realizedProfit;
+                                }
+                                currentCosts[id] -= costSold;
+                            }
+                        }
+                    }
+                    if (parseFloat(assets[id] || 0) <= 0.01) currentCosts[id] = 0;
+                }
+
+                for (const group in monthlyGroupResults) {
+                    if (!groupTaxResults[group]) groupTaxResults[group] = { accumulatedLoss: 0 };
+                    const profit = monthlyGroupResults[group];
+                    const previousLoss = groupTaxResults[group].accumulatedLoss;
+                    let taxableBase = 0;
+                    let tax = 0;
+                    if (profit > 0) {
+                        if (previousLoss < 0) {
+                            const compensation = Math.min(profit, Math.abs(previousLoss));
+                            taxableBase = profit - compensation;
+                            groupTaxResults[group].accumulatedLoss += compensation;
+                        } else {
+                            taxableBase = profit;
+                        }
+                        if (taxableBase > 0) {
+                            tax = taxableBase * (TAX_RATES[group] || 0.15);
+                        }
+                    } else {
+                        groupTaxResults[group].accumulatedLoss += profit;
+                    }
+                    if (tax > 0.01) {
+                        data.tax_summary[group] = { tax: tax };
+                    }
+                }
+            });
+
+            const totalTaxPaid = Object.values(log)
+                .reduce((acc, d) => acc + Object.values(d.tax_summary || {}).reduce((sum, g) => sum + (g.tax || 0), 0), 0);
+
+            const taxValueEl = document.getElementById('tax-paid-value');
+            if (taxValueEl && totalTaxPaid > 0.01) {
+                taxValueEl.innerText = fmtCur(totalTaxPaid);
+                const taxCard = document.getElementById('tax-paid-card');
+                const taxBadge = document.getElementById('tax-paid-badge');
+                if (taxCard) taxCard.style.background = 'var(--hero-tax-bg)';
+                if (taxBadge) { taxBadge.classList.remove('bg-secondary'); taxBadge.classList.add('bg-danger'); }
+                taxValueEl.classList.remove('text-muted'); taxValueEl.classList.add('text-danger');
+            }
+
+            const finalDate = dates[dates.length - 1];
+            if (finalDate && log[finalDate]) {
+                const finalValue = log[finalDate].total_value || 0;
+                const netFinalValue = finalValue - totalTaxPaid;
+                const initialCapital = <?= (float)$portfolio['initial_capital'] ?>;
+                const totalDeposits = Object.values(log).reduce((acc, d) => acc + (d.deposit_made || 0), 0);
+                const totalInvested = initialCapital + totalDeposits;
+                const netTotalReturn = totalInvested > 0 ? ((netFinalValue / totalInvested) - 1) * 100 : 0;
+                
+                const finalAmountEl = document.getElementById('final-value-amount');
+                if (finalAmountEl && totalTaxPaid > 0.01) {
+                    finalAmountEl.innerText = fmtCur(netFinalValue);
+                    finalAmountEl.title = `Valor Bruto: ${fmtCur(finalValue)} | Impostos: ${fmtCur(totalTaxPaid)}`;
+                    const totalReturnBadgeEl = document.getElementById('total-return-badge');
+                    if (totalReturnBadgeEl) {
+                        const isPos = netTotalReturn >= 0;
+                        totalReturnBadgeEl.innerText = (isPos ? '+' : '') + netTotalReturn.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
+                        totalReturnBadgeEl.classList.remove('bg-success', 'bg-danger');
+                        totalReturnBadgeEl.classList.add(isPos ? 'bg-success' : 'bg-danger');
+                    }
+                }
+            }
+        })();
 
         // ============================================================
         // Helpers: formatação de eixo X e tooltip de período

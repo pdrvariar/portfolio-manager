@@ -343,6 +343,7 @@ function fmtCur(value, currency) {
         const assetsBefore = data.asset_values_before || {};
         const trades = data.trades || {};
         const assets = data.asset_values || {};
+        const depositDetails = data.deposit_details || {};
 
         data.realized_profits = {};
         data.accumulated_realized_profits = {};
@@ -356,7 +357,10 @@ function fmtCur(value, currency) {
 
             const isInitialPoint = data.is_initial_point || false;
             const trade = trades[id];
-            const delta = (trade && trade.delta !== undefined) ? parseFloat(trade.delta) : 0;
+            const deposit = depositDetails[id];
+            const tradeDelta = (trade && trade.delta !== undefined) ? parseFloat(trade.delta) : 0;
+            const depositDelta = (deposit && deposit.amount !== undefined) ? parseFloat(deposit.amount) : 0;
+            const delta = tradeDelta + depositDelta;
             const rawTaxGroup = assetTaxGroups[id] || 'RENDA_FIXA';
             
             // Normalização de Grupos de IR conforme solicitado pelo usuário
@@ -365,6 +369,10 @@ function fmtCur(value, currency) {
             let taxGroup = rawTaxGroup;
             if (taxGroup === 'ACAO_BR') taxGroup = 'ETF_BR';
             if (taxGroup === 'ETF_USA') taxGroup = 'ETF_US';
+            if (taxGroup === 'ETF_US' || taxGroup === 'ETF_BR') {
+                // Para ETFs de Renda Variável, a alíquota é 15%
+                TAX_RATES[taxGroup] = 0.15;
+            }
 
             // DEBUG: Verificando se encontrou o grupo para este ativo
             if (date === dates[0]) {
@@ -394,12 +402,16 @@ function fmtCur(value, currency) {
                     currentCosts[id] += delta;
                 } else if (delta < 0) {
                     // VENDA: Apura Lucro/Prejuízo Realizado sobre o valor de mercado atualizado
-                    // (O valor pré-venda é igual ao saldo final do mês + o volume que foi sacado)
-                    const preTradeValue = parseFloat(assets[id] || 0) + Math.abs(delta);
+                    // Se houver compra e venda no mesmo mês (ex: rebalanceamento com aporte),
+                    // o delta líquido pode ser negativo. O lucro é apurado apenas sobre a parte vendida.
+                    // Para simplificar, usamos o valor absoluto do delta se for negativo.
+                    
+                    const sellAmount = Math.abs(delta);
+                    const preTradeValue = parseFloat(assets[id] || 0) + sellAmount;
                     if (preTradeValue > 0) {
-                        const proportionSold = Math.min(1, Math.abs(delta) / preTradeValue);
+                        const proportionSold = Math.min(1, sellAmount / preTradeValue);
                         const costSold = currentCosts[id] * proportionSold;
-                        const realizedProfit = Math.abs(delta) - costSold;
+                        const realizedProfit = sellAmount - costSold;
                         
                         data.realized_profits[id] = realizedProfit;
                         accumulatedRealized[id] += realizedProfit;
@@ -417,6 +429,14 @@ function fmtCur(value, currency) {
                 }
             }
             
+            // Injeta o custo calculado em cada ativo no log deste mês para a tabela renderizar (se necessário)
+            if (!data.asset_costs) data.asset_costs = {};
+            if (parseFloat(assets[id] || 0) > 0.01) {
+                data.asset_costs[id] = currentCosts[id];
+            } else {
+                currentCosts[id] = 0; // Zera custo se a posição for liquidada
+            }
+
             data.accumulated_realized_profits[id] = accumulatedRealized[id];
         }
 
@@ -494,17 +514,84 @@ function fmtCur(value, currency) {
         console.log("Exemplo de tax_summary no mês " + date + ":", data.tax_summary);
         window._debug_tax_logged = true;
     }
+    });
 
-        // Injeta o custo calculado no log deste mês para a tabela renderizar
-        data.asset_costs = {};
-        for (const id in currentCosts) {
-            if (assets[id] > 0.01) {
-                data.asset_costs[id] = currentCosts[id];
-            } else {
-                currentCosts[id] = 0; // Zera custo se a posição for liquidada
+    // ── Atualiza o Card de Total de Impostos no Hero ──
+    const totalTaxPaid = Object.values(log)
+        .filter(d => d.tax_summary)
+        .reduce((acc, d) => {
+            return acc + Object.values(d.tax_summary).reduce((sum, group) => sum + (group.tax || 0), 0);
+        }, 0);
+
+    const taxCard = document.getElementById('tax-paid-card');
+    const taxBadge = document.getElementById('tax-paid-badge');
+    const taxValue = document.getElementById('tax-paid-value');
+    const taxLabel = document.getElementById('tax-paid-label');
+
+    if (taxCard && taxValue && totalTaxPaid > 0.01) {
+        taxCard.style.background = 'var(--hero-tax-bg)';
+        taxBadge.classList.remove('bg-secondary');
+        taxBadge.classList.add('bg-danger');
+        taxValue.classList.remove('text-muted');
+        taxValue.classList.add('text-danger');
+        taxValue.innerText = fmtCur(totalTaxPaid);
+        taxLabel.innerHTML = '<i class="bi bi-receipt me-1"></i> Impostos sobre lucro';
+    }
+
+    // ── Atualiza o Card de Patrimônio Final (Valor Líquido) ──
+    const finalDate = dates[dates.length - 1];
+    if (finalDate && log[finalDate]) {
+        const finalValue = log[finalDate].total_value || 0;
+        const netFinalValue = finalValue - totalTaxPaid;
+        const initialCapital = <?= (float)$portfolio['initial_capital'] ?>;
+        const totalDeposits = Object.values(log).reduce((acc, d) => acc + (d.deposit_made || 0), 0);
+        
+        // Retorno total líquido (sobre o capital investido total)
+        const totalInvested = initialCapital + totalDeposits;
+        const netTotalReturn = totalInvested > 0 ? ((netFinalValue / totalInvested) - 1) * 100 : 0;
+        
+        const finalAmountEl = document.getElementById('final-value-amount');
+        const finalBadgeEl = document.getElementById('final-value-badge');
+        const finalCardEl = document.getElementById('final-value-card');
+        const totalReturnBadgeEl = document.getElementById('total-return-badge');
+
+        if (finalAmountEl && totalTaxPaid > 0.01) {
+            finalAmountEl.innerText = fmtCur(netFinalValue);
+            finalAmountEl.title = `Valor Bruto: ${fmtCur(finalValue)} | Impostos: ${fmtCur(totalTaxPaid)}`;
+            
+            if (totalReturnBadgeEl) {
+                const isPositive = netTotalReturn >= 0;
+                totalReturnBadgeEl.innerText = (isPositive ? '+' : '') + netTotalReturn.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
+                totalReturnBadgeEl.classList.remove('bg-success', 'bg-danger');
+                totalReturnBadgeEl.classList.add(isPositive ? 'bg-success' : 'bg-danger');
+                
+                // Atualiza cores do card se o retorno líquido mudou de sinal (raro mas possível)
+                if (finalAmountEl) {
+                    finalAmountEl.classList.remove('text-primary', 'text-danger');
+                    finalAmountEl.classList.add(isPositive ? 'text-primary' : 'text-danger');
+                }
+                if (finalBadgeEl) {
+                    finalBadgeEl.classList.remove('bg-primary', 'bg-danger');
+                    finalBadgeEl.classList.add(isPositive ? 'bg-primary' : 'bg-danger');
+                }
+                if (finalCardEl) {
+                    finalCardEl.style.background = isPositive ? 'var(--hero-final-pos-bg)' : 'var(--hero-final-neg-bg)';
+                }
             }
         }
-    });
+        
+        // Atualiza ROI (com aportes) se o campo existir
+        const roiValueEl = document.getElementById('roi-value');
+        if (roiValueEl && totalTaxPaid > 0.01) {
+            const netInterestEarned = netFinalValue - totalInvested;
+            const netRoi = totalInvested > 0 ? (netInterestEarned / totalInvested) * 100 : 0;
+            const isPositive = netRoi >= 0;
+            
+            roiValueEl.innerText = (isPositive ? '+' : '') + netRoi.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
+            roiValueEl.classList.remove('text-success', 'text-danger');
+            roiValueEl.classList.add(isPositive ? 'text-success' : 'text-danger');
+        }
+    }
 })();
 
 /* ── Monta o HTML da linha expandida ─────────────────────────────────────── */
