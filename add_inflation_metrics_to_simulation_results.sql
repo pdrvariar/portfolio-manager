@@ -1,0 +1,4 @@
+ALTER TABLE simulation_results 
+ADD COLUMN real_roi DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN real_roi_annual DECIMAL(20, 10) DEFAULT 0,
+ADD COLUMN total_inflation DECIMAL(20, 10) DEFAULT 0;

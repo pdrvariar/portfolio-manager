@@ -194,10 +194,8 @@ class BacktestService {
             $selicRates = $this->loadSelicRates($portfolio['start_date'], $fxEndDate);
         }
 
-        $ipcaRates = [];
-        if ($depositInflationAdjusted && $depositAmount > 0) {
-            $ipcaRates = $this->loadIpcaRates($portfolio['start_date'], $fxEndDate);
-        }
+        $ipcaRates = $this->loadIpcaRates($portfolio['start_date'], $fxEndDate);
+        $totalIpcaAcc = 1.0;
 
         // NOVO: Variáveis para cálculo do retorno real
         $portfolioWithoutDeposits = $initialCapital;
@@ -380,9 +378,11 @@ class BacktestService {
             // Total incluindo caixa SELIC (para tipos com caixa; para os demais, selicCash = 0)
             $totalWithCash = $totalMonthValue + $selicCash;
 
-            // Atualiza inflação acumulada para o próximo aporte
+            // Atualiza inflação acumulada
+            $monthlyIpca = $ipcaRates[$date] ?? 0;
+            $totalIpcaAcc *= (1 + $monthlyIpca);
+
             if ($depositInflationAdjusted) {
-                $monthlyIpca = $ipcaRates[$date] ?? 0;
                 $accumulatedIpca *= (1 + $monthlyIpca);
             }
 
@@ -1040,6 +1040,7 @@ class BacktestService {
 
     // Adiciona informação de total de aportes ao resultado
     $results['_metadata'] = [
+        'total_ipca_acc' => $totalIpcaAcc,
         'simulation_type' => $simulationType,
         'total_deposits' => $totalDeposits,
         'initial_capital' => $initialCapital,
@@ -1072,6 +1073,22 @@ class BacktestService {
 
         // Retorno Total Absoluto (considerando aportes)
         $totalReturnDecimal = $initial > 0 ? ($final - $initial) / $initial : 0;
+
+        // Ganho Real (Descontando Inflação IPCA)
+        $totalIpcaAcc = $metadata['total_ipca_acc'] ?? 1.0;
+        $totalInflationDecimal = $totalIpcaAcc - 1;
+        
+        // ROI Real (Fórmula: (1 + r_nominal) / (1 + r_inflação) - 1)
+        // Usamos o ROI nominal (que considera aportes) para o cálculo do ganho real do investidor
+        $roiDecimal = $roi / 100;
+        $realRoiDecimal = ((1 + $roiDecimal) / $totalIpcaAcc) - 1;
+        
+        // Ganho Real Anualizado
+        if ($numMonths >= 12) {
+            $realRoiAnnualReturn = pow(1 + $realRoiDecimal, 12 / $numMonths) - 1;
+        } else {
+            $realRoiAnnualReturn = $realRoiDecimal;
+        }
 
         // Cálculo de Retornos Mensais para Volatilidade (considerando aportes)
         $returns = [];
@@ -1151,6 +1168,9 @@ class BacktestService {
             'total_invested' => $totalInvested,
             'net_profit' => $netProfit,
             'roi' => $roi,
+            'real_roi' => $realRoiDecimal * 100,
+            'real_roi_annual' => $realRoiAnnualReturn * 100,
+            'total_inflation' => $totalInflationDecimal * 100,
             'simulation_type' => $metadata['simulation_type'] ?? 'standard',
             // NOVAS MÉTRICAS
             'strategy_return' => $strategyReturn,
@@ -1201,8 +1221,9 @@ class BacktestService {
             (portfolio_id, simulation_date, total_value, annual_return, volatility, 
             max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
             interest_earned, roi, strategy_return, strategy_annual_return, 
-            max_monthly_gain, max_monthly_loss, total_tax_paid) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            max_monthly_gain, max_monthly_loss, total_tax_paid, 
+            real_roi, real_roi_annual, total_inflation) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -1223,7 +1244,10 @@ class BacktestService {
             $metrics['strategy_annual_return'] ?? 0,
             $metrics['max_monthly_gain'] ?? 0,
             $metrics['max_monthly_loss'] ?? 0,
-            $metrics['total_tax_paid'] ?? 0
+            $metrics['total_tax_paid'] ?? 0,
+            $metrics['real_roi'] ?? 0,
+            $metrics['real_roi_annual'] ?? 0,
+            $metrics['total_inflation'] ?? 0
         ]);
         return $this->db->lastInsertId();
     }

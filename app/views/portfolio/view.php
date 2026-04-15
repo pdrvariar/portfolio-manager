@@ -518,6 +518,10 @@ $isSelicMonthlyConflict = (
                  'tooltip' => 'O <strong>maior retorno positivo</strong> registrado em um único mês durante o período simulado. Reflete o melhor cenário mensal da estratégia.'],
                 ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2), 'class' => 'border-danger', 'text' => 'text-danger',
                  'tooltip' => 'A <strong>maior perda</strong> sofrida em um único mês durante o período simulado. Ajuda a dimensionar o risco de curto prazo da estratégia.'],
+                ['label' => 'Ganho Real Total (IPCA)', 'val' => formatPercentage($metrics['real_roi'] ?? 0, 2), 'class' => 'border-primary', 'text' => ($metrics['real_roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                 'tooltip' => 'Retorno real total do portfólio <strong>descontando a inflação (IPCA)</strong> acumulada no período. Mostra o aumento real do seu poder de compra.'],
+                ['label' => 'Ganho Real Anualizado', 'val' => formatPercentage($metrics['real_roi_annual'] ?? 0, 2), 'class' => 'border-success', 'text' => ($metrics['real_roi_annual'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                 'tooltip' => 'Taxa de <strong>crescimento real anual</strong> do portfólio, já descontada a inflação. É a métrica mais pura de enriquecimento ao longo do tempo.'],
         ];
 
         // Se houver aportes, adicionamos métricas de Retorno Real e ROI
