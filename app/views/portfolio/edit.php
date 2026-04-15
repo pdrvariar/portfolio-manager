@@ -661,7 +661,7 @@ ob_start();
                     if (!marginHeader) {
                         const th = document.createElement('th');
                         th.className = 'margin-header';
-                        th.innerHTML = 'Margens de Rebalanceamento (%) <i class="bi bi-info-circle-fill ms-1 text-muted info-tooltip" data-bs-toggle="tooltip" title="Define o range onde não haverá rebalanceamento. Ex: Alvo 50% com margem -4% e +5%, não rebalanceia se estiver entre 46% e 55%."></i>';
+                        th.innerHTML = 'Margens de Rebalanceamento (%) <i class="bi bi-info-circle-fill ms-1 text-muted info-tooltip" data-bs-toggle="tooltip" title="Define o percentual mínimo e máximo aceitável para o ativo na carteira antes de disparar o rebalanceamento."></i>';
                         headerRow.insertBefore(th, headerRow.cells[headerRow.cells.length - 1]);
                     }
                 } else if (marginHeader) {
@@ -684,14 +684,14 @@ ob_start();
                                     <span class="input-group-text">Min</span>
                                     <input type="number" name="assets[${asset.asset_id}][rebalance_margin_down]"
                                         value="${asset.rebalance_margin_down !== null ? asset.rebalance_margin_down : ''}" step="any" class="form-control"
-                                        placeholder="-X.X" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_down', this.value)">
+                                        placeholder="Min %" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_down', this.value)">
                                     <span class="input-group-text">%</span>
                                 </div>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">Max</span>
                                     <input type="number" name="assets[${asset.asset_id}][rebalance_margin_up]"
                                         value="${asset.rebalance_margin_up !== null ? asset.rebalance_margin_up : ''}" step="any" class="form-control"
-                                        placeholder="+X.X" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_up', this.value)">
+                                        placeholder="Max %" oninput="updateAssetData(${asset.asset_id}, 'rebalance_margin_up', this.value)">
                                     <span class="input-group-text">%</span>
                                 </div>
                             </div>

@@ -714,9 +714,9 @@ class BacktestService {
                                 // Margem Global: Alvo * (1 + margem)
                                 $toleranceLimit = $targetValue * (1 + $rebalanceMargin);
                             } else {
-                                // Margem Customizada: Alvo + MargemUp (ex: 50% + 5% = 55%)
-                                $marginUpPct = isset($asset['rebalance_margin_up']) ? (float)$asset['rebalance_margin_up'] / 100 : 0;
-                                $toleranceLimit = $rebalanceBase * ($targetPct + $marginUpPct);
+                                // Margem Customizada: Margem absoluta informada pelo usuário (ex: 55%)
+                                $marginUpPct = isset($asset['rebalance_margin_up']) ? (float)$asset['rebalance_margin_up'] : 0;
+                                $toleranceLimit = $rebalanceBase * ($marginUpPct / 100);
                             }
 
                             if ($currentValue > $toleranceLimit + 0.001) {
@@ -849,11 +849,9 @@ class BacktestService {
                             
                             // Se for rebalanceamento com margens customizadas, só compra se estiver abaixo da margem inferior
                             if ($rebalanceType === 'custom_margin') {
-                                $marginDownPct = isset($asset['rebalance_margin_down']) ? (float)$asset['rebalance_margin_down'] / 100 : 0;
-                                // Margem inferior: Alvo - margem_down (ex: 50% - 4% = 46%)
-                                $buyThreshold = $rebalanceBase * ($targetPct + $marginDownPct); // rebalance_margin_down já vem negativo ou é somado algebricamente?
-                                // De acordo com o exemplo do usuário: DIVO11 - 50. Margem -4%. Range: [46%, 55%].
-                                // Se o usuário digitou "-4" no campo, fazemos targetPct + (-4/100).
+                                    $marginDownPct = isset($asset['rebalance_margin_down']) ? (float)$asset['rebalance_margin_down'] : 0;
+                                // Margem inferior: Margem absoluta informada pelo usuário (ex: 46%)
+                                $buyThreshold = $rebalanceBase * ($marginDownPct / 100);
                                 if ($currentValue > $buyThreshold - 0.001) {
                                     $deficit = 0; // Não precisa comprar pois está dentro do range
                                 }
