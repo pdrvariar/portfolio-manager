@@ -292,6 +292,8 @@ window.simulationAuditLog = <?= json_encode(
 
 const assetNames    = <?= json_encode($assetNames,   JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetTargets  = <?= json_encode($assetTargets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const assetMargins  = <?= json_encode($assetMargins ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const rebalanceType = <?= json_encode($portfolio['rebalance_type'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetCurrencies = <?= json_encode($assetCurrencies, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const assetTaxGroups  = <?= json_encode($assetTaxGroups ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const outputCurrency = <?= json_encode($portfolio['output_currency'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
@@ -884,6 +886,16 @@ function buildChildRow(dateKey) {
         const allocPct    = total > 0      ? (finalVal / total) * 100      : 0;
         const deviation   = allocPct - target;
 
+        // Formatação da Meta para Margens Customizadas
+        let metaHtml = `${target.toFixed(2)}%`;
+        if (rebalanceType === 'custom_margin') {
+            const margin = assetMargins[id] || {};
+            const min = margin.min !== null ? parseFloat(margin.min).toFixed(0) : '—';
+            const max = margin.max !== null ? parseFloat(margin.max).toFixed(0) : '—';
+            const alvo = target.toFixed(0);
+            metaHtml = `<span class="text-muted small">${min}%</span> <span class="fw-bold">${alvo}%</span> <span class="text-muted small">${max}%</span>`;
+        }
+
         const devColor = Math.abs(deviation) <= 1.0
             ? 'text-success'
             : (deviation > 0 ? 'text-warning' : 'text-danger');
@@ -915,7 +927,7 @@ function buildChildRow(dateKey) {
                 <td class="text-center py-2">
                     <span class="badge bg-primary bg-opacity-10 text-primary px-1">${allocPct.toFixed(2)}%</span>
                 </td>
-                <td class="text-center py-2 text-muted">${target.toFixed(2)}%</td>
+                <td class="text-center py-2 text-muted" style="white-space: nowrap;">${metaHtml}</td>
                 <td class="text-center py-2 fw-medium ${devColor}">
                     ${deviation > 0 ? '+' : ''}${deviation.toFixed(2)}%
                 </td>

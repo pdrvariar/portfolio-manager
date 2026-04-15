@@ -417,11 +417,16 @@ class PortfolioController {
         // Mapeamento de IDs para nomes de ativos para uso na view (JSON)
         $assetNames = [];
         $assetTargets = [];
+        $assetMargins = [];
         $assetCurrencies = [];
         $assetTaxGroups = [];
         foreach ($assets as $asset) {
             $assetNames[$asset['asset_id']] = $asset['name'];
             $assetTargets[$asset['asset_id']] = $asset['allocation_percentage'];
+            $assetMargins[$asset['asset_id']] = [
+                'min' => $asset['rebalance_margin_down'],
+                'max' => $asset['rebalance_margin_up']
+            ];
             $assetCurrencies[$asset['asset_id']] = $asset['currency'];
             $assetTaxGroups[$asset['asset_id']] = $asset['tax_group'] ?? 'RENDA_FIXA';
         }
