@@ -42,8 +42,12 @@ class SubscriptionController {
                 // Se o pagamento for aprovado, atualizamos o plano
                 if ($payment->status === 'approved') {
                     $userModel = new User();
-                    if ($userModel->updatePlan($user['id'], 'pro')) {
+                    $planType = $paymentData['plan_type'] ?? 'monthly';
+                    $expiration = ($planType === 'yearly') ? date('Y-m-d H:i:s', strtotime('+1 year')) : date('Y-m-d H:i:s', strtotime('+1 month'));
+                    
+                    if ($userModel->updatePlan($user['id'], 'pro', $expiration, $planType, $payment->id)) {
                         Auth::updateSessionPlan('pro');
+                        Session::setFlash('success', 'Assinatura PRO ativada com sucesso! Aproveite os novos recursos.');
                     }
                 }
 
@@ -114,7 +118,8 @@ class SubscriptionController {
             Session::setFlash('warning', 'Seu pagamento foi aprovado, mas houve um problema ao atualizar seu plano. Nossa equipe já foi notificada.');
         }
 
-        require_once __DIR__ . '/../views/subscription/success.php';
+        header('Location: /index.php?url=' . obfuscateUrl('dashboard'));
+        exit;
     }
 
     public function failure() {

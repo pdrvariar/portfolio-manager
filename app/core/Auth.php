@@ -41,6 +41,12 @@ class Auth {
         Session::set('user_plan', $user['plan'] ?? 'starter');
         Session::set('terms_accepted', (bool)($user['terms_accepted'] ?? 0));
         
+        // Verifica se a assinatura expirou ao fazer login
+        $userModel = new User();
+        if ($userModel->checkSubscription($user['id'])) {
+            Session::set('user_plan', 'starter');
+        }
+        
         // Opcional: Registrar data do último login no banco aqui
         
         Session::setFlash('success', 'Bem-vindo de volta, ' . $user['username'] . '!');

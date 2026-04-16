@@ -705,7 +705,7 @@ $isSelicMonthlyConflict = (
                         </div>
                         <h6 class="fw-bold mb-1">Análise de Ganhos Reais</h6>
                         <p class="text-muted small mb-3">Veja o quanto você realmente enriqueceu acima da inflação.</p>
-                        <a href="#" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                        <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
                             <i class="bi bi-rocket-takeoff me-1"></i> Desbloquear Plano PRO
                         </a>
                     </div>

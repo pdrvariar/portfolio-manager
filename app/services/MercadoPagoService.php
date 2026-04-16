@@ -17,20 +17,23 @@ class MercadoPagoService {
         // Removido setRuntimeEnviroment LOCAL para permitir conexões externas padrão
     }
 
-    public function createSubscriptionPreference($userId, $userEmail) {
+    public function createSubscriptionPreference($userId, $userEmail, $planType = 'monthly') {
         $client = new PreferenceClient();
         
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'http://localhost');
         
+        $price = ($planType === 'yearly') ? 179.40 : 29.90; // R$ 14.95/mês no anual (50% desc)
+        $title = "Assinatura Plano PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal') . " - Portfolio Manager";
+
         $preferenceData = [
             "items" => [
                 [
-                    "id" => "plan_pro",
-                    "title" => "Assinatura Plano PRO - Portfolio Manager",
+                    "id" => "plan_pro_" . $planType,
+                    "title" => $title,
                     "description" => "Acesso ilimitado a ferramentas avançadas de análise de portfólio.",
                     "quantity" => 1,
                     "currency_id" => "BRL",
-                    "unit_price" => 29.90
+                    "unit_price" => (float)$price
                 ]
             ],
             "payer" => [
@@ -64,9 +67,12 @@ class MercadoPagoService {
     public function processPayment($paymentData, $userId) {
         $client = new PaymentClient();
 
+        $planType = $paymentData['plan_type'] ?? 'monthly';
+        $description = "Assinatura Plano PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal') . " - Portfolio Manager";
+
         $request = [
             "transaction_amount" => (float)$paymentData['transaction_amount'],
-            "description" => "Assinatura Plano PRO - Portfolio Manager",
+            "description" => $description,
             "payment_method_id" => $paymentData['payment_method_id'],
             "payer" => [
                 "email" => $paymentData['payer']['email'],

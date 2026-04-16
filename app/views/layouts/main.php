@@ -78,18 +78,19 @@
                         </div>
                     </li>
                     <?php if (Auth::isLoggedIn()): ?>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem;">
-                                    <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
-                                </div>
-                                <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                            <div class="d-flex align-items-center">
+                                <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                    <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                                    </div>
+                                    <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                                </a>
                                 <?php if (Auth::isPro()): ?>
                                     <span class="badge bg-primary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">PRO</span>
                                 <?php else: ?>
-                                    <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">STARTER</span>
+                                    <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="badge bg-warning text-dark ms-2 text-decoration-none" style="font-size: 0.65rem; padding: 0.25em 0.5em;">UPGRADE</a>
                                 <?php endif; ?>
-                            </a>
+                            </div>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>
                                 <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('profile') ?>"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>

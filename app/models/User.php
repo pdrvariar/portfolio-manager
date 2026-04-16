@@ -162,10 +162,28 @@ class User {
     /**
      * Atualiza especificamente o plano do usuário.
      */
-    public function updatePlan($id, $plan) {
-        $sql = "UPDATE users SET plan = ? WHERE id = ?";
+    public function updatePlan($id, $plan, $expiration = null, $planType = null, $paymentId = null) {
+        $sql = "UPDATE users SET plan = ?, subscription_expires_at = ?, subscription_plan_type = ?, last_payment_id = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$plan, $id]);
+        return $stmt->execute([$plan, $expiration, $planType, $paymentId, $id]);
+    }
+
+    /**
+     * Verifica e atualiza o status da assinatura do usuário.
+     * Se expirada, retorna para 'starter'.
+     */
+    public function checkSubscription($id) {
+        $user = $this->findById($id);
+        if (!$user) return false;
+
+        if ($user['plan'] === 'pro' && !empty($user['subscription_expires_at'])) {
+            $expires = strtotime($user['subscription_expires_at']);
+            if ($expires < time()) {
+                $this->updatePlan($id, 'starter', null, null, $user['last_payment_id']);
+                return true; // Expirou
+            }
+        }
+        return false; // Não expirou ou não é pro
     }
 
     /**
