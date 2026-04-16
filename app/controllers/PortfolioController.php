@@ -116,6 +116,21 @@ class PortfolioController {
     public function runSimulation() {
         Auth::checkAuthentication();
         $portfolioId = $this->params['id'] ?? null;
+        $userId = $_SESSION['user_id'];
+
+        $simulationModel = new SimulationResult();
+        $monthlyCount = $simulationModel->countMonthlySimulations($userId);
+        $isPro = Auth::isPro();
+        $limit = $isPro ? 100 : 20;
+
+        if ($monthlyCount >= $limit) {
+            $msg = $isPro 
+                ? "Você atingiu o limite de 100 simulações mensais do seu plano PRO." 
+                : "Você atingiu o limite de 20 simulações mensais do plano Starter. Faça um upgrade para o PRO para aumentar seu limite para 100!";
+            Session::setFlash('error', $msg);
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
+            exit;
+        }
         
         $backtestService = new BacktestService();
         $result = $backtestService->runSimulation($portfolioId);

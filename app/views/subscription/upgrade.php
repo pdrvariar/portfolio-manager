@@ -110,22 +110,29 @@ ob_start();
                                 <li class="mb-3 d-flex align-items-start">
                                     <i class="bi bi-graph-up-arrow text-success me-3 fs-5"></i>
                                     <div>
-                                        <strong>Histórico Completo:</strong>
-                                        <p class="small text-muted mb-0">Acesse décadas de dados para simulações ultra-precisas.</p>
-                                    </div>
-                                </li>
-                                <li class="mb-3 d-flex align-items-start">
-                                    <i class="bi bi-layers-half text-success me-3 fs-5"></i>
-                                    <div>
-                                        <strong>Portfólios e Ativos Ilimitados:</strong>
-                                        <p class="small text-muted mb-0">Sem restrições para diversificar sua estratégia.</p>
+                                        <strong>Histórico e Ativos Ilimitados:</strong>
+                                        <p class="small text-muted mb-0">Simule com o histórico completo de décadas e adicione quantos ativos desejar (limite de 5 no Starter).</p>
                                     </div>
                                 </li>
                                 <li class="mb-3 d-flex align-items-start">
                                     <i class="bi bi-calculator text-success me-3 fs-5"></i>
                                     <div>
-                                        <strong>Gestão Fiscal Inteligente:</strong>
-                                        <p class="small text-muted mb-0">Cálculo automático de impostos e relatórios para IR.</p>
+                                        <strong>100 Simulações mensais:</strong>
+                                        <p class="small text-muted mb-0">Enquanto o plano Starter permite apenas 20 execuções por mês.</p>
+                                    </div>
+                                </li>
+                                <li class="mb-3 d-flex align-items-start">
+                                    <i class="bi bi-lightning-charge text-success me-3 fs-5"></i>
+                                    <div>
+                                        <strong>Recursos Premium de Rebalanceamento:</strong>
+                                        <p class="small text-muted mb-0">Acesse simulações de Aporte Direcionado, Estratégico e Rebalanceamento com Margem.</p>
+                                    </div>
+                                </li>
+                                <li class="mb-3 d-flex align-items-start">
+                                    <i class="bi bi-receipt text-success me-3 fs-5"></i>
+                                    <div>
+                                        <strong>Cálculo de Impostos:</strong>
+                                        <p class="small text-muted mb-0">Visualize o impacto tributário nas suas simulações automaticamente.</p>
                                     </div>
                                 </li>
                             </ul>

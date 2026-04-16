@@ -74,6 +74,36 @@ class SimulationResult {
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$id]);
     }
+
+    /**
+     * Conta quantas simulações o usuário realizou no mês atual
+     */
+    public function countMonthlySimulations($userId) {
+        $sql = "SELECT COUNT(*) as total 
+                FROM simulation_results sr
+                JOIN portfolios p ON sr.portfolio_id = p.id
+                WHERE p.user_id = ? 
+                AND strftime('%Y-%m', sr.created_at) = strftime('%Y-%m', 'now')";
+        
+        // Verifica se é SQLite ou MySQL (o projeto parece usar ambos ou estar em transição)
+        // Se falhar o strftime, tenta o formato MySQL
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+            return (int)$result['total'];
+        } catch (Exception $e) {
+            $sql = "SELECT COUNT(*) as total 
+                    FROM simulation_results sr
+                    JOIN portfolios p ON sr.portfolio_id = p.id
+                    WHERE p.user_id = ? 
+                    AND DATE_FORMAT(sr.created_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+            return (int)$result['total'];
+        }
+    }
     
     public function getStatistics($userId = null) {
         $sql = "SELECT 

@@ -116,18 +116,12 @@ ob_start();
                                                 <i class="bi bi-question-circle me-1"></i>Como escolher?
                                             </button>
                                         </label>
-                                        <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
+                                        <select class="form-select" id="simulation_type" name="simulation_type" required onchange="handleSimulationTypeChange(this)">
                                             <option value="standard" <?= $portfolio['simulation_type'] == 'standard' ? 'selected' : '' ?>>Padrão (sem aportes)</option>
                                             <option value="monthly_deposit" <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'selected' : '' ?>>Com Aportes Periódicos</option>
-                                            <?php if (Auth::isPro()): ?>
-                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?>>Com Aportes Estratégicos</option>
-                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?>>Aporte Direcionado ao Alvo</option>
-                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?>>Aporte em Caixa (SELIC)</option>
-                                            <?php else: ?>
-                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?> disabled>Com Aportes Estratégicos (Apenas PRO)</option>
-                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?> disabled>Aporte Direcionado ao Alvo (Apenas PRO)</option>
-                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?> disabled>Aporte em Caixa (SELIC) (Apenas PRO)</option>
-                                            <?php endif; ?>
+                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Aportes Estratégicos <?= !Auth::isPro() ? '🔒' : '' ?></option>
+                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte Direcionado ao Alvo <?= !Auth::isPro() ? '🔒' : '' ?></option>
+                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte em Caixa (SELIC) <?= !Auth::isPro() ? '🔒' : '' ?></option>
                                         </select>
                                     </div>
                                 </div>
@@ -142,8 +136,8 @@ ob_start();
                                             <div class="card-body p-2">
                                                 <div class="form-check form-switch mb-2 ms-2">
                                                     <?php $hasTax = !empty($portfolio['profit_tax_rates_json']) || !empty($portfolio['profit_tax_rate']); ?>
-                                                    <input class="form-check-input" type="checkbox" id="enable_tax" onchange="toggleTaxField()" <?= $hasTax ? 'checked' : '' ?>>
-                                                    <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto</label>
+                                                    <input class="form-check-input" type="checkbox" id="enable_tax" onchange="handleTaxToggle(this)" <?= $hasTax ? 'checked' : '' ?>>
+                                                    <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto <?= !Auth::isPro() ? '🔒' : '' ?></label>
                                                 </div>
                                                 <div id="tax_input_container" style="display: <?= $hasTax ? 'block' : 'none' ?>;">
                                                     <hr class="my-2 opacity-10">
@@ -178,14 +172,14 @@ ob_start();
                                                     </div>
                                                     <?php endforeach; ?>
                                                     <?php else: ?>
-                                                    <div class="text-center py-3 px-2">
+                                                    <div class="text-center py-3 px-2 cursor-pointer" onclick="showPaywallModal('Cálculo de Impostos', 'O sistema calcula automaticamente o imposto de renda devido em cada rebalanceamento, facilitando sua gestão fiscal.')">
                                                         <div class="mb-2">
                                                             <i class="bi bi-lock-fill text-primary fs-4"></i>
                                                         </div>
                                                         <p class="small text-muted mb-3">O cálculo automatizado de impostos está disponível apenas para assinantes PRO.</p>
-                                                        <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-sm btn-outline-primary fw-bold">
-                                                            Desbloquear Plano PRO
-                                                        </a>
+                                                        <span class="btn btn-sm btn-outline-primary fw-bold">
+                                                            <i class="bi bi-stars me-1"></i>Ver Detalhes
+                                                        </span>
                                                     </div>
                                                     <?php endif; ?>
                                                     
@@ -265,11 +259,11 @@ ob_start();
                                                     Tipo de Rebalanceamento
                                                     <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="'Apenas Compras' evita vender o que subiu, usando o aporte para comprar apenas o que está abaixo do alvo. 'Completo' vende e compra para manter os pesos exatos."></i>
                                                 </label>
-                                                <select class="form-select" id="rebalance_type" name="rebalance_type">
+                                                <select class="form-select" id="rebalance_type" name="rebalance_type" onchange="handleRebalanceTypeChange(this)">
                                                     <option value="full" <?= ($portfolio['rebalance_type'] ?? 'full') == 'full' ? 'selected' : '' ?>>Completo (Compra e Venda)</option>
                                                     <option value="buy_only" <?= ($portfolio['rebalance_type'] ?? 'full') == 'buy_only' ? 'selected' : '' ?>>Apenas Compras (Sem Vendas)</option>
-                                                    <option value="with_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'with_margin' ? 'selected' : '' ?>>Com Margem Global (Venda se superar X%)</option>
-                                                    <option value="custom_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'custom_margin' ? 'selected' : '' ?>>Com Margens Customizadas por Ativo</option>
+                                                    <option value="with_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'with_margin' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Margem Global (Venda se superar X%) <?= !Auth::isPro() ? '🔒' : '' ?></option>
+                                                    <option value="custom_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'custom_margin' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Margens Customizadas por Ativo <?= !Auth::isPro() ? '🔒' : '' ?></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -408,7 +402,12 @@ ob_start();
 
                         <hr class="my-4">
 
-                        <h5 class="mb-3 fw-bold"><i class="bi bi-pie-chart me-2 text-primary"></i>Alocação Estratégica de Ativos</h5>
+                        <h5 class="mb-3 fw-bold">
+                            <i class="bi bi-pie-chart me-2 text-primary"></i>Alocação Estratégica de Ativos
+                            <?php if (!Auth::isPro()): ?>
+                                <span class="ms-2 cursor-pointer" onclick="showPaywallModal('Limite de Ativos', 'No plano Starter você pode adicionar até 5 ativos por portfólio. No plano PRO, não há limites.')">🔒</span>
+                            <?php endif; ?>
+                        </h5>
                         <div class="table-responsive mb-3">
                             <table class="table table-hover align-middle" id="assetsTable">
                                 <thead class="table-light">
@@ -504,6 +503,55 @@ ob_start();
         let nextId = assets.length > 0 ? Math.max(...assets.map(a => a.id)) + 1 : 1;
         let suggestedMaxStart = "";
         let suggestedMinEnd = "";
+        let lastValidSimulationType = document.getElementById('simulation_type').value;
+
+        function handleSimulationTypeChange(select) {
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption.getAttribute('data-premium') === 'true') {
+                const feature = selectedOption.text.replace(' 🔒', '');
+                let desc = '';
+                
+                if (selectedOption.value === 'smart_deposit') desc = 'O aporte é usado para comprar o ativo que está mais longe do alvo, evitando vendas e reduzindo impostos.';
+                if (selectedOption.value === 'selic_cash_deposit') desc = 'O aporte mensal é guardado em um Caixa SELIC e investido apenas nos meses de rebalanceamento.';
+                if (selectedOption.value === 'strategic_deposit') desc = 'Simula a reserva de oportunidade, aportando apenas quando o mercado cai bruscamente.';
+
+                showPaywallModal(feature, desc);
+                select.value = lastValidSimulationType; // Volta para o anterior
+                return;
+            }
+            
+            lastValidSimulationType = select.value;
+            toggleSimulationFields();
+        }
+
+        function handleTaxToggle(checkbox) {
+            const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
+            if (!isPro && checkbox.checked) {
+                checkbox.checked = false;
+                showPaywallModal('Cálculo de Impostos', 'O sistema calcula automaticamente o imposto de renda devido em cada rebalanceamento, facilitando sua gestão fiscal.');
+                return;
+            }
+            toggleTaxField();
+        }
+
+        let lastValidRebalanceType = document.getElementById('rebalance_type').value;
+        function handleRebalanceTypeChange(select) {
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption.getAttribute('data-premium') === 'true') {
+                const feature = selectedOption.text.replace(' 🔒', '');
+                let desc = '';
+                
+                if (selectedOption.value === 'with_margin') desc = 'Define uma tolerância para o desvio dos ativos. O sistema só vende se o ativo subir além de uma margem X% do seu peso original.';
+                if (selectedOption.value === 'custom_margin') desc = 'Permite definir margens de rebalanceamento diferentes para cada ativo da sua carteira.';
+
+                showPaywallModal(feature, desc);
+                select.value = lastValidRebalanceType; // Volta para o anterior
+                return;
+            }
+            
+            lastValidRebalanceType = select.value;
+            toggleUseCashAssetsField();
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             updateTable(); // CORREÇÃO: Nome correto da função sincronizado com o carregamento
@@ -626,42 +674,19 @@ ob_start();
             }
         }
 
-        document.getElementById('rebalance_type').addEventListener('change', toggleUseCashAssetsField);
+        document.getElementById('rebalance_type').addEventListener('change', handleRebalanceTypeChange);
 
-        function addAsset() {
-            const select = document.getElementById('assetSelect');
-            const allocationInput = document.getElementById('assetAllocation');
-            const factorInput = document.getElementById('assetFactor');
+    function addAsset() {
+        const select = document.getElementById('assetSelect');
+        const allocationInput = document.getElementById('assetAllocation');
+        const factorInput = document.getElementById('assetFactor');
 
-            // Verificação de limite de ativos para Plano Starter
-            const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
-            if (!isPro && assets.length >= 5) {
-                const upgradeUrl = '/index.php?url=<?= obfuscateUrl('upgrade') ?>';
-                const modalHtml = `
-                    <div class="modal fade" id="limitReachedModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow">
-                                <div class="modal-body text-center p-5">
-                                    <i class="bi bi-exclamation-diamond-fill text-primary display-4 mb-3"></i>
-                                    <h4 class="fw-bold">Limite de Ativos Atingido</h4>
-                                    <p class="text-muted mb-4">O Plano Starter permite no máximo 5 ativos por carteira para manter as análises simplificadas.</p>
-                                    <div class="d-grid gap-2">
-                                        <a href="${upgradeUrl}" class="btn btn-primary py-2 fw-bold">Desbloquear Ativos Ilimitados</a>
-                                        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Agora não</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-                const modal = new bootstrap.Modal(document.getElementById('limitReachedModal'));
-                modal.show();
-                document.getElementById('limitReachedModal').addEventListener('hidden.bs.modal', function () {
-                    this.remove();
-                });
-                return;
-            }
+        // Verificação de limite de ativos para Plano Starter
+        const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
+        if (!isPro && assets.length >= 5) {
+            showPaywallModal('Limite de Ativos', 'No plano Starter você pode adicionar até 5 ativos por portfólio. No plano PRO, não há restrição de quantidade.');
+            return;
+        }
 
             if (!select.value || !allocationInput.value) {
                 alert("Selecione um ativo e informe a alocação.");
@@ -891,26 +916,7 @@ ob_start();
                 startDateInput.addEventListener('change', function() {
                     if (this.value < minDateStr) {
                         this.value = minDateStr;
-                        const upgradeUrl = '/index.php?url=<?= obfuscateUrl('upgrade') ?>';
-                        const toastHtml = `
-                            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1060">
-                                <div class="toast show align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="d-flex">
-                                        <div class="toast-body">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            No Plano Starter, o limite é de 5 anos. <a href="${upgradeUrl}" class="text-white fw-bold">Seja PRO</a> para histórico completo.
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        document.body.insertAdjacentHTML('beforeend', toastHtml);
-                        setTimeout(() => {
-                            const toast = document.querySelector('.toast');
-                            if (toast) toast.remove();
-                        }, 5000);
-                        
+                        showPaywallModal('Histórico de Dados', 'No Plano Starter, o histórico é limitado aos últimos 5 anos. No Plano PRO, você tem acesso a décadas de dados históricos para simulações ultra-precisas.');
                         validatePortfolioRange();
                     }
                 });

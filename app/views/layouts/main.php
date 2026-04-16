@@ -78,20 +78,20 @@
                         </div>
                     </li>
                     <?php if (Auth::isLoggedIn()): ?>
-                            <div class="d-flex align-items-center">
-                                <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                    <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem;">
-                                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
-                                    </div>
-                                    <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                                </a>
-                                <?php if (Auth::isPro()): ?>
-                                    <span class="badge bg-primary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">PRO</span>
-                                <?php else: ?>
-                                    <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="badge bg-warning text-dark ms-2 text-decoration-none" style="font-size: 0.65rem; padding: 0.25em 0.5em;">UPGRADE</a>
-                                <?php endif; ?>
-                            </div>
-                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li class="nav-item dropdown d-flex align-items-center">
+                            <a class="nav-link dropdown-toggle user-profile-dropdown d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                    <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                                </div>
+                                <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                            </a>
+                            <?php if (Auth::isPro()): ?>
+                                <span class="badge bg-primary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">PRO</span>
+                            <?php else: ?>
+                                <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="badge bg-warning text-dark ms-2 text-decoration-none" style="font-size: 0.65rem; padding: 0.25em 0.5em;">UPGRADE</a>
+                            <?php endif; ?>
+                            
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>
                                 <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('profile') ?>"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
                                 <?php if (Auth::isAdmin()): ?>
@@ -131,6 +131,55 @@
 
         <?php echo $content; ?>
     </main>
+
+    <!-- Modal Global de Paywall (Barreira de Vidro) -->
+    <div class="modal fade" id="paywallModal" tabindex="-1" aria-labelledby="paywallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="paywallModalLabel">
+                        <i class="bi bi-stars me-2"></i>Recurso Premium
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-4">
+                        <div class="bg-primary bg-soft rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                            <i class="bi bi-lock-fill text-primary fs-1"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2" id="paywallFeatureTitle">Aporte Direcionado ao Alvo</h4>
+                        <p class="text-muted" id="paywallFeatureDesc">
+                            Este recurso permite que o sistema direcione seus aportes automaticamente para o ativo que mais precisa de equilíbrio, otimizando seus custos e impostos.
+                        </p>
+                    </div>
+                    
+                    <div class="card bg-light border-0 mb-4 text-start shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-primary"><i class="bi bi-check2-circle me-2"></i>Vantagens do Plano PRO:</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> 100 Simulações mensais</li>
+                                <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> Histórico completo de dados</li>
+                                <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> Cálculo automático de impostos</li>
+                                <li><i class="bi bi-check-lg text-success me-2"></i> Estratégias de aporte avançadas</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                            Fazer Upgrade Agora
+                        </a>
+                        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Agora não, obrigado</button>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 justify-content-center py-2">
+                    <span class="text-muted smaller" style="font-size: 0.75rem;">
+                        <i class="bi bi-shield-check me-1"></i> Pagamento seguro via Mercado Pago
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
         <?php 
@@ -273,6 +322,35 @@
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
                 }
             });
+        });
+
+        // 4. Lógica Global para Paywall (Barreira de Vidro)
+        window.showPaywallModal = function(feature, description) {
+            const modalEl = document.getElementById('paywallModal');
+            if (!modalEl) return;
+            
+            const titleEl = document.getElementById('paywallFeatureTitle');
+            const descEl = document.getElementById('paywallFeatureDesc');
+            
+            if (feature) titleEl.textContent = feature;
+            if (description) descEl.textContent = description;
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        };
+
+        // Intercepta cliques em elementos com [data-paywall]
+        document.addEventListener('click', function(e) {
+            const paywallTrigger = e.target.closest('[data-paywall]');
+            if (paywallTrigger) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const feature = paywallTrigger.getAttribute('data-paywall-feature') || 'Recurso Premium';
+                const desc = paywallTrigger.getAttribute('data-paywall-desc') || '';
+                
+                showPaywallModal(feature, desc);
+            }
         });
     });
     </script>
