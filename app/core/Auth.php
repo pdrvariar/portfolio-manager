@@ -39,6 +39,7 @@ class Auth {
         Session::set('user_email', $user['email']);
         Session::set('is_admin', (bool)$user['is_admin']);
         Session::set('user_plan', $user['plan'] ?? 'starter');
+        Session::set('terms_accepted', (bool)($user['terms_accepted'] ?? 0));
         
         // Opcional: Registrar data do último login no banco aqui
         
@@ -70,7 +71,8 @@ class Auth {
             'username' => Session::get('username'),
             'email' => Session::get('user_email'),
             'is_admin' => (bool)Session::get('is_admin'),
-            'plan' => Session::get('user_plan') ?? 'starter'
+            'plan' => Session::get('user_plan') ?? 'starter',
+            'terms_accepted' => (bool)Session::get('terms_accepted')
         ];
     }
 
@@ -95,5 +97,13 @@ class Auth {
 
     public static function isPro() {
         return self::getUserPlan() === 'pro' || self::isAdmin();
+    }
+
+    public static function hasAcceptedTerms() {
+        return (bool)Session::get('terms_accepted');
+    }
+
+    public static function updateSessionTermsAccepted($accepted = true) {
+        Session::set('terms_accepted', $accepted);
     }
 }

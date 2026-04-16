@@ -56,6 +56,10 @@ function setupRoutes(Router $router) {
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);
     $router->add('reset-password', ['controller' => 'auth', 'action' => 'resetPassword']);
     
+    // --- Legal ---
+    $router->add('terms', ['controller' => 'home', 'action' => 'terms']);
+    $router->add('terms/accept', ['controller' => 'home', 'action' => 'acceptTerms']);
+    
     // --- Admin ---
     $router->add('admin', ['controller' => 'admin', 'action' => 'dashboard']);
     $router->add('admin/dashboard', ['controller' => 'admin', 'action' => 'dashboard']);

@@ -149,9 +149,19 @@
         endforeach; ?>
     </div>
 
-    <footer class="footer mt-auto py-3 border-top">
+    <footer class="footer mt-auto py-4 border-top">
         <div class="container text-center">
             <span class="text-muted small">Portfolio Backtest &copy; <?php echo date('Y'); ?></span>
+            <div class="mt-2">
+                <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Termos de Uso</a>
+                <span class="text-muted small">|</span>
+                <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Isenção de Responsabilidade</a>
+                <span class="text-muted small">|</span>
+                <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Garantia e Reembolso</a>
+            </div>
+            <p class="text-muted x-small mt-3 mb-0" style="font-size: 0.75rem;">
+                Este site é uma plataforma de estudo e simulação. Não realizamos recomendações de investimento.
+            </p>
         </div>
     </footer>
     

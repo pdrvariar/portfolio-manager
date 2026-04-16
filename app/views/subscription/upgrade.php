@@ -42,9 +42,31 @@ ob_start();
                         </li>
                     </ul>
 
+                    <div class="alert alert-info border-0 bg-light-primary mb-4 p-3 rounded-3">
+                        <div class="d-flex">
+                            <i class="bi bi-shield-check fs-2 me-3 text-primary"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Garantia Incondicional de 7 Dias</h6>
+                                <p class="small mb-0 opacity-75">Teste sem riscos. Se não gostar, devolvemos seu dinheiro integralmente, conforme o Código de Defesa do Consumidor.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check small">
+                            <input class="form-check-input" type="checkbox" id="accept_terms" required>
+                            <label class="form-check-label text-muted" for="accept_terms">
+                                Eu li e aceito os <a href="/index.php?url=terms" target="_blank" class="fw-bold">Termos de Uso</a>, incluindo as cláusulas de isenção de responsabilidade financeira.
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="d-grid gap-3">
                         <!-- SÊNIOR: Container para o Card Payment Brick (Apenas Cartão) -->
-                        <div id="paymentBrick_container"></div>
+                        <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
+                        <div id="terms_warning" class="text-danger small text-center">
+                            Marque o aceite dos termos acima para habilitar o pagamento.
+                        </div>
                         
                         <p class="text-center text-muted small mb-0">
                             Pagamento seguro via Checkout Transparente Mercado Pago.
@@ -61,6 +83,23 @@ ob_start();
         </div>
     </div>
 </div>
+
+<!-- SÊNIOR: Script para habilitar o pagamento apenas após o aceite -->
+<script>
+    document.getElementById('accept_terms').addEventListener('change', function() {
+        const container = document.getElementById('paymentBrick_container');
+        const warning = document.getElementById('terms_warning');
+        if (this.checked) {
+            container.classList.remove('opacity-50');
+            container.style.pointerEvents = 'auto';
+            warning.classList.add('d-none');
+        } else {
+            container.classList.add('opacity-50');
+            container.style.pointerEvents = 'none';
+            warning.classList.remove('d-none');
+        }
+    });
+</script>
 
 <!-- SÊNIOR: Integração elegante com Checkout Bricks do Mercado Pago -->
 <script src="https://sdk.mercadopago.com/js/v2"></script>

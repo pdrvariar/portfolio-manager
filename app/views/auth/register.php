@@ -60,6 +60,15 @@ ob_start();
                             <label class="form-label fw-semibold">Confirmar Senha</label>
                             <input type="password" name="confirm_password" class="form-control" required>
                         </div>
+
+                        <div class="col-12 mt-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label text-muted small" for="terms">
+                                    Ao me cadastrar, eu aceito os <a href="/index.php?url=terms" target="_blank" class="text-primary text-decoration-none fw-bold">Termos de Uso e Condições</a>, incluindo a isenção de responsabilidade sobre prejuízos financeiros e a natureza educacional do site.
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100 py-3 mt-4 fw-bold rounded-3">Criar minha conta</button>

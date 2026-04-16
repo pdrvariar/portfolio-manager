@@ -27,8 +27,9 @@ class User {
 
             $sql = "INSERT INTO users (
                         username, full_name, email, phone, birth_date, 
-                        password, verification_token, status, plan
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'starter')";
+                        password, verification_token, status, plan,
+                        terms_accepted, terms_accepted_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'starter', 1, NOW())";
             
             $stmt = $this->db->prepare($sql);
             $success = $stmt->execute([
@@ -82,9 +83,9 @@ class User {
         // 2. Se não existe, criar um novo já ativo e verificado
         $username = explode('@', $data['email'])[0] . rand(10, 99);
         
-        // SÊNIOR: Note o preenchimento de email_verified_at e status 'active'
-        $sql = "INSERT INTO users (full_name, email, username, status, email_verified_at, is_admin, plan) 
-                VALUES (?, ?, ?, 'active', NOW(), 0, 'starter')";
+        // SÊNIOR: Note o preenchimento de email_verified_at, status 'active' e aceite dos termos
+        $sql = "INSERT INTO users (full_name, email, username, status, email_verified_at, is_admin, plan, terms_accepted, terms_accepted_at) 
+                VALUES (?, ?, ?, 'active', NOW(), 0, 'starter', 1, NOW())";
         
         try {
             $stmt = $this->db->prepare($sql);

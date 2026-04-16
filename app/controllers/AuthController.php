@@ -111,6 +111,12 @@ class AuthController {
                 redirectBack('/index.php?url=' . obfuscateUrl('register'));
             }
 
+            // 4. Validação do Aceite dos Termos
+            if (empty($_POST['terms'])) {
+                Session::setFlash('error', 'Você deve aceitar os Termos de Uso e Isenção de Responsabilidade para se cadastrar.');
+                redirectBack('/index.php?url=' . obfuscateUrl('register'));
+            }
+
             // 4. Verificação de Duplicidade de Usuário
             if ($this->userModel->findByUsername($data['username'])) {
                 Session::setFlash('error', 'Este nome de usuário já existe.');
