@@ -45,6 +45,10 @@ function setupRoutes(Router $router) {
     $router->add('profile/change-password', ['controller' => 'profile', 'action' => 'changePassword']);
     $router->add('portfolio/toggle-system/{id:\d+}', ['controller' => 'portfolio', 'action' => 'toggleSystem']);    
 
+    // --- Rotas de Assinatura ---
+    $router->add('upgrade', ['controller' => 'subscription', 'action' => 'upgrade']);
+    $router->add('subscription/checkout', ['controller' => 'subscription', 'action' => 'checkout']);
+
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);
     $router->add('reset-password', ['controller' => 'auth', 'action' => 'resetPassword']);

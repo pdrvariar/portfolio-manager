@@ -64,6 +64,12 @@ ob_start();
                                     <i class="bi bi-info-circle-fill ms-2 text-muted info-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Data do primeiro aporte. O sistema buscará preços históricos a partir deste dia."></i>
                                 </label>
                                 <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $portfolio['start_date']; ?>" required>
+                                <?php if (!Auth::isPro()): ?>
+                                <div class="form-text text-primary small">
+                                    <i class="bi bi-info-circle me-1"></i> No Plano Starter, o histórico é limitado aos últimos 5 anos. 
+                                    <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="fw-bold text-decoration-none">Desbloquear PRO</a>
+                                </div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-4">
                                 <label for="end_date" class="form-label fw-bold d-flex align-items-center">
@@ -172,8 +178,14 @@ ob_start();
                                                     </div>
                                                     <?php endforeach; ?>
                                                     <?php else: ?>
-                                                    <div class="alert alert-warning py-2 small mb-0 ms-2 me-2">
-                                                        <i class="bi bi-lock-fill me-1"></i> Cálculo de impostos disponível apenas no <strong>Plano PRO</strong>.
+                                                    <div class="text-center py-3 px-2">
+                                                        <div class="mb-2">
+                                                            <i class="bi bi-lock-fill text-primary fs-4"></i>
+                                                        </div>
+                                                        <p class="small text-muted mb-3">O cálculo automatizado de impostos está disponível apenas para assinantes PRO.</p>
+                                                        <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-sm btn-outline-primary fw-bold">
+                                                            Desbloquear Plano PRO
+                                                        </a>
                                                     </div>
                                                     <?php endif; ?>
                                                     
@@ -624,7 +636,30 @@ ob_start();
             // Verificação de limite de ativos para Plano Starter
             const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
             if (!isPro && assets.length >= 5) {
-                alert('O Plano Starter permite no máximo 5 ativos por carteira. Faça upgrade para o Plano PRO para adicionar ilimitados.');
+                const upgradeUrl = '/index.php?url=<?= obfuscateUrl('upgrade') ?>';
+                const modalHtml = `
+                    <div class="modal fade" id="limitReachedModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-body text-center p-5">
+                                    <i class="bi bi-exclamation-diamond-fill text-primary display-4 mb-3"></i>
+                                    <h4 class="fw-bold">Limite de Ativos Atingido</h4>
+                                    <p class="text-muted mb-4">O Plano Starter permite no máximo 5 ativos por carteira para manter as análises simplificadas.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="${upgradeUrl}" class="btn btn-primary py-2 fw-bold">Desbloquear Ativos Ilimitados</a>
+                                        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Agora não</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = new bootstrap.Modal(document.getElementById('limitReachedModal'));
+                modal.show();
+                document.getElementById('limitReachedModal').addEventListener('hidden.bs.modal', function () {
+                    this.remove();
+                });
                 return;
             }
 
@@ -841,6 +876,45 @@ ob_start();
             });
 
             toggleSimulationFields();
+
+            // Restrição de 5 anos para Plano Starter (Data Início)
+            const startDateInput = document.getElementById('start_date');
+            const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
+            
+            if (!isPro && startDateInput) {
+                const fiveYearsAgo = new Date();
+                fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+                
+                const minDateStr = fiveYearsAgo.toISOString().split('T')[0];
+                startDateInput.min = minDateStr;
+
+                startDateInput.addEventListener('change', function() {
+                    if (this.value < minDateStr) {
+                        this.value = minDateStr;
+                        const upgradeUrl = '/index.php?url=<?= obfuscateUrl('upgrade') ?>';
+                        const toastHtml = `
+                            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1060">
+                                <div class="toast show align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            No Plano Starter, o limite é de 5 anos. <a href="${upgradeUrl}" class="text-white fw-bold">Seja PRO</a> para histórico completo.
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.insertAdjacentHTML('beforeend', toastHtml);
+                        setTimeout(() => {
+                            const toast = document.querySelector('.toast');
+                            if (toast) toast.remove();
+                        }, 5000);
+                        
+                        validatePortfolioRange();
+                    }
+                });
+            }
         });
 
     </script>

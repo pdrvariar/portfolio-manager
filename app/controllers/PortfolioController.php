@@ -60,6 +60,16 @@ class PortfolioController {
                 'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null,
                 'profit_tax_rates_json' => !empty($_POST['profit_tax_rates']) ? json_encode($_POST['profit_tax_rates']) : null
             ];
+
+            // Validação de limites do Plano Starter
+            if (!Auth::isPro()) {
+                // Limite de 5 anos na data de início
+                $fiveYearsAgo = date('Y-m-d', strtotime('-5 years'));
+                if ($data['start_date'] < $fiveYearsAgo) {
+                    $data['start_date'] = $fiveYearsAgo;
+                    Session::setFlash('warning', 'No Plano Starter o histórico é limitado a 5 anos. Sua data de início foi ajustada.');
+                }
+            }
             
             $portfolioId = $this->portfolioModel->create($data);
             if ($portfolioId) {
@@ -393,6 +403,16 @@ class PortfolioController {
                 'profit_tax_rate' => !empty($_POST['profit_tax_rate']) ? (float)str_replace(',', '.', $_POST['profit_tax_rate']) : null,
                 'profit_tax_rates_json' => !empty($_POST['profit_tax_rates']) ? json_encode($_POST['profit_tax_rates']) : null
             ];
+
+            // Validação de limites do Plano Starter no update
+            if (!Auth::isPro()) {
+                // Limite de 5 anos na data de início
+                $fiveYearsAgo = date('Y-m-d', strtotime('-5 years'));
+                if ($data['start_date'] < $fiveYearsAgo) {
+                    $data['start_date'] = $fiveYearsAgo;
+                    Session::setFlash('warning', 'No Plano Starter o histórico é limitado a 5 anos. Sua data de início foi ajustada.');
+                }
+            }
             
             // 1. Atualiza os metadados (Nome, Capital, etc)
             $this->portfolioModel->update($data);
