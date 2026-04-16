@@ -48,16 +48,21 @@ class SubscriptionController {
                 }
 
                 header('Content-Type: application/json');
-                echo json_encode([
+                $response = [
                     'status' => $payment->status,
                     'status_detail' => $payment->status_detail,
                     'id' => $payment->id
-                ]);
+                ];
+
+                echo json_encode($response);
                 exit;
             }
 
+            // SÊNIOR: Se chegamos aqui, houve erro. Vamos pegar a mensagem detalhada se existir
+            $detailedError = Session::getFlash('error_debug') ?: 'Falha ao processar pagamento com Mercado Pago.';
+            
             header('Content-Type: application/json');
-            echo json_encode(['status' => 'error', 'message' => 'Falha ao processar pagamento com Mercado Pago.']);
+            echo json_encode(['status' => 'error', 'message' => $detailedError]);
             exit;
         }
 

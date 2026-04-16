@@ -43,7 +43,7 @@ ob_start();
                     </ul>
 
                     <div class="d-grid gap-3">
-                        <!-- SÊNIOR: Container para o Card Payment Brick -->
+                        <!-- SÊNIOR: Container para o Card Payment Brick (Apenas Cartão) -->
                         <div id="paymentBrick_container"></div>
                         
                         <p class="text-center text-muted small mb-0">
@@ -77,14 +77,18 @@ ob_start();
                 },
             },
             customization: {
-                visual: {
-                    style: {
-                        theme: 'default', // 'default' | 'dark' | 'bootstrap' | 'flat'
+                paymentMethods: {
+                    maxInstallments: 1,
+                    types: {
+                        includedByPriority: ['card'] // Apenas Cartão
                     }
                 },
-                paymentMethods: {
-                    maxInstallments: 1
-                }
+                visual: {
+                    style: {
+                        theme: 'default',
+                    },
+                    hideFormTitle: true,
+                },
             },
             callbacks: {
                 onReady: () => {
@@ -93,7 +97,7 @@ ob_start();
                 onSubmit: (formData) => {
                     // SÊNIOR: Envia os dados para o backend processar via API
                     return new Promise((resolve, reject) => {
-                        fetch('/index.php?url=<?= obfuscateUrl('subscription/checkout') ?>', {
+                        fetch('/index.php?url=' + '<?= obfuscateUrl('subscription/checkout') ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -103,10 +107,10 @@ ob_start();
                         .then((response) => response.json())
                         .then((result) => {
                             if (result.status === 'approved') {
-                                window.location.href = '/index.php?url=<?= obfuscateUrl('subscription/success') ?>';
+                                window.location.href = '/index.php?url=' + '<?= obfuscateUrl('subscription/success') ?>';
                                 resolve();
-                            } else if (result.status === 'in_process') {
-                                window.location.href = '/index.php?url=<?= obfuscateUrl('subscription/pending') ?>';
+                            } else if (result.status === 'pending' || result.status === 'in_process') {
+                                window.location.href = '/index.php?url=' + '<?= obfuscateUrl('subscription/pending') ?>';
                                 resolve();
                             } else {
                                 alert('Pagamento não aprovado: ' + (result.message || result.status_detail || 'Erro desconhecido'));
@@ -134,20 +138,23 @@ ob_start();
 
     function json_encode_with_brick_data(formData) {
         // Converte os dados do Brick para o formato esperado pelo MercadoPagoService
-        return JSON.stringify({
-            token: formData.token,
-            issuer_id: formData.issuer_id,
-            payment_method_id: formData.payment_method_id,
+        const data = {
             transaction_amount: formData.transaction_amount,
-            installments: formData.installments,
+            payment_method_id: formData.payment_method_id,
             payer: {
                 email: formData.payer.email,
                 identification: {
                     type: formData.payer.identification.type,
-                    number: formData.payer.identification.number,
+                    number: formData.payer.identification.number.replace(/\D/g, ''),
                 },
             },
-        });
+        };
+
+        if (formData.token) data.token = formData.token;
+        if (formData.installments) data.installments = formData.installments;
+        if (formData.issuer_id) data.issuer_id = formData.issuer_id;
+
+        return JSON.stringify(data);
     }
 
     renderCardPaymentBrick(bricksBuilder);
