@@ -21,7 +21,10 @@ ob_start();
     }
     .plan-card.active {
         border-color: #0d6efd;
-        background-color: #f8f9ff;
+        background-color: var(--soft-primary);
+    }
+    [data-theme="dark"] .plan-card.active {
+        background-color: rgba(13, 110, 253, 0.2);
     }
     .badge-save {
         background-color: #ffc107;
@@ -36,6 +39,9 @@ ob_start();
         color: #6c757d;
         font-size: 0.9rem;
     }
+    .text-main {
+        color: var(--text-main) !important;
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -46,7 +52,7 @@ ob_start();
             <?php if ($currentExpiration): ?>
                 <div class="alert alert-info d-inline-block mt-2">
                     <i class="bi bi-calendar-check me-2"></i>
-                    Sua assinatura atual é válida até: <strong><?= $currentExpiration ?></strong>
+                    Sua assinatura atual é válida até: <strong class="text-main"><?= $currentExpiration ?></strong>
                 </div>
             <?php endif; ?>
         </div>
@@ -66,7 +72,7 @@ ob_start();
                         <ul class="list-unstyled text-start mb-0">
                             <li class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i> Renovação a cada 30 dias</li>
                             <li class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i> Todos os recursos PRO</li>
-                            <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong><?= date('d/m/Y', strtotime('+1 month')) ?></strong></li>
+                            <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong class="text-main"><?= date('d/m/Y', strtotime('+1 month')) ?></strong></li>
                         </ul>
                     </div>
                 </div>
@@ -93,14 +99,14 @@ ob_start();
                         <ul class="list-unstyled text-start mb-0">
                             <li class="mb-2"><i class="bi bi-star-fill text-warning me-2"></i> <strong>Economize R$ 179,40 por ano</strong></li>
                             <li class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i> Todos os recursos PRO</li>
-                            <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong><?= date('d/m/Y', strtotime('+1 year')) ?></strong></li>
+                            <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong class="text-main"><?= date('d/m/Y', strtotime('+1 year')) ?></strong></li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="card border-0 shadow-lg overflow-hidden mb-4">
             <div class="row g-0">
                 <div class="col-md-12 p-5">
                     <div class="row">
@@ -108,28 +114,28 @@ ob_start();
                             <h4 class="fw-bold mb-4">O que você ganha com o PRO:</h4>
                             <ul class="list-unstyled">
                                 <li class="mb-3 d-flex align-items-start">
-                                    <i class="bi bi-graph-up-arrow text-success me-3 fs-5"></i>
+                                    <i class="bi bi-graph-up-arrow text-primary me-3 fs-5"></i>
                                     <div>
                                         <strong>Histórico e Ativos Ilimitados:</strong>
                                         <p class="small text-muted mb-0">Simule com o histórico completo de décadas e adicione quantos ativos desejar (limite de 5 no Starter).</p>
                                     </div>
                                 </li>
                                 <li class="mb-3 d-flex align-items-start">
-                                    <i class="bi bi-calculator text-success me-3 fs-5"></i>
+                                    <i class="bi bi-calculator text-primary me-3 fs-5"></i>
                                     <div>
                                         <strong>100 Simulações mensais:</strong>
                                         <p class="small text-muted mb-0">Enquanto o plano Starter permite apenas 20 execuções por mês.</p>
                                     </div>
                                 </li>
                                 <li class="mb-3 d-flex align-items-start">
-                                    <i class="bi bi-lightning-charge text-success me-3 fs-5"></i>
+                                    <i class="bi bi-lightning-charge text-primary me-3 fs-5"></i>
                                     <div>
                                         <strong>Recursos Premium de Rebalanceamento:</strong>
                                         <p class="small text-muted mb-0">Acesse simulações de Aporte Direcionado, Estratégico e Rebalanceamento com Margem.</p>
                                     </div>
                                 </li>
                                 <li class="mb-3 d-flex align-items-start">
-                                    <i class="bi bi-receipt text-success me-3 fs-5"></i>
+                                    <i class="bi bi-receipt text-primary me-3 fs-5"></i>
                                     <div>
                                         <strong>Cálculo de Impostos:</strong>
                                         <p class="small text-muted mb-0">Visualize o impacto tributário nas suas simulações automaticamente.</p>
@@ -137,7 +143,7 @@ ob_start();
                                 </li>
                             </ul>
                         </div>
-                        <div class="col-md-6 border-start ps-md-5">
+                        <div class="col-md-6 border-start ps-md-5 mt-4 mt-md-0">
                             <div id="payment-section">
                                 <h4 class="fw-bold mb-4">Finalizar Assinatura</h4>
                                 
@@ -150,14 +156,14 @@ ob_start();
                                     </div>
                                 </div>
 
-                                <div id="order-summary" class="bg-light p-3 rounded mb-4">
+                                <div id="order-summary" class="bg-light-subtle p-3 rounded mb-4">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Plano selecionado:</span>
                                         <span id="summary-plan-name" class="fw-bold text-primary">Mensal</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted">Total a pagar:</span>
-                                        <span id="summary-plan-price" class="fs-4 fw-bold text-dark">R$ 29,90</span>
+                                        <span id="summary-plan-price" class="fs-4 fw-bold">R$ 29,90</span>
                                     </div>
                                 </div>
 
@@ -225,7 +231,7 @@ ob_start();
             },
             customization: {
                 visual: {
-                    style: { theme: 'default' },
+                    style: { theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' },
                     hideFormTitle: true,
                     hidePaymentButton: false,
                 },
