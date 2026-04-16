@@ -1098,7 +1098,7 @@ class BacktestService {
             }
         }
 
-        // NOVO: Calcula métricas adicionais e performance real da estratégia (sem aportes)
+        // NOVO: Calcula métricas adicionais e performance da estratégia (sem aportes)
         $valuesWithoutDeposits = [];
         $strategyReturns = [];
         $prevStrategyValue = $initial;
@@ -1119,11 +1119,11 @@ class BacktestService {
         $initialWithoutDeposits = $initial;
         $finalWithoutDeposits = end($valuesWithoutDeposits);
 
-        // Retorno real da estratégia (sem aportes)
+        // Performance da estratégia (sem aportes)
         $strategyReturn = $initialWithoutDeposits > 0 ?
             (($finalWithoutDeposits - $initialWithoutDeposits) / $initialWithoutDeposits) * 100 : 0;
             
-        // CAGR Real da Estratégia (considerando tempo, sem aportes)
+        // CAGR da Estratégia (considerando tempo, sem aportes)
         $strategyReturnDecimal = $strategyReturn / 100;
         if ($numMonths >= 12) {
             $strategyAnnualReturn = pow(1 + $strategyReturnDecimal, 12 / $numMonths) - 1;

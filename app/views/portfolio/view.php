@@ -543,13 +543,13 @@ $isSelicMonthlyConflict = (
             ]
         ],
         [
-            'title' => 'Eficiência da Estratégia (Sem Aportes)',
+            'title' => 'Desempenho da Carteira (Sem Aportes)',
             'icon'  => 'bi-gear-wide-connected',
             'color' => '#6610f2',
-            'description' => 'Isolamos o efeito do seu bolso para medir apenas a qualidade da alocação de ativos. É a métrica real de performance do gestor.',
+            'description' => 'Isolamos o efeito do seu bolso para medir apenas a qualidade da alocação de ativos. É a métrica de performance do gestor.',
             'metrics' => [
                 [
-                    'label' => 'Performance da Estratégia',
+                    'label' => 'Performance da Carteira',
                     'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
                     'class' => 'border-indigo',
                     'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
@@ -557,15 +557,15 @@ $isSelicMonthlyConflict = (
                     'sub' => 'Retorno Teórico da Carteira'
                 ],
                 [
-                    'label' => 'Performance Anual (Estratégia)',
+                    'label' => 'Performance Anualizada',
                     'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0, 2),
                     'class' => 'border-indigo',
                     'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Rentabilidade anualizada da estratégia, permitindo comparar com benchmarks como IBOV ou S&P500.',
-                    'sub' => 'CAGR da Estratégia'
+                    'tooltip' => 'Rentabilidade anualizada da carteira (sem aportes), permitindo comparar com benchmarks como IBOV ou S&P500.',
+                    'sub' => 'CAGR da Performance'
                 ],
                 [
-                    'label' => 'Lucro da Estratégia (em valor)',
+                    'label' => 'Lucro da Carteira (em valor)',
                     'val' => formatCurrency(($portfolio['initial_capital'] * ($metrics['strategy_return'] ?? 0) / 100), $portfolio['output_currency']),
                     'class' => 'border-indigo',
                     'visible' => $hasDeposits,
@@ -798,12 +798,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             <i class="bi bi-graph-up-arrow me-1"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)
                             <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                     data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                    title="<strong>Estimativa futura</strong> baseada no retorno anual real histórico da estratégia, com juros compostos mensais.<br><br>⚠️ Rentabilidade passada <strong>não garante</strong> rentabilidade futura. Use como referência de planejamento.">
+                                    title="<strong>Estimativa futura</strong> baseada na rentabilidade anual histórica da estratégia, com juros compostos mensais.<br><br>⚠️ Rentabilidade passada <strong>não garante</strong> rentabilidade futura. Use como referência de planejamento.">
                                 <i class="bi bi-info-circle-fill"></i>
                             </button>
                         </h5>
                         <p class="text-muted small mb-0">
-                            Baseado no retorno anual real da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
+                            Baseado na rentabilidade anual da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
                             <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
                                 e aporte mensal de <strong><?= formatCurrency($monthlyDeposit, $portfolio['output_currency']) ?></strong>.
                             <?php else: ?>
@@ -890,14 +890,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="card shadow-sm border-0">
                 <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Performance Real da Estratégia
+                        Desempenho da Carteira
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Compara o crescimento do portfólio <strong>com aportes</strong> (linha verde) versus a <strong>performance pura da estratégia</strong> (linha azul), sem aportes.<br><br>A diferença entre as linhas representa o impacto dos aportes no patrimônio.">
+                                title="Compara o crescimento do patrimônio <strong>com aportes</strong> (linha verde) versus o <strong>desempenho puro da carteira</strong> (linha roxa), sem aportes.<br><br>A diferença entre as linhas representa o quanto o seu esforço de poupança (aportes) contribuiu para o valor final.">
                             <i class="bi bi-info-circle-fill"></i>
                         </button>
                     </h5>
-                    <p class="text-muted small mb-0">Comparação entre o crescimento do portfólio total (com aportes) e a performance real da estratégia (excluindo aportes).</p>
+                    <p class="text-muted small mb-0">Comparação entre o patrimônio total (com aportes) e o desempenho da carteira (sem aportes).</p>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -906,7 +906,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     <div class="mt-3 text-center">
                         <div class="d-inline-block me-4">
                             <span class="badge bg-primary me-1" style="width: 15px; height: 15px; display: inline-block;"></span>
-                            <span class="small">Estratégia (<?php echo formatPercentage($lastStrategyReturn); ?>)</span>
+                            <span class="small">Performance (<?php echo formatPercentage($lastStrategyReturn); ?>)</span>
                         </div>
                         <div class="d-inline-block">
                             <span class="badge bg-success me-1" style="width: 15px; height: 15px; display: inline-block;"></span>
@@ -1001,10 +1001,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Retorno por Ano Real (Sem Aportes)
+                        Retorno por Ano (Carteira)
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Retorno percentual gerado pela <strong>estratégia pura</strong> em cada ano, excluindo o efeito dos aportes. Permite avaliar a qualidade da alocação de ativos independentemente do volume aportado.">
+                                title="Retorno percentual gerado pela <strong>carteira pura</strong> em cada ano, excluindo o efeito dos aportes. Permite avaliar a qualidade da alocação de ativos independentemente do volume aportado.">
                             <i class="bi bi-info-circle-fill"></i>
                         </button>
                     </h5>
@@ -1441,7 +1441,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Retorno Real: ${context.raw.toFixed(4)}%`;
+                                return `Performance: ${context.raw.toFixed(4)}%`;
                             }
                         }
                     }

@@ -156,7 +156,7 @@ class ChartService {
         return [
             'labels' => $labels,
             'datasets' => [[
-                'label' => 'Retorno Anual (%)',
+                'label' => 'Performance da Carteira (%)',
                 'data' => $returns,
                 'backgroundColor' => $colors,
                 'borderColor' => $colors,
@@ -198,7 +198,7 @@ class ChartService {
         return [
             'labels' => $labels,
             'datasets' => [[
-                'label' => 'Retorno Real (Sem Aportes) (%)',
+                'label' => 'Performance da Carteira (%)',
                 'data' => $returns,
                 'backgroundColor' => $colors,
                 'borderColor' => $colors,
@@ -349,7 +349,7 @@ class ChartService {
             'labels' => $dates,
             'datasets' => [
                 [
-                    'label' => 'Estratégia (sem aportes)',
+                    'label' => 'Performance (sem aportes)',
                     'data' => $strategyValues,
                     'borderColor' => '#6f42c1',
                     'backgroundColor' => 'rgba(111, 66, 193, 0.1)',
