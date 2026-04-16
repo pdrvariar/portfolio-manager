@@ -495,113 +495,227 @@ $isSelicMonthlyConflict = (
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <?php
-        // Adiciona métricas específicas para simulações com aportes
-        $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
+    <?php
+    // --- Categorização das Métricas (Analista Sênior) ---
+    $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
+    $isShort = $metrics['is_short_period'] ?? false;
 
-        $metricsList = [
-                ['label' => 'Retorno Total', 'val' => formatPercentage($metrics['total_return'], 2), 'class' => 'border-primary', 'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger',
-                 'tooltip' => 'Percentual de valorização total do portfólio do início ao fim da simulação. Inclui o efeito dos aportes e do rebalanceamento.'],
+    $metricGroups = [
+        [
+            'title' => 'Performance do Patrimônio (Com Aportes)',
+            'icon'  => 'bi-bank',
+            'color' => '#0d6efd',
+            'description' => 'Estes números refletem o que você veria no saldo da sua corretora. Incluem tanto o rendimento quanto o dinheiro que você tirou do bolso.',
+            'metrics' => [
                 [
-                        'label' => ($metrics['is_short_period'] ?? false) ? 'Retorno no Período' : 'CAGR (Anual)',
-                        'val'   => formatPercentage($metrics['annual_return'], 2),
-                        'class' => 'border-success',
-                        'text'  => 'text-success',
-                        'tooltip' => 'CAGR (Compound Annual Growth Rate): taxa de crescimento anual composta. Representa o retorno anualizado consistente que teria gerado o mesmo resultado final.'
-                ],
-                ['label' => 'Volatilidade', 'val' => formatPercentage($metrics['volatility'], 2), 'class' => 'border-warning', 'text' => 'text-main',
-                 'tooltip' => 'Desvio padrão dos retornos mensais. Mede a imprevisibilidade do portfólio: <strong>quanto maior, mais arriscado</strong>. Valores baixos indicam maior estabilidade.'],
-                ['label' => 'Sharpe Ratio', 'val' => number_format($metrics['sharpe_ratio'], 2), 'class' => 'border-info', 'text' => 'text-main',
-                 'tooltip' => 'Relação entre retorno e risco. <strong>Acima de 1</strong> = bom; <strong>acima de 2</strong> = excelente. Indica quanto de retorno foi obtido por unidade de risco assumido.'],
-                ['label' => 'MAIOR ALTA MENSAL REAL', 'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2), 'class' => 'border-success', 'text' => 'text-success',
-                 'tooltip' => 'O <strong>maior retorno positivo</strong> registrado em um único mês durante o período simulado. Reflete o melhor cenário mensal da estratégia.'],
-                ['label' => 'MAIOR QUEDA REAL MENSAL', 'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2), 'class' => 'border-danger', 'text' => 'text-danger',
-                 'tooltip' => 'A <strong>maior perda</strong> sofrida em um único mês durante o período simulado. Ajuda a dimensionar o risco de curto prazo da estratégia.'],
-                ['label' => 'Ganho Real Total (IPCA)', 'val' => formatPercentage($metrics['real_roi'] ?? 0, 2), 'class' => 'border-primary', 'text' => ($metrics['real_roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                 'tooltip' => 'Retorno real total do portfólio <strong>descontando a inflação (IPCA)</strong> acumulada no período. Mostra o aumento real do seu poder de compra.'],
-                ['label' => 'Ganho Real Anualizado', 'val' => formatPercentage($metrics['real_roi_annual'] ?? 0, 2), 'class' => 'border-success', 'text' => ($metrics['real_roi_annual'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                 'tooltip' => 'Taxa de <strong>crescimento real anual</strong> do portfólio, já descontada a inflação. É a métrica mais pura de enriquecimento ao longo do tempo.'],
-        ];
-
-        // Se houver aportes, adicionamos métricas de Retorno Real e ROI
-        if ($hasDeposits) {
-            $metricsList[] = [
-                    'label' => 'Performance Real (Sem Aportes)',
-                    'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
+                    'label' => 'Retorno Total do Patrimônio',
+                    'val' => formatPercentage($metrics['total_return'], 2),
                     'class' => 'border-primary',
-                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Retorno total gerado <strong>exclusivamente pela estratégia de investimento</strong>, isolando o efeito dos aportes. Mostra o quanto a alocação de ativos contribuiu para o resultado.'
-            ];
-
-            $metricsList[] = [
-                'label' => ($metrics['is_short_period'] ?? false) ? 'Perf. Anual Real (Sem Aportes)' : 'Performance Anual Real (Sem Aportes)',
-                'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0, 2),
-                'class' => 'border-success',
-                'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                'tooltip' => 'Versão <strong>anualizada</strong> do retorno real da estratégia, sem considerar o efeito dos aportes. Permite comparar com benchmarks e outras estratégias.'
-            ];
-            
-            $metricsList[] = [
-                    'label' => 'Retorno Real (Sem Aportes)',
-                    'val' => formatCurrency(($portfolio['initial_capital'] * ($metrics['strategy_return'] ?? 0) / 100), $portfolio['output_currency']),
-                    'class' => 'border-info',
-                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => '<strong>Valor monetário</strong> gerado pela estratégia sobre o capital inicial, desconsiderando todos os aportes. É o lucro puro da alocação de ativos.'
-            ];
-
-            $metricsList[] = [
-                    'label' => 'ROI (com aportes)',
+                    'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Crescimento total do saldo da conta, do início ao fim, somando rendimentos e aportes.',
+                    'sub' => 'Saldo Final vs Capital Inicial'
+                ],
+                [
+                    'label' => $isShort ? 'Rentabilidade no Período' : 'Rentabilidade Anual (Média)',
+                    'val'   => formatPercentage($metrics['annual_return'], 2),
+                    'class' => 'border-primary',
+                    'text'  => 'text-primary',
+                    'tooltip' => 'A taxa média de crescimento do seu patrimônio por ano, considerando o efeito dos aportes.',
+                    'sub' => $isShort ? 'Período inferior a 1 ano' : 'CAGR do Patrimônio'
+                ],
+                [
+                    'label' => 'ROI (Retorno sobre Investimento)',
                     'val' => formatPercentage($metrics['roi'] ?? 0, 2),
                     'class' => 'border-success',
+                    'visible' => $hasDeposits,
                     'text' => ($metrics['roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Return on Investment: retorno percentual sobre o <strong>total investido</strong> (capital inicial + todos os aportes). Indica a eficiência de todo o capital empregado.'
-            ];
-        }
+                    'tooltip' => 'O quanto o seu capital rendeu de fato sobre <b>todo o dinheiro investido</b> (Início + Aportes).',
+                    'footer' => 'Investido: ' . formatCurrency($metrics['total_invested'], $portfolio['output_currency'])
+                ],
+                [
+                    'label' => 'Lucro Nominal Total',
+                    'val' => formatCurrency($metrics['interest_earned'] ?? ($metrics['final_value'] - $metrics['total_invested']), $portfolio['output_currency']),
+                    'class' => 'border-success',
+                    'text' => ($metrics['interest_earned'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'O valor em dinheiro que o mercado te deu, subtraindo tudo o que você investiu.',
+                    'sub' => 'Ganhos de capital + Proventos'
+                ]
+            ]
+        ],
+        [
+            'title' => 'Eficiência da Estratégia (Sem Aportes)',
+            'icon'  => 'bi-gear-wide-connected',
+            'color' => '#6610f2',
+            'description' => 'Isolamos o efeito do seu bolso para medir apenas a qualidade da alocação de ativos. É a métrica real de performance do gestor.',
+            'metrics' => [
+                [
+                    'label' => 'Performance da Estratégia',
+                    'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
+                    'class' => 'border-indigo',
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Quanto a carteira rendeu <b>por conta própria</b>. É como se você tivesse investido R$ 100 no início e nunca mais mexido.',
+                    'sub' => 'Retorno Teórico da Carteira'
+                ],
+                [
+                    'label' => 'Performance Anual (Estratégia)',
+                    'val' => formatPercentage($metrics['strategy_annual_return'] ?? 0, 2),
+                    'class' => 'border-indigo',
+                    'text' => ($metrics['strategy_annual_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Rentabilidade anualizada da estratégia, permitindo comparar com benchmarks como IBOV ou S&P500.',
+                    'sub' => 'CAGR da Estratégia'
+                ],
+                [
+                    'label' => 'Lucro da Estratégia (em valor)',
+                    'val' => formatCurrency(($portfolio['initial_capital'] * ($metrics['strategy_return'] ?? 0) / 100), $portfolio['output_currency']),
+                    'class' => 'border-indigo',
+                    'visible' => $hasDeposits,
+                    'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Quanto o capital inicial rendeu sozinho, desconsiderando os lucros vindos dos aportes posteriores.',
+                    'footer' => 'Base: ' . formatCurrency($portfolio['initial_capital'], $portfolio['output_currency'])
+                ],
+                [
+                    'label' => 'BETA DA CARTEIRA',
+                    'val' => '<span id="betaValue">--</span>',
+                    'class' => 'border-dark',
+                    'text'  => 'text-main',
+                    'tooltip' => 'Mede o risco em relação ao mercado. <b>Beta > 1</b> indica que a carteira oscila mais que o benchmark selecionado.',
+                    'footer_id' => 'betaBenchmarkName',
+                    'footer' => 'Selecione um benchmark'
+                ]
+            ]
+        ],
+        [
+            'title' => 'Poder de Compra e Inflação (Ganhos REAIS)',
+            'icon'  => 'bi-shield-lock',
+            'color' => '#fd7e14',
+            'description' => 'O termo "Real" aqui refere-se ao ganho acima do IPCA. É o que realmente te deixa mais rico após descontar o aumento de preços.',
+            'metrics' => [
+                [
+                    'label' => 'Ganho Real Acima da Inflação',
+                    'val' => formatPercentage($metrics['real_roi'] ?? 0, 2),
+                    'class' => 'border-orange',
+                    'text' => ($metrics['real_roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'O seu retorno total já descontando a inflação (IPCA) acumulada no período.',
+                    'sub' => 'Poder de Compra Adquirido'
+                ],
+                [
+                    'label' => 'Ganho Real Anualizado',
+                    'val' => formatPercentage($metrics['real_roi_annual'] ?? 0, 2),
+                    'class' => 'border-orange',
+                    'text' => ($metrics['real_roi_annual'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                    'tooltip' => 'Taxa de crescimento real ao ano. Se este número for positivo, seu patrimônio está vencendo o custo de vida.',
+                    'sub' => 'Acima do IPCA'
+                ],
+                [
+                    'label' => 'Inflação Acumulada (IPCA)',
+                    'val' => formatPercentage($metrics['total_inflation'] ?? 0, 2),
+                    'class' => 'border-secondary',
+                    'text' => 'text-muted',
+                    'tooltip' => 'A variação do IPCA no período simulado. Representa o quanto o seu dinheiro perdeu de valor para os preços.',
+                    'sub' => 'Custo de vida no período'
+                ],
+                [
+                    'label' => 'Total de Impostos (Est.)',
+                    'val' => formatCurrency($metrics['total_tax_paid'] ?? 0, $portfolio['output_currency']),
+                    'class' => 'border-danger',
+                    'text' => 'text-danger',
+                    'tooltip' => 'Soma estimada de impostos sobre ganhos de capital, considerando as regras vigentes e compensação de prejuízos.',
+                    'sub' => 'Provisão de I.R.'
+                ]
+            ]
+        ],
+        [
+            'title' => 'Risco e Volatilidade',
+            'icon'  => 'bi-graph-down',
+            'color' => '#dc3545',
+            'description' => 'A jornada importa tanto quanto o destino. Aqui medimos o quão "turbulenta" foi a simulação.',
+            'metrics' => [
+                [
+                    'label' => 'Volatilidade Anual',
+                    'val' => formatPercentage($metrics['volatility'], 2),
+                    'class' => 'border-warning',
+                    'text' => 'text-main',
+                    'tooltip' => 'Desvio padrão dos retornos. Quanto maior, mais a carteira "balança". Carteiras conservadoras buscam volatilidade baixa.',
+                    'sub' => 'Risco da jornada'
+                ],
+                [
+                    'label' => 'Índice de Sharpe',
+                    'val' => number_format($metrics['sharpe_ratio'], 2),
+                    'class' => 'border-info',
+                    'text' => 'text-main',
+                    'tooltip' => 'Relação retorno/risco. Acima de 1 é considerado bom. Mostra se o risco que você correu valeu a pena em retorno.',
+                    'sub' => 'Eficiência de Risco'
+                ],
+                [
+                    'label' => 'Maior Alta Mensal',
+                    'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2),
+                    'class' => 'border-success',
+                    'text' => 'text-success',
+                    'tooltip' => 'O melhor mês da história desta carteira. Reflete o potencial de "tiro" positivo.',
+                    'sub' => 'Recorde positivo mensal'
+                ],
+                [
+                    'label' => 'Maior Queda Mensal',
+                    'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2),
+                    'class' => 'border-danger',
+                    'text' => 'text-danger',
+                    'tooltip' => 'O pior mês enfrentado. Importante para testar seu estômago como investidor.',
+                    'sub' => 'Drawdown máximo mensal'
+                ]
+            ]
+        ]
+    ];
 
-        $metricsList[] = [
-            'label' => 'BETA DA CARTEIRA',
-            'val' => '<span id="betaValue">--</span>',
-            'class' => 'border-dark',
-            'text'  => 'text-main',
-            'tooltip' => 'O <strong>Beta</strong> mede a sensibilidade do portfólio em relação a um benchmark (ex: IBOV). <br><br><strong>Beta > 1:</strong> Mais volátil que o mercado.<br><strong>Beta = 1:</strong> Mesma volatilidade.<br><strong>Beta < 1:</strong> Menos volátil que o mercado.'
-        ];
+    foreach ($metricGroups as $group): ?>
+        <div class="col-12 mt-4 mb-2">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 32px; height: 32px; background-color: <?= $group['color'] ?>20; color: <?= $group['color'] ?>;">
+                    <i class="bi <?= $group['icon'] ?> fs-5"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #333;"><?= $group['title'] ?></h5>
+            </div>
+            <p class="text-muted small mb-3 ms-5"><?= $group['description'] ?></p>
+        </div>
 
-        foreach ($metricsList as $m): ?>
-            <div class="col-md-3 mb-3">
-                <div class="card metric-card shadow-sm h-100 border-start border-4 <?php echo $m['class']; ?>">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="text-muted small text-uppercase fw-bold mb-0 me-1"><?php echo $m['label']; ?></h6>
-                            <?php if (!empty($m['tooltip'])): ?>
-                            <button type="button" class="btn btn-link btn-sm p-0 text-muted flex-shrink-0 info-tooltip"
-                                    data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                    title="<?= htmlspecialchars($m['tooltip']) ?>">
-                                <i class="bi bi-info-circle-fill small"></i>
-                            </button>
+        <div class="row g-3 mb-2 ms-4">
+            <?php foreach ($group['metrics'] as $m): 
+                if (isset($m['visible']) && !$m['visible']) continue;
+            ?>
+                <div class="col-md-3">
+                    <div class="card metric-card shadow-sm h-100 border-start border-4 <?= $m['class'] ?> border-top-0 border-end-0 border-bottom-0">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="text-muted smaller text-uppercase fw-bold mb-0 me-1" style="font-size: 0.7rem; letter-spacing: 0.02em;">
+                                    <?= $m['label'] ?>
+                                </h6>
+                                <?php if (!empty($m['tooltip'])): ?>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted flex-shrink-0 info-tooltip"
+                                        data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
+                                        title="<?= htmlspecialchars($m['tooltip']) ?>">
+                                    <i class="bi bi-info-circle-fill" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                            <h4 id="<?= ($m['label'] == 'ROI (Retorno sobre Investimento)') ? 'roi-value' : '' ?>" class="<?= $m['text'] ?> fw-bold mb-1">
+                                <?= $m['val'] ?>
+                            </h4>
+                            <?php if (isset($m['sub'])): ?>
+                                <div class="smaller text-muted" style="font-size: 0.75rem; opacity: 0.8;">
+                                    <?= $m['sub'] ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($m['footer'])): ?>
+                                <div id="<?= $m['footer_id'] ?? '' ?>" class="mt-2 pt-2 border-top smaller text-muted" style="font-size: 0.7rem;">
+                                    <?= $m['footer'] ?>
+                                </div>
                             <?php endif; ?>
                         </div>
-                        <h3 id="<?= ($m['label'] == 'ROI (com aportes)') ? 'roi-value' : '' ?>" class="<?php echo $m['text']; ?> fw-bold mb-0"><?php echo $m['val']; ?></h3>
-                        <?php if ($m['label'] == 'BETA DA CARTEIRA'): ?>
-                            <div class="mt-2 small text-muted">
-                                <span id="betaBenchmarkName">Selecione um benchmark</span>
-                            </div>
-                        <?php endif; ?>
-                        <?php if ($m['label'] == 'Retorno Real (Sem Aportes)'): ?>
-                            <div class="mt-2 small text-muted">
-                                Capital Inicial: <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
-                            </div>
-                        <?php endif; ?>
-                        <?php if ($m['label'] == 'ROI (com aportes)' && $hasDeposits): ?>
-                            <div class="mt-2 small text-muted">
-                                Investido: <?php echo formatCurrency($metrics['total_invested'], $portfolio['output_currency']); ?>
-                                <br>Aportes: <?php echo formatCurrency($metrics['total_deposits'], $portfolio['output_currency']); ?>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endforeach; ?>
     </div>
 
     <div class="row mb-4">
