@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Bloqueia páginas que não devem ser indexadas
+Disallow: /index.php?url=dashboard
+Disallow: /index.php?url=portfolio
+Disallow: /index.php?url=assets
+Disallow: /index.php?url=profile
+Disallow: /index.php?url=admin
+Disallow: /index.php?url=checkout
+Disallow: /index.php?url=logout
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://smartreturns.com.br/sitemap.xml
+

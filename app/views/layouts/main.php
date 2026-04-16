@@ -11,8 +11,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $title ?? 'Portfolio Backtest'; ?></title>
-    
+    <title><?php echo htmlspecialchars($title ?? 'Smart Returns - Backtest e Simulação de Portfólios de Investimentos'); ?></title>
+
+    <!-- SEO: Meta tags principais -->
+    <meta name="description" content="<?php echo htmlspecialchars($meta_description ?? 'Smart Returns: simule e faça backtest de portfólios de investimentos com dados históricos reais. Analise ações, FIIs, renda fixa e criptoativos. Tome decisões financeiras mais inteligentes.'); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars($meta_keywords ?? 'backtest portfólio, simulação de investimentos, análise de portfólio, ações, FIIs, renda fixa, diversificação, Sharpe, drawdown, investimentos Brasil'); ?>">
+    <meta name="author" content="Smart Returns">
+    <meta name="robots" content="<?php echo $meta_robots ?? 'index, follow'; ?>">
+    <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url ?? 'https://smartreturns.com.br' . ($_SERVER['REQUEST_URI'] ?? '/')); ?>">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url ?? 'https://smartreturns.com.br' . ($_SERVER['REQUEST_URI'] ?? '/')); ?>">
+    <meta property="og:title" content="<?php echo htmlspecialchars($title ?? 'Smart Returns - Backtest e Simulação de Portfólios'); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($meta_description ?? 'Simule e analise portfólios de investimentos com dados históricos reais. Métricas de risco, gráficos interativos e estratégias de rebalanceamento.'); ?>">
+    <meta property="og:image" content="<?php echo $og_image ?? 'https://smartreturns.com.br/assets/og-image.png'; ?>">
+    <meta property="og:site_name" content="Smart Returns">
+    <meta property="og:locale" content="pt_BR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo htmlspecialchars($title ?? 'Smart Returns - Backtest de Portfólios'); ?>">
+    <meta name="twitter:description" content="<?php echo htmlspecialchars($meta_description ?? 'Simule portfólios de investimentos com dados históricos reais.'); ?>">
+    <meta name="twitter:image" content="<?php echo $og_image ?? 'https://smartreturns.com.br/assets/og-image.png'; ?>">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/favicon.png">
+
+    <!-- JSON-LD: Dados estruturados para Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Smart Returns",
+        "url": "https://smartreturns.com.br",
+        "description": "Plataforma brasileira de backtest e simulação de portfólios de investimentos com dados históricos reais.",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "pt-BR",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BRL",
+            "description": "Plano gratuito disponível"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Smart Returns",
+            "url": "https://smartreturns.com.br"
+        }
+    }
+    </script>
+
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -201,15 +252,32 @@
 
     <footer class="footer mt-auto py-4 border-top">
         <div class="container text-center">
-            <span class="text-muted small">Portfolio Backtest &copy; <?php echo date('Y'); ?></span>
-            <div class="mt-2">
+            <div class="mb-2">
+                <a href="/" class="text-muted fw-bold text-decoration-none fs-6">
+                    <i class="bi bi-graph-up-arrow me-1" style="color:#0d6efd"></i>Smart Returns
+                </a>
+            </div>
+            <div class="mt-2 mb-3">
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Termos de Uso</a>
                 <span class="text-muted small">|</span>
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Isenção de Responsabilidade</a>
                 <span class="text-muted small">|</span>
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Garantia e Reembolso</a>
             </div>
-            <p class="text-muted x-small mt-3 mb-0" style="font-size: 0.75rem;">
+            <!-- Redes Sociais - atualize os links com seus perfis reais -->
+            <div class="mb-3">
+                <a href="https://instagram.com/smartreturns.br" target="_blank" rel="noopener" class="text-muted mx-2" title="Instagram Smart Returns" aria-label="Instagram">
+                    <i class="bi bi-instagram fs-5"></i>
+                </a>
+                <a href="https://youtube.com/@smartreturns" target="_blank" rel="noopener" class="text-muted mx-2" title="YouTube Smart Returns" aria-label="YouTube">
+                    <i class="bi bi-youtube fs-5"></i>
+                </a>
+                <a href="https://linkedin.com/company/smartreturns" target="_blank" rel="noopener" class="text-muted mx-2" title="LinkedIn Smart Returns" aria-label="LinkedIn">
+                    <i class="bi bi-linkedin fs-5"></i>
+                </a>
+            </div>
+            <span class="text-muted small">Smart Returns &copy; <?php echo date('Y'); ?> — smartreturns.com.br</span>
+            <p class="text-muted x-small mt-2 mb-0" style="font-size: 0.75rem;">
                 Este site é uma plataforma de estudo e simulação. Não realizamos recomendações de investimento.
             </p>
         </div>
