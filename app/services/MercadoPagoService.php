@@ -90,8 +90,9 @@ class MercadoPagoService {
         if (isset($paymentData['token'])) {
             $request["token"] = $paymentData['token'];
             $request["installments"] = (int)$paymentData['installments'];
-            if (isset($paymentData['issuer_id'])) {
-                $request["issuer_id"] = (int)$paymentData['issuer_id'];
+            // SÊNIOR: issuer_id deve ser string na API v2 ou nulo se não fornecido
+            if (isset($paymentData['issuer_id']) && $paymentData['issuer_id'] !== "") {
+                $request["issuer_id"] = (string)$paymentData['issuer_id'];
             }
         }
 
@@ -120,15 +121,18 @@ class MercadoPagoService {
         $msg = $context . ": " . $e->getMessage();
         
         $body = null;
+        $statusCode = 0;
         if ($e instanceof \MercadoPago\Exceptions\MPApiException && $e->getApiResponse()) {
             $response = $e->getApiResponse();
             $body = $response->getContent();
-            $msg .= " | Status: " . $response->getStatusCode();
+            $statusCode = $response->getStatusCode();
+            $msg .= " | Status: " . $statusCode;
             $msg .= " | Body: " . json_encode($body);
         } elseif (method_exists($e, 'getResponse') && $e->getResponse()) {
             $response = $e->getResponse();
             $body = $response->getContent();
-            $msg .= " | Status: " . $response->getStatusCode();
+            $statusCode = $response->getStatusCode();
+            $msg .= " | Status: " . $statusCode;
             $msg .= " | Body: " . json_encode($body);
         } else {
             $msg .= " | Trace: " . substr($e->getTraceAsString(), 0, 500);
@@ -149,20 +153,41 @@ class MercadoPagoService {
         
         // Tentar extrair uma mensagem amigável para o usuário
         $friendlyMessage = "Erro ao processar com Mercado Pago.";
-        if ($body && isset($body['message'])) {
-            $friendlyMessage .= " Detalhe: " . $body['message'];
-            
-            // SÊNIOR: Dica específica para Unauthorized use of live credentials
-            if (strpos($body['message'], 'Unauthorized use of live credentials') !== false) {
-                $friendlyMessage .= ". DICA: Você está usando chaves de PRODUÇÃO (APP_USR-) com cartões de teste ou em ambiente local. Para testes, use credenciais de TESTE (TEST-) e cartões de teste específicos.";
+        
+        if ($body) {
+            if (isset($body['message'])) {
+                $friendlyMessage .= " Detalhe: " . $body['message'];
             }
-        }
-        if ($body && isset($body['cause']) && is_array($body['cause'])) {
-            foreach ($body['cause'] as $cause) {
-                if (isset($cause['description'])) {
-                    $friendlyMessage .= " (" . $cause['description'] . ")";
+            
+            // SÊNIOR: Adiciona causas específicas se houver (muito comum em 400 Bad Request)
+            if (isset($body['cause']) && is_array($body['cause'])) {
+                $causes = [];
+                foreach ($body['cause'] as $cause) {
+                    if (is_array($cause) && isset($cause['description'])) {
+                        $causes[] = $cause['description'];
+                    } elseif (is_string($cause)) {
+                        $causes[] = $cause;
+                    }
+                }
+                if (!empty($causes)) {
+                    $friendlyMessage .= " (" . implode(", ", $causes) . ")";
                 }
             }
+
+            // SÊNIOR: Dica específica para Unauthorized use of live credentials
+            if (isset($body['message']) && strpos($body['message'], 'Unauthorized use of live credentials') !== false) {
+                $friendlyMessage .= ". DICA: Você está usando chaves de PRODUÇÃO (APP_USR-) com cartões de teste. Use credenciais de TESTE (TEST-).";
+            }
+        }
+        
+        // Se for erro de validação (400), a mensagem é crucial para o desenvolvedor/usuário
+        if ($statusCode === 400 && strpos($friendlyMessage, 'Detalhe') === false) {
+            $friendlyMessage .= " (Erro de validação nos parâmetros enviados)";
+        }
+
+        // SÊNIOR: Dica para Internal Error (500)
+        if ($statusCode === 500) {
+            $friendlyMessage = "Erro interno no Mercado Pago. Por favor, tente novamente em alguns minutos. Se o erro persistir, tente usar outro cartão ou método de pagamento.";
         }
 
         Session::setFlash('error_debug', $friendlyMessage);

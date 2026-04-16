@@ -63,6 +63,11 @@ ob_start();
 
                     <div class="d-grid gap-3">
                         <!-- SÊNIOR: Container para o Card Payment Brick (Apenas Cartão) -->
+                        <div id="payment-error-container" class="alert alert-danger d-none mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <span id="payment-error-message"></span>
+                        </div>
+
                         <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
                         <div id="terms_warning" class="text-danger small text-center">
                             Marque o aceite dos termos acima para habilitar o pagamento.
@@ -134,6 +139,9 @@ ob_start();
                     console.log("Brick Ready");
                 },
                 onSubmit: (formData) => {
+                    // SÊNIOR: Log para debug (não enviar para produção com dados sensíveis)
+                    console.log("Form Data:", formData);
+                    
                     // SÊNIOR: Envia os dados para o backend processar via API
                     return new Promise((resolve, reject) => {
                         fetch('/index.php?url=' + '<?= obfuscateUrl('subscription/checkout') ?>', {
@@ -152,13 +160,15 @@ ob_start();
                                 window.location.href = '/index.php?url=' + '<?= obfuscateUrl('subscription/pending') ?>';
                                 resolve();
                             } else {
-                                alert('Pagamento não aprovado: ' + (result.message || result.status_detail || 'Erro desconhecido'));
+                                // SÊNIOR: Melhora a exibição do erro para o usuário integrado ao layout
+                                const errorMsg = result.message || result.status_detail || 'Pagamento não aprovado';
+                                showPaymentError('Erro no Pagamento: ' + errorMsg);
                                 reject();
                             }
                         })
                         .catch((error) => {
                             console.error("Erro no processamento:", error);
-                            alert("Ocorreu um erro ao processar seu pagamento. Tente novamente.");
+                            showPaymentError("Ocorreu um erro ao processar seu pagamento. Verifique sua conexão ou tente novamente.");
                             reject();
                         });
                     });
@@ -184,16 +194,30 @@ ob_start();
                 email: formData.payer.email,
                 identification: {
                     type: formData.payer.identification.type,
-                    number: formData.payer.identification.number.replace(/\D/g, ''),
+                    number: formData.payer.identification.number ? formData.payer.identification.number.replace(/\D/g, '') : '',
                 },
             },
         };
 
         if (formData.token) data.token = formData.token;
         if (formData.installments) data.installments = formData.installments;
-        if (formData.issuer_id) data.issuer_id = formData.issuer_id;
+        // SÊNIOR: Apenas envia issuer_id se estiver presente e não for vazio
+        if (formData.issuer_id && formData.issuer_id !== "") {
+            data.issuer_id = formData.issuer_id;
+        }
 
         return JSON.stringify(data);
+    }
+
+    function showPaymentError(message) {
+        const errorContainer = document.getElementById('payment-error-container');
+        const errorMessage = document.getElementById('payment-error-message');
+        
+        errorMessage.textContent = message;
+        errorContainer.classList.remove('d-none');
+        
+        // Scroll suave até o erro se estiver longe da visão
+        errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     renderCardPaymentBrick(bricksBuilder);
