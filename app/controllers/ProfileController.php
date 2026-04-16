@@ -34,6 +34,8 @@ class ProfileController {
             'role'       => $userData['is_admin'] ? 'Administrador' : 'Investidor',
             'status'     => $userData['status'] ?? 'pending',
             'verified'   => !empty($userData['email_verified_at']),
+            'plan'       => $userData['plan'] ?? 'starter',
+            'is_admin'   => (bool)$userData['is_admin'],
             'created_at' => $userData['created_at'] // ADICIONE ESTA LINHA
         ];
         

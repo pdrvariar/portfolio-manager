@@ -113,9 +113,15 @@ ob_start();
                                         <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
                                             <option value="standard" <?= $portfolio['simulation_type'] == 'standard' ? 'selected' : '' ?>>Padrão (sem aportes)</option>
                                             <option value="monthly_deposit" <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'selected' : '' ?>>Com Aportes Periódicos</option>
+                                            <?php if (Auth::isPro()): ?>
                                             <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?>>Com Aportes Estratégicos</option>
                                             <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?>>Aporte Direcionado ao Alvo</option>
                                             <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?>>Aporte em Caixa (SELIC)</option>
+                                            <?php else: ?>
+                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?> disabled>Com Aportes Estratégicos (Apenas PRO)</option>
+                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?> disabled>Aporte Direcionado ao Alvo (Apenas PRO)</option>
+                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?> disabled>Aporte em Caixa (SELIC) (Apenas PRO)</option>
+                                            <?php endif; ?>
                                         </select>
                                     </div>
                                 </div>
@@ -135,6 +141,7 @@ ob_start();
                                                 </div>
                                                 <div id="tax_input_container" style="display: <?= $hasTax ? 'block' : 'none' ?>;">
                                                     <hr class="my-2 opacity-10">
+                                                    <?php if (Auth::isPro()): ?>
                                                     <?php 
                                                         $taxRates = !empty($portfolio['profit_tax_rates_json']) ? json_decode($portfolio['profit_tax_rates_json'], true) : [];
                                                         $defaultRates = [
@@ -164,6 +171,11 @@ ob_start();
                                                         </div>
                                                     </div>
                                                     <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                    <div class="alert alert-warning py-2 small mb-0 ms-2 me-2">
+                                                        <i class="bi bi-lock-fill me-1"></i> Cálculo de impostos disponível apenas no <strong>Plano PRO</strong>.
+                                                    </div>
+                                                    <?php endif; ?>
                                                     
                                                     <!-- Campo oculto para compatibilidade com o legado se necessário -->
                                                     <input type="hidden" id="profit_tax_rate" name="profit_tax_rate" value="<?= $portfolio['profit_tax_rate'] ?? '' ?>">
@@ -608,6 +620,13 @@ ob_start();
             const select = document.getElementById('assetSelect');
             const allocationInput = document.getElementById('assetAllocation');
             const factorInput = document.getElementById('assetFactor');
+
+            // Verificação de limite de ativos para Plano Starter
+            const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
+            if (!isPro && assets.length >= 5) {
+                alert('O Plano Starter permite no máximo 5 ativos por carteira. Faça upgrade para o Plano PRO para adicionar ilimitados.');
+                return;
+            }
 
             if (!select.value || !allocationInput.value) {
                 alert("Selecione um ativo e informe a alocação.");

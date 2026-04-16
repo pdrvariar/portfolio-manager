@@ -38,6 +38,7 @@ class Auth {
         Session::set('username', $user['username']);
         Session::set('user_email', $user['email']);
         Session::set('is_admin', (bool)$user['is_admin']);
+        Session::set('user_plan', $user['plan'] ?? 'starter');
         
         // Opcional: Registrar data do último login no banco aqui
         
@@ -60,5 +61,13 @@ class Auth {
     
     public static function getCurrentUserId() {
         return Session::get('user_id');
+    }
+
+    public static function getUserPlan() {
+        return Session::get('user_plan') ?? 'starter';
+    }
+
+    public static function isPro() {
+        return self::getUserPlan() === 'pro' || self::isAdmin();
     }
 }

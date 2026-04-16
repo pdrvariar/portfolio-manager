@@ -17,6 +17,18 @@ class BacktestService {
         // SÊNIOR: Cálculo do horizonte comum de dados
         $effectiveDates = $this->calculateEffectiveRange($assets, $portfolio['start_date'], $portfolio['end_date']);
         
+        // Verificação de limite de histórico para o Plano Starter (5 anos do fim para trás)
+        if (!Auth::isPro()) {
+            $endDate = new DateTime($effectiveDates['end']);
+            $fiveYearsLimit = (clone $endDate)->modify('-5 years')->format('Y-m-d');
+            
+            if ($effectiveDates['start'] < $fiveYearsLimit) {
+                $effectiveDates['start'] = $fiveYearsLimit;
+                // Recalcula a validade se o início foi movido
+                $effectiveDates['valid'] = ($effectiveDates['start'] <= $effectiveDates['end']);
+            }
+        }
+        
         if (!$effectiveDates['valid']) {
             return ['success' => false, 'message' => 'Nenhum dos ativos possui dados em comum no período selecionado.'];
         }

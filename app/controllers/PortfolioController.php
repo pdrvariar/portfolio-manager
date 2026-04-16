@@ -22,6 +22,17 @@ class PortfolioController {
     public function create() {
         Auth::checkAuthentication();
         
+        // Verificação de limites para o Plano Starter
+        if (!Auth::isPro()) {
+            $userId = Auth::getCurrentUserId();
+            $existingPortfolios = $this->portfolioModel->getUserPortfolios($userId, false); // false para não incluir defaults
+            if (count($existingPortfolios) >= 2) {
+                Session::setFlash('warning', 'O Plano Starter permite no máximo 2 portfólios. Faça upgrade para o Plano PRO para criar ilimitados.');
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+                exit;
+            }
+        }
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
                 Session::setFlash('error', 'Segurança: Token inválido.');
@@ -53,6 +64,15 @@ class PortfolioController {
             $portfolioId = $this->portfolioModel->create($data);
             if ($portfolioId) {
                 if (isset($_POST['assets'])) {
+                    // Verificação de limite de ativos para o Plano Starter
+                    if (!Auth::isPro()) {
+                        $assetsCount = count($_POST['assets']);
+                        if ($assetsCount > 5) {
+                            // Se exceder, pegamos apenas os 5 primeiros
+                            $_POST['assets'] = array_slice($_POST['assets'], 0, 5, true);
+                            Session::setFlash('warning', 'O Plano Starter permite no máximo 5 ativos por carteira. Apenas os 5 primeiros foram salvos.');
+                        }
+                    }
                     $this->portfolioModel->updateAssets($portfolioId, $_POST['assets']);
                 }
                 // Garanta que o redirecionamento passe pelo index.php e seja ofuscado
@@ -377,6 +397,14 @@ class PortfolioController {
             // 1. Atualiza os metadados (Nome, Capital, etc)
             $this->portfolioModel->update($data);
             if (isset($_POST['assets'])) {
+                // Verificação de limite de ativos para o Plano Starter no update
+                if (!Auth::isPro()) {
+                    $assetsCount = count($_POST['assets']);
+                    if ($assetsCount > 5) {
+                        $_POST['assets'] = array_slice($_POST['assets'], 0, 5, true);
+                        Session::setFlash('warning', 'O Plano Starter permite no máximo 5 ativos por carteira. Apenas os 5 primeiros foram salvos.');
+                    }
+                }
                 $this->portfolioModel->updateAssets($id, $_POST['assets']);
                 // CORREÇÃO: Use Session::setFlash para o main.php mostrar o alerta
                 Session::setFlash('success', 'Portfólio atualizado com sucesso!');
@@ -645,6 +673,21 @@ class PortfolioController {
             }
             header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
             exit;
+        }
+
+        // Verificação de limite de ativos para o Plano Starter no quickUpdate
+        if (!Auth::isPro()) {
+            if (count($_POST['assets']) > 5) {
+                if (isAjax()) {
+                    if (ob_get_length()) ob_clean();
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'O Plano Starter permite no máximo 5 ativos por carteira.']);
+                    exit;
+                }
+                Session::setFlash('warning', 'O Plano Starter permite no máximo 5 ativos por carteira.');
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $id));
+                exit;
+            }
         }
 
         $total = 0;

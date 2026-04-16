@@ -84,6 +84,11 @@
                                     <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
                                 </div>
                                 <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                                <?php if (Auth::isPro()): ?>
+                                    <span class="badge bg-primary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">PRO</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; padding: 0.25em 0.5em;">STARTER</span>
+                                <?php endif; ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>

@@ -108,9 +108,15 @@ $assets = $assetModel->getAllWithDetails();
                                 <select class="form-select" id="simulation_type" name="simulation_type" required onchange="toggleSimulationFields()">
                                     <option value="standard">Padrão (sem aportes)</option>
                                     <option value="monthly_deposit">Com Aportes Periódicos</option>
+                                    <?php if (Auth::isPro()): ?>
                                     <option value="strategic_deposit">Com Aportes Estratégicos</option>
                                     <option value="smart_deposit">Aporte Direcionado ao Alvo</option>
                                     <option value="selic_cash_deposit">Aporte em Caixa (SELIC)</option>
+                                    <?php else: ?>
+                                    <option value="strategic_deposit" disabled>Com Aportes Estratégicos (Apenas PRO)</option>
+                                    <option value="smart_deposit" disabled>Aporte Direcionado ao Alvo (Apenas PRO)</option>
+                                    <option value="selic_cash_deposit" disabled>Aporte em Caixa (SELIC) (Apenas PRO)</option>
+                                    <?php endif; ?>
                                 </select>
                             </div>
                         </div>
@@ -129,6 +135,7 @@ $assets = $assetModel->getAllWithDetails();
                                         </div>
                                         <div id="tax_input_container" style="display: none;">
                                             <hr class="my-2 opacity-10">
+                                            <?php if (Auth::isPro()): ?>
                                             <?php 
                                                 $defaultRates = [
                                                     'CRIPTOMOEDA' => '15.0',
@@ -156,6 +163,11 @@ $assets = $assetModel->getAllWithDetails();
                                                 </div>
                                             </div>
                                             <?php endforeach; ?>
+                                            <?php else: ?>
+                                            <div class="alert alert-warning py-2 small mb-0 ms-2 me-2">
+                                                <i class="bi bi-lock-fill me-1"></i> Cálculo de impostos disponível apenas no <strong>Plano PRO</strong>.
+                                            </div>
+                                            <?php endif; ?>
                                             
                                             <!-- Campo oculto para compatibilidade -->
                                             <input type="hidden" id="profit_tax_rate" name="profit_tax_rate" value="">
@@ -431,6 +443,13 @@ function addAsset() {
     const assetSelect = document.getElementById('assetSelect');
     const allocationInput = document.getElementById('assetAllocation');
     const factorInput = document.getElementById('assetFactor');
+
+    // Verificação de limite de ativos para Plano Starter
+    const isPro = <?= Auth::isPro() ? 'true' : 'false' ?>;
+    if (!isPro && assets.length >= 5) {
+        alert('O Plano Starter permite no máximo 5 ativos por carteira. Faça upgrade para o Plano PRO para adicionar ilimitados.');
+        return;
+    }
     
     if (!assetSelect.value || parseFloat(allocationInput.value) <= 0) {
         alert('Selecione um ativo e informe a alocação.');

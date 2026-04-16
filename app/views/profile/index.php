@@ -31,6 +31,15 @@ ob_start();
                     <i class="bi <?= $user['verified'] ? 'bi-patch-check-fill' : 'bi-exclamation-triangle' ?> me-1"></i>
                     <?= $user['verified'] ? 'Conta Verificada' : 'E-mail Pendente' ?>
                 </span>
+                <?php if ($user['is_admin'] || $user['plan'] === 'pro'): ?>
+                    <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill">
+                        <i class="bi bi-gem me-1"></i> Plano PRO
+                    </span>
+                <?php else: ?>
+                    <span class="badge bg-soft-secondary text-secondary px-3 py-2 rounded-pill">
+                        <i class="bi bi-star me-1"></i> Plano Starter
+                    </span>
+                <?php endif; ?>
             </div>
 
             <hr class="opacity-10">

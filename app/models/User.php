@@ -27,8 +27,8 @@ class User {
 
             $sql = "INSERT INTO users (
                         username, full_name, email, phone, birth_date, 
-                        password, verification_token, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')";
+                        password, verification_token, status, plan
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'starter')";
             
             $stmt = $this->db->prepare($sql);
             $success = $stmt->execute([
@@ -83,8 +83,8 @@ class User {
         $username = explode('@', $data['email'])[0] . rand(10, 99);
         
         // SÊNIOR: Note o preenchimento de email_verified_at e status 'active'
-        $sql = "INSERT INTO users (full_name, email, username, status, email_verified_at, is_admin) 
-                VALUES (?, ?, ?, 'active', NOW(), 0)";
+        $sql = "INSERT INTO users (full_name, email, username, status, email_verified_at, is_admin, plan) 
+                VALUES (?, ?, ?, 'active', NOW(), 0, 'starter')";
         
         try {
             $stmt = $this->db->prepare($sql);
@@ -162,13 +162,14 @@ class User {
      * Atualização administrativa completa de um usuário.
      */
     public function adminUpdate($id, $data) {
-        $sql = "UPDATE users SET full_name = ?, email = ?, status = ?, is_admin = ? WHERE id = ?";
+        $sql = "UPDATE users SET full_name = ?, email = ?, status = ?, is_admin = ?, plan = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             $data['full_name'],
             $data['email'],
             $data['status'],
             $data['is_admin'],
+            $data['plan'],
             $id
         ]);
     }

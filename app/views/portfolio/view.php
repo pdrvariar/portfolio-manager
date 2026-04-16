@@ -426,12 +426,13 @@ $isSelicMonthlyConflict = (
             <?php 
             $heroTotalTax = $metrics['total_tax_paid'] ?? 0;
             $hasTax = $heroTotalTax > 0;
+            $isPro = Auth::isPro();
             ?>
             <div id="tax-paid-card" class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: <?= $hasTax ? 'var(--hero-tax-bg)' : 'linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%)' ?>;">
+                 style="background: <?= $isPro && $hasTax ? 'var(--hero-tax-bg)' : 'linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%)' ?>;">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span id="tax-paid-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $hasTax ? 'bg-danger' : 'bg-secondary' ?>">
+                        <span id="tax-paid-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $isPro && $hasTax ? 'bg-danger' : 'bg-secondary' ?>">
                             <i class="bi bi-calculator me-1"></i> Total de Impostos
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -440,6 +441,7 @@ $isSelicMonthlyConflict = (
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
+                    <?php if ($isPro): ?>
                     <div>
                         <div id="tax-paid-value" class="fs-2 fw-bold lh-1 mb-1 <?= $hasTax ? 'text-danger' : 'text-muted' ?>">
                             <?= $hasTax ? formatCurrency($heroTotalTax, $portfolio['output_currency']) : '—' ?>
@@ -448,6 +450,14 @@ $isSelicMonthlyConflict = (
                             <i class="bi bi-receipt me-1"></i> <?= $hasTax ? 'Impostos sobre lucro' : 'Sem impostos no período' ?>
                         </div>
                     </div>
+                    <?php else: ?>
+                    <div class="text-center py-2">
+                        <div class="fs-4 fw-bold text-muted mb-2">Bloqueado</div>
+                        <a href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem;">
+                            <i class="bi bi-gem me-1"></i> ASSINE O PRO
+                        </a>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -666,7 +676,9 @@ $isSelicMonthlyConflict = (
         ]
     ];
 
-    foreach ($metricGroups as $group): ?>
+    foreach ($metricGroups as $group): 
+        $isGroupLocked = ($group['title'] === 'Poder de Compra e Inflação (Ganhos REAIS)' && !Auth::isPro());
+    ?>
         <div class="col-12 mt-4 mb-2">
             <div class="d-flex align-items-center gap-2 mb-1">
                 <div class="rounded-circle d-flex align-items-center justify-content-center" 
@@ -674,11 +686,32 @@ $isSelicMonthlyConflict = (
                     <i class="bi <?= $group['icon'] ?> fs-5"></i>
                 </div>
                 <h5 class="fw-bold mb-0" style="color: #333;"><?= $group['title'] ?></h5>
+                <?php if ($isGroupLocked): ?>
+                    <span class="badge bg-soft-primary text-primary rounded-pill px-2 py-1 ms-2" style="font-size: 0.7rem;">
+                        <i class="bi bi-lock-fill me-1"></i> APENAS PRO
+                    </span>
+                <?php endif; ?>
             </div>
             <p class="text-muted small mb-3 ms-5"><?= $group['description'] ?></p>
         </div>
 
-        <div class="row g-3 mb-2 ms-4">
+        <div class="row g-3 mb-2 ms-4 position-relative">
+            <?php if ($isGroupLocked): ?>
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center rounded-4" 
+                     style="background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); z-index: 10;">
+                    <div class="text-center p-4 bg-white shadow-lg rounded-4 border">
+                        <div class="rounded-circle bg-soft-primary text-primary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="bi bi-gem fs-2"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">Análise de Ganhos Reais</h6>
+                        <p class="text-muted small mb-3">Veja o quanto você realmente enriqueceu acima da inflação.</p>
+                        <a href="#" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="bi bi-rocket-takeoff me-1"></i> Desbloquear Plano PRO
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php foreach ($group['metrics'] as $m): 
                 if (isset($m['visible']) && !$m['visible']) continue;
             ?>
