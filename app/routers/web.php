@@ -48,6 +48,9 @@ function setupRoutes(Router $router) {
     // --- Rotas de Assinatura ---
     $router->add('upgrade', ['controller' => 'subscription', 'action' => 'upgrade']);
     $router->add('subscription/checkout', ['controller' => 'subscription', 'action' => 'checkout']);
+    $router->add('subscription/success', ['controller' => 'subscription', 'action' => 'success']);
+    $router->add('subscription/failure', ['controller' => 'subscription', 'action' => 'failure']);
+    $router->add('subscription/pending', ['controller' => 'subscription', 'action' => 'pending']);
 
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);

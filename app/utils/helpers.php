@@ -95,21 +95,29 @@ function renderBreadcrumbs($params) {
 
     // Mapeamento de nomes amigáveis para os Controllers
     $labels = [
-        'portfolio' => 'Portfólios',
-        'asset'     => 'Ativos',
-        'profile'   => 'Meu Perfil',
-        'admin'     => 'Admin'
+        'portfolio'    => 'Portfólios',
+        'asset'        => 'Ativos',
+        'profile'      => 'Meu Perfil',
+        'admin'        => 'Admin',
+        'subscription' => 'Assinatura'
     ];
 
     if (isset($labels[$controller])) {
-        $url = "/index.php?url=" . obfuscateUrl($controller); // Adicionado obfuscateUrl
-        $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
+        // Para assinatura, talvez não queiramos um link clicável se já estiver na tela de planos
+        $url = "/index.php?url=" . obfuscateUrl($controller);
+        if ($controller === 'subscription' && $action === 'upgrade') {
+            $breadcrumbs[] = ['label' => $labels[$controller], 'url' => '#'];
+        } else {
+            $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
+        }
     }
 
     // Adiciona a ação específica (Editar, Visualizar, etc)
     if ($action === 'view') $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '#'];
     if ($action === 'edit' || $action === 'editUser') $breadcrumbs[] = ['label' => 'Edição', 'url' => '#'];
     if ($action === 'import') $breadcrumbs[] = ['label' => 'Importação', 'url' => '#'];
+    if ($action === 'success') $breadcrumbs[] = ['label' => 'Sucesso', 'url' => '#'];
+    if ($action === 'failure') $breadcrumbs[] = ['label' => 'Falha', 'url' => '#'];
 
     $html = '<nav aria-label="breadcrumb"><ol class="breadcrumb mb-4 shadow-sm p-2 bg-white rounded">';
     foreach ($breadcrumbs as $index => $crumb) {
@@ -148,6 +156,10 @@ function deobfuscateUrl($hash) {
     // HEURÍSTICA DE QA: Se a URL contém "/", ela já é um caminho legível, 
     // então não tentamos descriptografar para evitar o erro de IV curto.
     if (strpos($hash, '/') !== false) return $hash;
+
+    // Se for uma rota que deve ser pública ou não ofuscada
+    $publicRoutes = ['subscription/success', 'subscription/failure', 'subscription/pending'];
+    if (in_array($hash, $publicRoutes)) return $hash;
 
     $key = getenv('URL_SECRET_KEY');
     

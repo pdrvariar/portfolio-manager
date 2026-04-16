@@ -3,7 +3,8 @@
         "phpmailer/phpmailer": "^7.0",
         "google/apiclient": "^2.18",
         "ext-curl": "*",
-        "ext-openssl": "*"
+        "ext-openssl": "*",
+        "mercadopago/dx-php": "^3.8"
     },
     "config": {
         "process-timeout": 9000

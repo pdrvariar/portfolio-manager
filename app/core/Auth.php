@@ -59,6 +59,25 @@ class Auth {
         return self::isLoggedIn() && (bool)Session::get('is_admin') === true;
     }
     
+    /**
+     * Retorna os dados do usuário logado na sessão
+     */
+    public static function getUser() {
+        if (!self::isLoggedIn()) return null;
+        
+        return [
+            'id' => Session::get('user_id'),
+            'username' => Session::get('username'),
+            'email' => Session::get('user_email'),
+            'is_admin' => (bool)Session::get('is_admin'),
+            'plan' => Session::get('user_plan') ?? 'starter'
+        ];
+    }
+
+    public static function getUserId() {
+        return self::getCurrentUserId();
+    }
+    
     public static function getCurrentUserId() {
         return Session::get('user_id');
     }

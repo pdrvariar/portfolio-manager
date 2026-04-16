@@ -453,7 +453,7 @@ $isSelicMonthlyConflict = (
                     <?php else: ?>
                     <div class="text-center py-2">
                         <div class="fs-4 fw-bold text-muted mb-2">Bloqueado</div>
-                        <a href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem;">
+                        <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem;">
                             <i class="bi bi-gem me-1"></i> ASSINE O PRO
                         </a>
                     </div>
