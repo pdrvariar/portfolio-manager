@@ -43,11 +43,11 @@ ob_start();
                     </ul>
 
                     <div class="d-grid gap-3">
-                        <a href="/index.php?url=<?= obfuscateUrl('subscription/checkout') ?>" class="btn btn-primary btn-lg fw-bold py-3">
-                            <i class="bi bi-credit-card me-2"></i>Assinar Agora com Mercado Pago
-                        </a>
+                        <!-- SÊNIOR: Container para o Card Payment Brick -->
+                        <div id="paymentBrick_container"></div>
+                        
                         <p class="text-center text-muted small mb-0">
-                            Pagamento seguro processado pelo Mercado Pago.
+                            Pagamento seguro via Checkout Transparente Mercado Pago.
                         </p>
                     </div>
                 </div>
@@ -61,6 +61,97 @@ ob_start();
         </div>
     </div>
 </div>
+
+<!-- SÊNIOR: Integração elegante com Checkout Bricks do Mercado Pago -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+    const mp = new MercadoPago('<?= getenv('MERCADOPAGO_PUBLIC_KEY') ?: ($_ENV['MERCADOPAGO_PUBLIC_KEY'] ?? '') ?>');
+    const bricksBuilder = mp.bricks();
+
+    const renderCardPaymentBrick = async (bricksBuilder) => {
+        const settings = {
+            initialization: {
+                amount: 29.90, // Valor fixo do plano PRO
+                payer: {
+                    email: "<?= Auth::getUser()['email'] ?>",
+                },
+            },
+            customization: {
+                visual: {
+                    style: {
+                        theme: 'default', // 'default' | 'dark' | 'bootstrap' | 'flat'
+                    }
+                },
+                paymentMethods: {
+                    maxInstallments: 1
+                }
+            },
+            callbacks: {
+                onReady: () => {
+                    console.log("Brick Ready");
+                },
+                onSubmit: (formData) => {
+                    // SÊNIOR: Envia os dados para o backend processar via API
+                    return new Promise((resolve, reject) => {
+                        fetch('/index.php?url=<?= obfuscateUrl('subscription/checkout') ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: json_encode_with_brick_data(formData),
+                        })
+                        .then((response) => response.json())
+                        .then((result) => {
+                            if (result.status === 'approved') {
+                                window.location.href = '/index.php?url=<?= obfuscateUrl('subscription/success') ?>';
+                                resolve();
+                            } else if (result.status === 'in_process') {
+                                window.location.href = '/index.php?url=<?= obfuscateUrl('subscription/pending') ?>';
+                                resolve();
+                            } else {
+                                alert('Pagamento não aprovado: ' + (result.message || result.status_detail || 'Erro desconhecido'));
+                                reject();
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Erro no processamento:", error);
+                            alert("Ocorreu um erro ao processar seu pagamento. Tente novamente.");
+                            reject();
+                        });
+                    });
+                },
+                onError: (error) => {
+                    console.error("Brick Error:", error);
+                },
+            },
+        };
+        window.cardPaymentBrickController = await bricksBuilder.create(
+            'cardPayment',
+            'paymentBrick_container',
+            settings
+        );
+    };
+
+    function json_encode_with_brick_data(formData) {
+        // Converte os dados do Brick para o formato esperado pelo MercadoPagoService
+        return JSON.stringify({
+            token: formData.token,
+            issuer_id: formData.issuer_id,
+            payment_method_id: formData.payment_method_id,
+            transaction_amount: formData.transaction_amount,
+            installments: formData.installments,
+            payer: {
+                email: formData.payer.email,
+                identification: {
+                    type: formData.payer.identification.type,
+                    number: formData.payer.identification.number,
+                },
+            },
+        });
+    }
+
+    renderCardPaymentBrick(bricksBuilder);
+</script>
 
 <?php
 $content = ob_get_clean();

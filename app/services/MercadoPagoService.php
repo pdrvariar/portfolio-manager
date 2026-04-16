@@ -2,6 +2,7 @@
 
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Payment\PaymentClient;
 
 class MercadoPagoService {
     public function __construct() {
@@ -54,24 +55,59 @@ class MercadoPagoService {
             }
             return $preference;
         } catch (Exception $e) {
-            $msg = "ERRO CRÍTICO MP: " . $e->getMessage();
-            
-            // Verificação SÊNIOR: Captura detalhes de MPApiException especificamente
-            if ($e instanceof \MercadoPago\Exceptions\MPApiException && $e->getApiResponse()) {
-                $response = $e->getApiResponse();
-                $msg .= " | Status: " . $response->getStatusCode();
-                $msg .= " | Body: " . json_encode($response->getContent());
-            } elseif (method_exists($e, 'getResponse') && $e->getResponse()) {
-                $response = $e->getResponse();
-                $msg .= " | Status: " . $response->getStatusCode();
-                $msg .= " | Body: " . json_encode($response->getContent());
-            } else {
-                $msg .= " | Trace: " . substr($e->getTraceAsString(), 0, 500);
-            }
-            error_log($msg);
-            $GLOBALS['last_mp_error'] = $msg;
-            Session::setFlash('error_debug', $msg);
+            $this->logException($e, "ERRO CRÍTICO MP (Preference)");
             return null;
         }
+    }
+
+    public function processPayment($paymentData, $userId) {
+        $client = new PaymentClient();
+
+        $request = [
+            "transaction_amount" => (float)$paymentData['transaction_amount'],
+            "token" => $paymentData['token'],
+            "description" => "Assinatura Plano PRO - Portfolio Manager",
+            "installments" => (int)$paymentData['installments'],
+            "payment_method_id" => $paymentData['payment_method_id'],
+            "issuer_id" => $paymentData['issuer_id'],
+            "payer" => [
+                "email" => $paymentData['payer']['email'],
+                "identification" => [
+                    "type" => $paymentData['payer']['identification']['type'],
+                    "number" => $paymentData['payer']['identification']['number']
+                ]
+            ],
+            "external_reference" => (string)$userId,
+            "statement_descriptor" => "PORTFOLIO PRO"
+        ];
+
+        try {
+            error_log("MP INFO: Processando pagamento via API para User ID: " . $userId);
+            $payment = $client->create($request);
+            return $payment;
+        } catch (Exception $e) {
+            $this->logException($e, "ERRO CRÍTICO MP (Payment)");
+            return null;
+        }
+    }
+
+    private function logException($e, $context) {
+        $msg = $context . ": " . $e->getMessage();
+        
+        if ($e instanceof \MercadoPago\Exceptions\MPApiException && $e->getApiResponse()) {
+            $response = $e->getApiResponse();
+            $msg .= " | Status: " . $response->getStatusCode();
+            $msg .= " | Body: " . json_encode($response->getContent());
+        } elseif (method_exists($e, 'getResponse') && $e->getResponse()) {
+            $response = $e->getResponse();
+            $msg .= " | Status: " . $response->getStatusCode();
+            $msg .= " | Body: " . json_encode($response->getContent());
+        } else {
+            $msg .= " | Trace: " . substr($e->getTraceAsString(), 0, 500);
+        }
+        
+        error_log($msg);
+        $GLOBALS['last_mp_error'] = $msg;
+        Session::setFlash('error_debug', $msg);
     }
 }

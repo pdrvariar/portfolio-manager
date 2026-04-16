@@ -86,6 +86,13 @@ class Auth {
         return Session::get('user_plan') ?? 'starter';
     }
 
+    /**
+     * Atualiza o plano do usuário na sessão ativa.
+     */
+    public static function updateSessionPlan($plan) {
+        Session::set('user_plan', $plan);
+    }
+
     public static function isPro() {
         return self::getUserPlan() === 'pro' || self::isAdmin();
     }

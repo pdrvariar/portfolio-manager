@@ -151,11 +151,20 @@ class User {
         $sql = "UPDATE users SET full_name = ?, phone = ?, birth_date = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
-            $data['full_name'],
-            $data['phone'],
-            $data['birth_date'],
+            $data['full_name'] ?? null,
+            $data['phone'] ?? null,
+            $data['birth_date'] ?? null,
             $id
         ]);
+    }
+
+    /**
+     * Atualiza especificamente o plano do usuário.
+     */
+    public function updatePlan($id, $plan) {
+        $sql = "UPDATE users SET plan = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$plan, $id]);
     }
 
     /**
