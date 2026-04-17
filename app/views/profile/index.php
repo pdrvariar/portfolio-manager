@@ -23,7 +23,7 @@ ob_start();
             <h4 class="fw-bold mb-1"><?= htmlspecialchars($user['name']) ?></h4>
             <p class="text-muted small mb-3">@<?= htmlspecialchars($user['username']) ?></p>
             
-            <div class="d-flex justify-content-center gap-2 mb-4">
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
                 <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill">
                     <?= htmlspecialchars($user['role']) ?>
                 </span>
@@ -35,6 +35,14 @@ ob_start();
                     <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill">
                         <i class="bi bi-gem me-1"></i> Plano PRO
                     </span>
+                    <?php if (!empty($user['expires_at'])): ?>
+                        <div class="w-100 mt-2">
+                            <span class="badge bg-soft-primary text-primary border fw-medium px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                <span class="opacity-75 fw-normal">Válido até:</span> <?= formatFullDate($user['expires_at']) ?>
+                            </span>
+                        </div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <span class="badge bg-soft-secondary text-secondary px-3 py-2 rounded-pill">
                         <i class="bi bi-star me-1"></i> Plano Starter

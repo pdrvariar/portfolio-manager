@@ -36,7 +36,8 @@ class ProfileController {
             'verified'   => !empty($userData['email_verified_at']),
             'plan'       => $userData['plan'] ?? 'starter',
             'is_admin'   => (bool)$userData['is_admin'],
-            'created_at' => $userData['created_at'] // ADICIONE ESTA LINHA
+            'created_at' => $userData['created_at'],
+            'expires_at' => $userData['subscription_expires_at'] ?? null
         ];
         
         require_once __DIR__ . '/../views/profile/index.php';

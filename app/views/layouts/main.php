@@ -272,18 +272,7 @@
                 <span class="text-muted small">|</span>
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Garantia e Reembolso</a>
             </div>
-            <!-- Redes Sociais - atualize os links com seus perfis reais -->
-            <div class="mb-3">
-                <a href="https://instagram.com/smartreturns.br" target="_blank" rel="noopener" class="text-muted mx-2" title="Instagram Smart Returns" aria-label="Instagram">
-                    <i class="bi bi-instagram fs-5"></i>
-                </a>
-                <a href="https://youtube.com/@smartreturns" target="_blank" rel="noopener" class="text-muted mx-2" title="YouTube Smart Returns" aria-label="YouTube">
-                    <i class="bi bi-youtube fs-5"></i>
-                </a>
-                <a href="https://linkedin.com/company/smartreturns" target="_blank" rel="noopener" class="text-muted mx-2" title="LinkedIn Smart Returns" aria-label="LinkedIn">
-                    <i class="bi bi-linkedin fs-5"></i>
-                </a>
-            </div>
+
             <span class="text-muted small">Smart Returns &copy; <?php echo date('Y'); ?> — smartreturns.com.br</span>
             <p class="text-muted x-small mt-2 mb-0" style="font-size: 0.75rem;">
                 Este site é uma plataforma de estudo e simulação. Não realizamos recomendações de investimento.
