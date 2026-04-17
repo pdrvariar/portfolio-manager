@@ -207,10 +207,11 @@ function formatFullDate($date) {
     ];
     
     $timestamp = strtotime($date);
+    $day = date('d', $timestamp);
     $month = (int)date('n', $timestamp);
     $year = date('Y', $timestamp);
     
-    return $months[$month] . ' de ' . $year;
+    return $day . ' de ' . $months[$month] . ' de ' . $year;
 }
 
 ?>

@@ -110,9 +110,10 @@ class SubscriptionController {
         $userId = Auth::getUserId();
         
         // Simulação de atualização de plano - SÊNIOR: Garantindo que o plano mude no BD
-        if ($userModel->updatePlan($userId, 'pro')) {
+        $expiration = date('Y-m-d H:i:s', strtotime('+1 month'));
+        if ($userModel->updatePlan($userId, 'pro', $expiration, 'monthly')) {
             // Atualizar a sessão para refletir o novo plano
-            $_SESSION['user_plan'] = 'pro';
+            Auth::updateSessionPlan('pro');
         } else {
             error_log("ERRO CRÍTICO: Não foi possível atualizar o plano do usuário ID " . $userId . " para PRO após pagamento.");
             Session::setFlash('warning', 'Seu pagamento foi aprovado, mas houve um problema ao atualizar seu plano. Nossa equipe já foi notificada.');
