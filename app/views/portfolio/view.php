@@ -510,6 +510,15 @@ $isSelicMonthlyConflict = (
     $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
     $isShort = $metrics['is_short_period'] ?? false;
 
+    // Calcula inflação média anual (IPCA) do período
+    $startDateObj = new DateTime($portfolio['start_date']);
+    $endDateObj   = $portfolio['end_date'] ? new DateTime($portfolio['end_date']) : new DateTime();
+    $periodMonths = max(1, $startDateObj->diff($endDateObj)->m + ($startDateObj->diff($endDateObj)->y * 12));
+    $totalIpcaFactor = 1 + ($metrics['total_inflation'] ?? 0) / 100;
+    $avgAnnualInflation = ($periodMonths >= 12)
+        ? (pow($totalIpcaFactor, 12 / $periodMonths) - 1) * 100
+        : ($metrics['total_inflation'] ?? 0);
+
     $metricGroups = [
         [
             'title' => 'Performance do Patrimônio (Com Aportes)',
@@ -625,12 +634,12 @@ $isSelicMonthlyConflict = (
                     'sub' => 'Custo de vida no período'
                 ],
                 [
-                    'label' => 'Total de Impostos (Est.)',
-                    'val' => formatCurrency($metrics['total_tax_paid'] ?? 0, $portfolio['output_currency']),
-                    'class' => 'border-danger',
-                    'text' => 'text-danger',
-                    'tooltip' => 'Soma estimada de impostos sobre ganhos de capital, considerando as regras vigentes e compensação de prejuízos.',
-                    'sub' => 'Provisão de I.R.'
+                    'label' => 'IPCA Médio ao Ano',
+                    'val' => formatPercentage($avgAnnualInflation, 2),
+                    'class' => 'border-secondary',
+                    'text' => 'text-muted',
+                    'tooltip' => 'Inflação média anual (IPCA) ao longo do período simulado. É o "custo" anual que o dinheiro paga para manter o poder de compra.',
+                    'sub' => 'Inflação anualizada do período'
                 ]
             ]
         ],
@@ -1003,14 +1012,21 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Composição Histórica
-                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
-                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Percentual de cada ativo no portfólio <strong>mês a mês</strong>. Mostra como as alocações evoluíram com o tempo e os rebalanceamentos periódicos.">
-                            <i class="bi bi-info-circle-fill"></i>
-                        </button>
-                    </h5>
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div>
+                            <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                                <i class="bi bi-pie-chart-fill text-warning"></i>
+                                Composição Histórica
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                        data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                        title="<strong>Como a alocação entre os ativos evoluiu</strong> ano a ano — mostra a fatia de cada ativo no portfólio ao longo do tempo, refletindo os rebalanceamentos periódicos.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </button>
+                            </h5>
+                            <p class="mb-0 mt-1 text-muted small">Distribuição dos ativos ano a ano</p>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 text-nowrap small">Alocação</span>
+                    </div>
                 </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="compositionChart"></canvas></div></div>
             </div>
@@ -1018,14 +1034,21 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Retorno por Ano
-                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
-                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Retorno percentual total do portfólio (incluindo aportes) em <strong>cada ano</strong> do período simulado. Barras verdes = anos positivos; barras vermelhas = anos negativos.">
-                            <i class="bi bi-info-circle-fill"></i>
-                        </button>
-                    </h5>
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div>
+                            <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                                <i class="bi bi-wallet2 text-primary"></i>
+                                Rentabilidade da Carteira
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                        data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                        title="<strong>Como sua carteira efetivamente se comportou</strong> ano a ano — considera todos os aportes realizados, rebalanceamentos e o fluxo de caixa. É o resultado que você, de fato, obteve.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </button>
+                            </h5>
+                            <p class="mb-0 mt-1 text-muted small">Inclui aportes e rebalanceamentos</p>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-nowrap small">Com aportes</span>
+                    </div>
                 </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="returnsChart"></canvas></div></div>
             </div>
@@ -1033,14 +1056,21 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Retorno por Ano (Carteira)
-                        <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
-                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Retorno percentual gerado pela <strong>carteira pura</strong> em cada ano, excluindo o efeito dos aportes. Permite avaliar a qualidade da alocação de ativos independentemente do volume aportado.">
-                            <i class="bi bi-info-circle-fill"></i>
-                        </button>
-                    </h5>
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div>
+                            <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                                <i class="bi bi-graph-up-arrow text-success"></i>
+                                Performance da Estratégia
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
+                                        data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
+                                        title="<strong>Quanto os ativos selecionados renderam</strong>, isolados de qualquer aporte ou retirada. Mede a qualidade da alocação em si — o quanto a estratégia de investimento entregou, independentemente do capital investido.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </button>
+                            </h5>
+                            <p class="mb-0 mt-1 text-muted small">Performance pura dos ativos, sem efeito dos aportes</p>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-nowrap small">Estratégia pura</span>
+                    </div>
                 </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="strategyReturnsChart"></canvas></div></div>
             </div>

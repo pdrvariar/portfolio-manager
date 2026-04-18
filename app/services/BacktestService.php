@@ -1176,6 +1176,7 @@ class BacktestService {
             'real_roi' => $realRoiDecimal * 100,
             'real_roi_annual' => $realRoiAnnualReturn * 100,
             'total_inflation' => $totalInflationDecimal * 100,
+            'avg_annual_inflation' => ($numMonths >= 12 ? (pow($totalIpcaAcc, 12 / $numMonths) - 1) * 100 : $totalInflationDecimal * 100),
             'simulation_type' => $metadata['simulation_type'] ?? 'standard',
             // NOVAS MÉTRICAS
             'strategy_return' => $strategyReturn,
