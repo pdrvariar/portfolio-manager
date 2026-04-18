@@ -780,7 +780,7 @@ ob_start();
                                     <div class="margin-input-control">
                                         <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.asset_id}, 'down', -0.1)">-</button>
                                         <input type="number" class="margin-input-field" step="0.1" 
-                                            value="${asset.rebalance_margin_down.toFixed(1)}" 
+                                            value="${(asset.rebalance_margin_down !== null && asset.rebalance_margin_down !== undefined) ? asset.rebalance_margin_down.toFixed(1) : ''}" 
                                             onchange="updateAssetData(${asset.asset_id}, 'rebalance_margin_down', this.value)">
                                         <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.asset_id}, 'down', 0.1)">+</button>
                                     </div>
@@ -790,7 +790,7 @@ ob_start();
                                     <div class="margin-input-control">
                                         <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.asset_id}, 'up', -0.1)">-</button>
                                         <input type="number" class="margin-input-field" step="0.1" 
-                                            value="${asset.rebalance_margin_up.toFixed(1)}" 
+                                            value="${(asset.rebalance_margin_up !== null && asset.rebalance_margin_up !== undefined) ? asset.rebalance_margin_up.toFixed(1) : ''}" 
                                             onchange="updateAssetData(${asset.asset_id}, 'rebalance_margin_up', this.value)">
                                         <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.asset_id}, 'up', 0.1)">+</button>
                                     </div>
