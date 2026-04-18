@@ -86,10 +86,27 @@ $rebalTypeLabels = [
     $currency = $portfolio['output_currency'] ?? 'BRL';
 
     $snapshotsJs = [];
+    $metricsJs   = [];
     foreach ($simulations as $sim) {
         $pc = $sim['portfolio_config'] ? json_decode($sim['portfolio_config'], true) : null;
         $ac = $sim['assets_config']    ? json_decode($sim['assets_config'],    true) : null;
         $snapshotsJs[$sim['id']] = ['portfolio' => $pc, 'assets' => $ac];
+        $metricsJs[$sim['id']] = [
+            'total_invested'          => $sim['total_invested']          ?? null,
+            'total_deposits'          => $sim['total_deposits']          ?? null,
+            'total_value'             => $sim['total_value']             ?? null,
+            'interest_earned'         => $sim['interest_earned']         ?? null,
+            'total_tax_paid'          => $sim['total_tax_paid']          ?? null,
+            'roi'                     => $sim['roi']                     ?? null,
+            'annual_return'           => $sim['annual_return']           ?? null,
+            'strategy_annual_return'  => $sim['strategy_annual_return']  ?? null,
+            'strategy_return'         => $sim['strategy_return']         ?? null,
+            'volatility'              => $sim['volatility']              ?? null,
+            'sharpe_ratio'            => $sim['sharpe_ratio']            ?? null,
+            'max_drawdown'            => $sim['max_drawdown']            ?? null,
+            'max_monthly_gain'        => $sim['max_monthly_gain']        ?? null,
+            'max_monthly_loss'        => $sim['max_monthly_loss']        ?? null,
+        ];
     }
 ?>
 
@@ -244,6 +261,7 @@ $rebalTypeLabels = [
 
 <?php
 $snapshotsJsonPhp   = isset($snapshotsJs) ? json_encode($snapshotsJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) : '{}';
+$metricsJsonPhp     = isset($metricsJs)   ? json_encode($metricsJs,   JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) : '{}';
 $applySnapshotUrl   = isset($portfolio) ? obfuscateUrl('portfolio/apply-snapshot/' . $portfolio['id']) : '';
 $csrfToken          = Session::getCsrfToken();
 $csrfTokenJson      = json_encode($csrfToken);
@@ -290,6 +308,62 @@ $additional_css = '
 
     /* ── DataTables child row background ── */
     #historyTable tbody tr.child td { background-color: var(--bg-body, #f8f9fa) !important; padding:0 !important; }
+
+    /* ── Resumo dos Resultados — KPI Cards ── */
+    .result-summary-block {
+        background: var(--bg-card, #fff);
+        border: 1px solid var(--border-color, #dee2e6);
+        border-radius: 10px;
+        padding: 14px 16px 10px;
+    }
+    .result-group-label {
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--text-muted, #6c757d);
+        margin-bottom: 8px;
+    }
+    .result-kpi-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .result-kpi {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-width: 110px;
+        flex: 1 1 110px;
+        max-width: 160px;
+        padding: 10px 12px 8px;
+        border-radius: 10px;
+        background: var(--bg-body, #f8f9fa);
+        border: 1px solid var(--border-color, #e9ecef);
+        gap: 2px;
+    }
+    .result-kpi-icon { font-size: 1rem; margin-bottom: 3px; }
+    .result-kpi-label { font-size: .63rem; color: var(--text-muted, #6c757d); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; line-height: 1.2; }
+    .result-kpi-value { font-size: .88rem; font-weight: 800; margin-top: 2px; line-height: 1.1; }
+
+    /* Color variants */
+    .result-kpi.kpi-primary { border-color: rgba(13,110,253,.2);  background: rgba(13,110,253,.05); }
+    .result-kpi.kpi-info    { border-color: rgba(13,202,240,.25); background: rgba(13,202,240,.06); }
+    .result-kpi.kpi-success { border-color: rgba(25,135,84,.2);   background: rgba(25,135,84,.05); }
+    .result-kpi.kpi-danger  { border-color: rgba(220,53,69,.2);   background: rgba(220,53,69,.05); }
+
+    /* Separator between summary and config */
+    .result-summary-block + .d-flex { padding-top: 16px; border-top: 1px solid var(--border-color, #dee2e6); margin-top: 12px; }
+
+    /* Dark mode overrides for KPI cards */
+    [data-theme="dark"] .result-summary-block { background: var(--bg-body); }
+    [data-theme="dark"] .result-kpi           { background: var(--bg-card); border-color: var(--border-color); }
+    [data-theme="dark"] .result-kpi.kpi-primary { background: rgba(13,110,253,.1); }
+    [data-theme="dark"] .result-kpi.kpi-info    { background: rgba(13,202,240,.08); }
+    [data-theme="dark"] .result-kpi.kpi-success { background: rgba(25,135,84,.1); }
+    [data-theme="dark"] .result-kpi.kpi-danger  { background: rgba(220,53,69,.1); }
 </style>';
 
 $additional_js = <<<ENDJS
@@ -297,6 +371,7 @@ $additional_js = <<<ENDJS
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
 const SNAPSHOTS          = {$snapshotsJsonPhp};
+const METRICS            = {$metricsJsonPhp};
 const APPLY_SNAPSHOT_URL = "/index.php?url={$applySnapshotUrl}";
 const CSRF_TOKEN         = {$csrfTokenJson};
 const HISTORY_URL        = "/index.php?url={$historyUrl}";
@@ -320,8 +395,81 @@ function fmtCurrency(val, cur) {
 
 function buildChildRow(simId) {
     const data = SNAPSHOTS[simId];
+    const m    = METRICS[simId] || {};
+
+    /* ── Seção: Resumo dos Resultados ── */
+    const cur = (data && data.portfolio && data.portfolio.output_currency) ? data.portfolio.output_currency : "BRL";
+
+    function kpi(icon, label, value, colorClass, bgClass) {
+        return '<div class="result-kpi '+( bgClass||"")+'">'+
+               '<div class="result-kpi-icon '+( colorClass||"text-primary")+'"><i class="bi '+icon+'"></i></div>'+
+               '<div class="result-kpi-label">'+label+'</div>'+
+               '<div class="result-kpi-value '+(colorClass||"")+'">'+value+'</div>'+
+               '</div>';
+    }
+
+    function pctBadge(val, alwaysSign) {
+        if (val === null || val === undefined || val === "") return '<span class="text-muted">—</span>';
+        const v = parseFloat(val);
+        const sign = v >= 0 ? "+" : "";
+        const cls  = v >= 0 ? "text-success" : "text-danger";
+        return '<span class="'+cls+'">'+sign+fmt(v)+'%</span>';
+    }
+
+    const totalInvested  = parseFloat(m.total_invested  || 0);
+    const totalDeposits  = parseFloat(m.total_deposits  || 0);
+    const totalValue     = parseFloat(m.total_value     || 0);
+    const interestEarned = parseFloat(m.interest_earned || 0);
+    const taxPaid        = parseFloat(m.total_tax_paid  || 0);
+    const roi            = parseFloat(m.roi             || 0);
+    const annReturn      = parseFloat(m.annual_return   || 0);
+    const strReturn      = parseFloat(m.strategy_annual_return || 0);
+    const vol            = parseFloat(m.volatility      || 0);
+    const sharpe         = parseFloat(m.sharpe_ratio    || 0);
+    const dd             = Math.abs(parseFloat(m.max_drawdown || 0));
+    const maxGain        = parseFloat(m.max_monthly_gain || 0);
+    const maxLoss        = Math.abs(parseFloat(m.max_monthly_loss || 0));
+
+    const volColor   = vol  <= 10 ? "text-success" : (vol  <= 20 ? "text-warning" : "text-danger");
+    const sharpeColor= sharpe >= 1 ? "text-success" : (sharpe >= 0.5 ? "text-warning" : "text-danger");
+    const ddColor    = dd   <= 10 ? "text-success" : (dd   <= 25 ? "text-warning" : "text-danger");
+
+    const summaryHtml =
+        '<div class="result-summary-block mb-3">'+
+
+        /* ── Grupo Patrimônio ── */
+        '<div class="result-group-label"><i class="bi bi-wallet2 me-1"></i>Patrimônio</div>'+
+        '<div class="result-kpi-grid">'+
+            kpi("bi-bank",        "Capital Inicial",   fmtCurrency(totalInvested,  cur), "text-primary",   "kpi-primary") +
+            kpi("bi-plus-circle", "Total de Aportes",  fmtCurrency(totalDeposits,  cur), "text-info",      "kpi-info") +
+            kpi("bi-graph-up-arrow","Patrimônio Final", fmtCurrency(totalValue,    cur), totalValue >= totalInvested ? "text-success" : "text-danger", totalValue >= totalInvested ? "kpi-success" : "kpi-danger") +
+            kpi("bi-cash-stack",  "Ganho Bruto",       (interestEarned >= 0 ? "+" : "") + fmtCurrency(interestEarned, cur), interestEarned >= 0 ? "text-success" : "text-danger", interestEarned >= 0 ? "kpi-success" : "kpi-danger") +
+            (taxPaid > 0 ? kpi("bi-receipt", "Imposto Pago", "−" + fmtCurrency(taxPaid, cur), "text-danger", "kpi-danger") : "") +
+        '</div>'+
+
+        /* ── Grupo Performance ── */
+        '<div class="result-group-label mt-3"><i class="bi bi-bar-chart-line me-1"></i>Performance</div>'+
+        '<div class="result-kpi-grid">'+
+            kpi("bi-percent",         "Retorno Anual<br><small style=\'font-size:.6rem;opacity:.7;\'>com aportes</small>",    pctBadge(m.annual_return),              annReturn >= 0 ? "text-success" : "text-danger") +
+            kpi("bi-trophy",          "Retorno Estratégia<br><small style=\'font-size:.6rem;opacity:.7;\'>puro dos ativos</small>", pctBadge(m.strategy_annual_return), strReturn >= 0 ? "text-success" : "text-danger") +
+            kpi("bi-tags",            "ROI Total",          (roi >= 0 ? "+" : "") + fmt(roi) + "%",           roi >= 0 ? "text-success" : "text-danger") +
+        '</div>'+
+
+        /* ── Grupo Risco ── */
+        '<div class="result-group-label mt-3"><i class="bi bi-shield-exclamation me-1"></i>Risco</div>'+
+        '<div class="result-kpi-grid">'+
+            kpi("bi-activity",        "Volatilidade",        fmt(vol) + "%",   volColor) +
+            kpi("bi-speedometer2",    "Índice Sharpe",       fmt(sharpe),      sharpeColor) +
+            kpi("bi-arrow-down-circle","Drawdown Máx.",      "−" + fmt(dd) + "%", ddColor) +
+            kpi("bi-arrow-up-right",  "Melhor Mês",         "+" + fmt(maxGain) + "%", "text-success") +
+            kpi("bi-arrow-down-left", "Pior Mês",           "−" + fmt(maxLoss) + "%", "text-danger") +
+        '</div>'+
+
+        '</div>';
+
     if (!data || !data.portfolio) {
-        return '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>Configuração não disponível (simulação anterior à ativação desta funcionalidade).</div>';
+        return '<div class="child-config p-3 m-2">'+summaryHtml+
+               '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>Configuração não disponível (simulação anterior à ativação desta funcionalidade).</div></div>';
     }
     const p = data.portfolio;
     const assets = data.assets || [];
@@ -423,6 +571,11 @@ function buildChildRow(simId) {
         '</button></form></div>';
 
     return '<div class="child-config p-3 m-2">' +
+
+        /* ── Seção 1: Resumo dos Resultados ── */
+        summaryHtml +
+
+        /* ── Seção 2: Configuração ── */
         '<div class="d-flex align-items-center gap-2 mb-3">' +
         '<i class="bi bi-clipboard-data text-primary fs-5"></i>' +
         '<span class="fw-bold child-config-title" style="font-size:.9rem;">Configuração usada nesta simulação</span>' +
