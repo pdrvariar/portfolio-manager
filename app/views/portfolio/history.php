@@ -354,7 +354,29 @@ function buildChildRow(simId) {
     }
 
     let taxHtml = "";
-    if (p.profit_tax_rate) {
+    const TAX_GROUP_LABELS = {
+        CRIPTOMOEDA: "Criptomoeda",
+        ETF_US: "ETF (EUA)",
+        ETF_BR: "ETF (BR)",
+        RENDA_FIXA: "Renda Fixa",
+        FUNDO_IMOBILIARIO: "Fundo Imobiliário"
+    };
+    const TAX_GROUPS_ORDER = ["CRIPTOMOEDA","ETF_US","ETF_BR","RENDA_FIXA","FUNDO_IMOBILIARIO"];
+    // Try per-group rates first (new format), fallback to legacy single rate
+    let taxRates = null;
+    if (p.profit_tax_rates_json) {
+        try { taxRates = (typeof p.profit_tax_rates_json === "string") ? JSON.parse(p.profit_tax_rates_json) : p.profit_tax_rates_json; } catch(e) {}
+    }
+    if (taxRates && typeof taxRates === "object" && Object.keys(taxRates).length > 0) {
+        let taxPills = TAX_GROUPS_ORDER.map(function(group) {
+            const rate = taxRates[group];
+            if (rate === undefined || rate === null || rate === "") return null;
+            return pill("bi-percent", TAX_GROUP_LABELS[group] || group, fmt(rate)+"%", "text-danger");
+        }).filter(Boolean).join("");
+        if (taxPills) {
+            taxHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+taxPills+'</div></div>';
+        }
+    } else if (p.profit_tax_rate) {
         taxHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+pill("bi-percent","Alíquota geral", fmt(p.profit_tax_rate)+"%","text-danger")+'</div></div>';
     }
 
@@ -363,7 +385,7 @@ function buildChildRow(simId) {
         const pct   = parseFloat(a.allocation_percentage || 0);
         const color = BAR_COLORS[i % BAR_COLORS.length];
         const margin = (a.rebalance_margin_down || a.rebalance_margin_up)
-            ? '<span>v'+fmt(a.rebalance_margin_down||0)+'% / ^'+fmt(a.rebalance_margin_up||0)+'%</span>'
+            ? '<span>Entre '+fmt(a.rebalance_margin_down||0)+'% à '+fmt(a.rebalance_margin_up||0)+'%</span>'
             : "-";
         assetsRows +=
             '<tr>' +
