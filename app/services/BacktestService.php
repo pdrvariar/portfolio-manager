@@ -48,6 +48,7 @@ class BacktestService {
         $simulationId = $this->saveResults($portfolioId, $metrics, $chartData, $effectiveDates['end']);
 
         $this->saveAssetDetails($simulationId, $results, $assets);
+        $this->saveSnapshot($simulationId, $portfolio, $assets);
         
         return [
             'success' => true,
@@ -1266,6 +1267,59 @@ class BacktestService {
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$simulationId, $asset['asset_id'], $year, 0]);
         }
+    }
+
+    private function saveSnapshot($simulationId, $portfolio, $assets) {
+        // Captura configuração completa do portfólio no momento da simulação
+        $portfolioConfig = [
+            'name'                          => $portfolio['name'],
+            'description'                   => $portfolio['description'] ?? null,
+            'initial_capital'               => $portfolio['initial_capital'],
+            'output_currency'               => $portfolio['output_currency'],
+            'start_date'                    => $portfolio['start_date'],
+            'end_date'                      => $portfolio['end_date'] ?? null,
+            'rebalance_frequency'           => $portfolio['rebalance_frequency'],
+            'rebalance_type'                => $portfolio['rebalance_type'] ?? 'full',
+            'rebalance_margin'              => $portfolio['rebalance_margin'] ?? null,
+            'simulation_type'               => $portfolio['simulation_type'] ?? 'standard',
+            'deposit_amount'                => $portfolio['deposit_amount'] ?? null,
+            'deposit_currency'              => $portfolio['deposit_currency'] ?? null,
+            'deposit_frequency'             => $portfolio['deposit_frequency'] ?? null,
+            'deposit_inflation_adjusted'    => $portfolio['deposit_inflation_adjusted'] ?? 0,
+            'strategic_threshold'           => $portfolio['strategic_threshold'] ?? null,
+            'strategic_deposit_percentage'  => $portfolio['strategic_deposit_percentage'] ?? null,
+            'use_cash_assets_for_rebalance' => $portfolio['use_cash_assets_for_rebalance'] ?? 0,
+            'profit_tax_rate'               => $portfolio['profit_tax_rate'] ?? null,
+            'profit_tax_rates_json'         => $portfolio['profit_tax_rates_json'] ?? null,
+        ];
+
+        // Captura composição de ativos com alocações no momento da simulação
+        $assetsConfig = [];
+        foreach ($assets as $a) {
+            $assetsConfig[] = [
+                'asset_id'              => $a['asset_id'],
+                'name'                  => $a['name'],
+                'code'                  => $a['code'],
+                'currency'              => $a['currency'],
+                'asset_type'            => $a['asset_type'] ?? null,
+                'allocation_percentage' => $a['allocation_percentage'],
+                'rebalance_margin_down' => $a['rebalance_margin_down'] ?? null,
+                'rebalance_margin_up'   => $a['rebalance_margin_up']   ?? null,
+                'performance_factor'    => $a['performance_factor']    ?? 1.0,
+            ];
+        }
+
+        $sql = "INSERT INTO simulation_snapshots (simulation_id, portfolio_config, assets_config)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    portfolio_config = VALUES(portfolio_config),
+                    assets_config    = VALUES(assets_config)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $simulationId,
+            json_encode($portfolioConfig, JSON_UNESCAPED_UNICODE),
+            json_encode($assetsConfig,    JSON_UNESCAPED_UNICODE),
+        ]);
     }
 
     private function parseRebalanceFrequency($freq) {

@@ -449,6 +449,122 @@ class PortfolioController {
         }
     }
 
+    public function applySnapshot() {
+        Auth::checkAuthentication();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $portfolioId  = $this->params['id'] ?? null;
+        $simulationId = (int)($_POST['simulation_id'] ?? 0);
+
+        if (!$portfolioId || !$simulationId) {
+            Session::setFlash('error', 'Parâmetros inválidos.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        // Valida propriedade do portfólio
+        $portfolio = $this->portfolioModel->findById($portfolioId);
+        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+            Session::setFlash('error', 'Acesso negado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        if ($portfolio['is_system_default'] && !Auth::isAdmin()) {
+            Session::setFlash('error', 'Portfólios do sistema não podem ser alterados.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/history/' . $portfolioId));
+            exit;
+        }
+
+        // Carrega o snapshot
+        $db       = Database::getInstance()->getConnection();
+        $stmt     = $db->prepare("SELECT portfolio_config, assets_config FROM simulation_snapshots WHERE simulation_id = ?");
+        $stmt->execute([$simulationId]);
+        $snapshot = $stmt->fetch();
+
+        if (!$snapshot) {
+            Session::setFlash('error', 'Snapshot não encontrado para esta simulação. Execute uma nova simulação para gerar o snapshot.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/history/' . $portfolioId));
+            exit;
+        }
+
+        $pc = json_decode($snapshot['portfolio_config'], true);
+        $ac = json_decode($snapshot['assets_config'],    true);
+
+        // Aplica configurações do portfólio (mantém name e description atuais — só parâmetros técnicos)
+        $updateData = [
+            'id'                            => $portfolioId,
+            'name'                          => $portfolio['name'],
+            'description'                   => $portfolio['description'],
+            'initial_capital'               => $pc['initial_capital'],
+            'start_date'                    => $pc['start_date'],
+            'end_date'                      => $pc['end_date'] ?? null,
+            'rebalance_frequency'           => $pc['rebalance_frequency'],
+            'output_currency'               => $pc['output_currency'],
+            'simulation_type'               => $pc['simulation_type'] ?? 'standard',
+            'rebalance_type'                => $pc['rebalance_type'] ?? 'full',
+            'rebalance_margin'              => $pc['rebalance_margin'] ?? null,
+            'deposit_amount'                => $pc['deposit_amount'] ?? null,
+            'deposit_currency'              => $pc['deposit_currency'] ?? null,
+            'deposit_frequency'             => $pc['deposit_frequency'] ?? null,
+            'strategic_threshold'           => $pc['strategic_threshold'] ?? null,
+            'strategic_deposit_percentage'  => $pc['strategic_deposit_percentage'] ?? null,
+            'deposit_inflation_adjusted'    => $pc['deposit_inflation_adjusted'] ?? 0,
+            'use_cash_assets_for_rebalance' => $pc['use_cash_assets_for_rebalance'] ?? 0,
+            'profit_tax_rate'               => $pc['profit_tax_rate'] ?? null,
+            'profit_tax_rates_json'         => $pc['profit_tax_rates_json'] ?? null,
+        ];
+        $this->portfolioModel->update($updateData);
+
+        // Aplica composição de ativos
+        $assetsForUpdate = [];
+        foreach ($ac as $asset) {
+            $assetsForUpdate[$asset['asset_id']] = [
+                'allocation'            => $asset['allocation_percentage'],
+                'performance_factor'    => $asset['performance_factor'] ?? 1.0,
+                'rebalance_margin_down' => $asset['rebalance_margin_down'] ?? null,
+                'rebalance_margin_up'   => $asset['rebalance_margin_up']   ?? null,
+            ];
+        }
+        $this->portfolioModel->updateAssets($portfolioId, $assetsForUpdate);
+
+        Session::setFlash('success', 'Configuração aplicada com sucesso! Execute uma nova simulação para comparar os resultados.');
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
+        exit;
+    }
+
+    public function history() {
+        Auth::checkAuthentication();
+        $id = $this->params['id'] ?? null;
+
+        if (!$id) {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $portfolio = $this->portfolioModel->findById($id);
+        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+            Session::setFlash('error', 'Acesso negado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $simulationModel = new SimulationResult();
+        $simulations = $simulationModel->getHistoryByPortfolio($id, 10);
+
+        require_once __DIR__ . '/../views/portfolio/history.php';
+    }
+
     public function simulationDetails() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;

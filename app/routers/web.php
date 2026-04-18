@@ -28,7 +28,9 @@ function setupRoutes(Router $router) {
     $router->add('portfolio/delete/{id:\d+}', ['controller' => 'portfolio', 'action' => 'delete']);
     $router->add('portfolio/clone/{id:\d+}', ['controller' => 'portfolio', 'action' => 'clone']);    
     $router->add('portfolio/simulation-details/{id:\d+}', ['controller' => 'portfolio', 'action' => 'simulationDetails']);
-    
+    $router->add('portfolio/history/{id:\d+}', ['controller' => 'portfolio', 'action' => 'history']);
+    $router->add('portfolio/apply-snapshot/{id:\d+}', ['controller' => 'portfolio', 'action' => 'applySnapshot']);
+
     // --- Rotas de Ativos ---
     $router->add('assets/view/{id:\d+}', ['controller' => 'asset', 'action' => 'view']);
     $router->add('assets', ['controller' => 'asset', 'action' => 'index']);

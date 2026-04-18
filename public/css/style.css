@@ -488,3 +488,22 @@ body {
 [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
     color: var(--text-main) !important;
 }
+
+/* ── Histórico de Simulações — Child Row (Dark Mode) ── */
+[data-theme="dark"] .child-config {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .config-pill {
+    background: var(--bg-body) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+[data-theme="dark"] .config-pill .text-muted { color: var(--text-muted) !important; }
+[data-theme="dark"] .config-pill strong      { color: var(--text-main) !important; }
+[data-theme="dark"] .child-config table td,
+[data-theme="dark"] .child-config table th   { color: var(--text-main) !important; border-color: transparent !important; background: transparent !important; }
+[data-theme="dark"] .asset-bar-wrap          { background: var(--border-color) !important; }
+[data-theme="dark"] #historyTable tbody tr.child td { background-color: var(--bg-card) !important; }
+[data-theme="dark"] tr.dt-hasChild td        { background-color: rgba(13,110,253,.08) !important; }
+

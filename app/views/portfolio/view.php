@@ -75,6 +75,9 @@ ob_start();
         </div>
         <div class="col-md-4 text-end">
             <div class="btn-group shadow-sm">
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Histórico de Simulações">
+                    <i class="bi bi-clock-history"></i> Histórico
+                </a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-info text-white" title="Detalhes da Simulação">
                     <i class="bi bi-list-check"></i> Detalhes
                 </a>
