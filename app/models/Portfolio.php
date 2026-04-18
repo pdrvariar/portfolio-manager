@@ -57,7 +57,14 @@ class Portfolio {
             $data['is_system_default'] ?? 0
         ]);
 
-        return $this->db->lastInsertId();
+        $portfolioId = $this->db->lastInsertId();
+
+        // Se houver ativos no data (ex: vindo de um formulário de criação com ativos pré-definidos)
+        if (isset($data['assets']) && !empty($data['assets'])) {
+            $this->updateAssets($portfolioId, $data['assets']);
+        }
+
+        return $portfolioId;
     }
 
     public function clone($portfolioId, $userId, $newName = null) {
@@ -100,8 +107,8 @@ class Portfolio {
     }
 
     private function cloneAssets($sourcePortfolioId, $targetPortfolioId) {
-        $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor)
-                SELECT ?, asset_id, allocation_percentage, performance_factor
+        $sql = "INSERT INTO portfolio_assets (portfolio_id, asset_id, allocation_percentage, performance_factor, rebalance_margin_down, rebalance_margin_up)
+                SELECT ?, asset_id, allocation_percentage, performance_factor, rebalance_margin_down, rebalance_margin_up
                 FROM portfolio_assets 
                 WHERE portfolio_id = ?";
         

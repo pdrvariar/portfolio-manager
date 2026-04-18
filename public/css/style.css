@@ -286,6 +286,120 @@ body {
 .smaller { font-size: 0.75rem; }
 .asset-range-info { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
 .rebalanced-row { background-color: rgba(13, 202, 240, 0.03); }
+
+/* Controles de Margens de Rebalanceamento (UEX Senior Revise) */
+.margin-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-light-subtle);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-width: 220px;
+}
+
+.margin-input-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.margin-input-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 35px;
+    text-transform: uppercase;
+}
+
+.margin-input-control {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.margin-input-btn {
+    padding: 4px 10px;
+    background: var(--soft-secondary);
+    border: none;
+    color: var(--text-main);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.margin-input-btn:hover {
+    background: var(--border-color);
+}
+
+.margin-input-field {
+    width: 60px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    outline: none;
+    padding: 4px 0;
+}
+
+/* Remover as setas padrão do input number */
+.margin-input-field::-webkit-inner-spin-button,
+.margin-input-field::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.margin-suggested-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--soft-info);
+    color: var(--primary);
+    border: 1px solid rgba(13, 110, 253, 0.2);
+    font-weight: bold;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.margin-reset-btn {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: fit-content;
+    align-self: center;
+}
+
+.margin-reset-btn:hover {
+    background: var(--soft-primary);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.margin-suggested-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
 .alert-bordered-warning { border-left: 5px solid #ffc107; background-color: #fffdf5; }
 
 /* 5. Contentores de Gráficos Chart.js - Define a altura fixa */

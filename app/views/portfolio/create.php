@@ -497,6 +497,18 @@ function handleRebalanceTypeChange(select) {
     
     lastValidRebalanceType = select.value;
     toggleUseCashAssetsField();
+
+    // Sênior UEX: Sugerir margens se trocar para custom_margin e não tiverem preenchidas
+    if (lastValidRebalanceType === 'custom_margin') {
+        assets.forEach(asset => {
+            if (asset.rebalance_margin_down === null || asset.rebalance_margin_up === null) {
+                const suggestions = getMarginSuggestions(asset.allocation);
+                asset.rebalance_margin_down = asset.rebalance_margin_down ?? suggestions.down;
+                asset.rebalance_margin_up = asset.rebalance_margin_up ?? suggestions.up;
+            }
+        });
+        updateAssetsTable();
+    }
 }
 
 function addAsset() {
@@ -524,14 +536,17 @@ function addAsset() {
     
     const opt = assetSelect.options[assetSelect.selectedIndex];
     
+    const allocation = parseFloat(allocationInput.value) || 0;
+    const suggestions = getMarginSuggestions(allocation);
+    
     const asset = {
         id: nextId++,
         asset_id: assetSelect.value,
         name: opt.getAttribute('data-name'),
-        allocation: parseFloat(allocationInput.value) || 0,
+        allocation: allocation,
         factor: parseFloat(factorInput.value) || 1.0,
-        rebalance_margin_down: null,
-        rebalance_margin_up: null,
+        rebalance_margin_down: suggestions.down,
+        rebalance_margin_up: suggestions.up,
         // Sênior: Metadados para validação de UEX
         min_date: opt.getAttribute('data-min'),
         max_date: opt.getAttribute('data-max')
@@ -585,23 +600,38 @@ function updateAssetsTable() {
 
         let marginFields = '';
         if (isCustomMargin) {
+            const suggestions = getMarginSuggestions(asset.allocation);
             marginFields = `
-                <td>
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">Min</span>
-                            <input type="number" name="assets[${asset.asset_id}][rebalance_margin_down]"
-                                value="${asset.rebalance_margin_down !== null ? asset.rebalance_margin_down : ''}" step="any" class="form-control"
-                                placeholder="Min %" oninput="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_down', this.value)">
-                            <span class="input-group-text">%</span>
+                <td class="bg-light-subtle rounded-3">
+                    <div class="margin-input-group">
+                        <div class="margin-input-item">
+                            <span class="margin-input-label">Mín</span>
+                            <div class="margin-input-control">
+                                <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.id}, 'down', -0.1)">-</button>
+                                <input type="number" class="margin-input-field" step="0.1" 
+                                    value="${asset.rebalance_margin_down.toFixed(1)}" 
+                                    onchange="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_down', this.value)">
+                                <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.id}, 'down', 0.1)">+</button>
+                            </div>
                         </div>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">Max</span>
-                            <input type="number" name="assets[${asset.asset_id}][rebalance_margin_up]"
-                                value="${asset.rebalance_margin_up !== null ? asset.rebalance_margin_up : ''}" step="any" class="form-control"
-                                placeholder="Max %" oninput="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_up', this.value)">
-                            <span class="input-group-text">%</span>
+                        <div class="margin-input-item">
+                            <span class="margin-input-label">Máx</span>
+                            <div class="margin-input-control">
+                                <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.id}, 'up', -0.1)">-</button>
+                                <input type="number" class="margin-input-field" step="0.1" 
+                                    value="${asset.rebalance_margin_up.toFixed(1)}" 
+                                    onchange="updateAssetCustomMargin(${asset.id}, 'rebalance_margin_up', this.value)">
+                                <button type="button" class="margin-input-btn" onclick="adjustMargin(${asset.id}, 'up', 0.1)">+</button>
+                            </div>
                         </div>
+                        <div class="margin-suggested-row">
+                            <div class="margin-suggested-badge">Sugestão: ${suggestions.label}</div>
+                            <button type="button" class="margin-reset-btn" onclick="resetMarginToSuggestion(${asset.id})" title="Reaplicar valores sugeridos">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reaplicar
+                            </button>
+                        </div>
+                        <input type="hidden" name="assets[${asset.asset_id}][rebalance_margin_down]" value="${asset.rebalance_margin_down}">
+                        <input type="hidden" name="assets[${asset.asset_id}][rebalance_margin_up]" value="${asset.rebalance_margin_up}">
                     </div>
                 </td>
             `;
@@ -644,10 +674,79 @@ function updateAssetsTable() {
     });
 }
 
+// Lógica de Sugestão de Margens (UEX Senior)
+function getMarginSuggestions(allocation) {
+    let downPer, upPer;
+    let label = "";
+    
+    if (allocation < 5) {
+        downPer = 10; upPer = 100;
+        label = "-10% / +100%";
+    } else if (allocation >= 5 && allocation < 10) {
+        downPer = 20; upPer = 50;
+        label = "-20% / +50%";
+    } else if (allocation >= 10 && allocation <= 50) {
+        downPer = 10; upPer = 20;
+        label = "-10% / +20%";
+    } else {
+        downPer = 5; upPer = 5;
+        label = "±5%";
+    }
+
+    const downValue = allocation * (1 - downPer / 100);
+    const upValue = allocation * (1 + upPer / 100);
+
+    return {
+        down: parseFloat(downValue.toFixed(2)),
+        up: parseFloat(upValue.toFixed(2)),
+        label: label
+    };
+}
+
+// Função para resetar margens para a sugestão (UEX Senior)
+function resetMarginToSuggestion(assetId) {
+    const asset = assets.find(a => a.id == assetId);
+    if (!asset) return;
+    
+    const suggestions = getMarginSuggestions(asset.allocation);
+    asset.rebalance_margin_down = suggestions.down;
+    asset.rebalance_margin_up = suggestions.up;
+    updateAssetsTable();
+}
+
+// Função para ajustar margens com botões +/- (UEX Senior Revise)
+function adjustMargin(id, type, delta) {
+    const asset = assets.find(a => a.id === id);
+    if (!asset) return;
+
+    if (type === 'down') {
+        let val = (asset.rebalance_margin_down || 0) + delta;
+        val = Math.max(0, parseFloat(val.toFixed(2)));
+        // Garantir que não ultrapasse o topo
+        if (val > asset.rebalance_margin_up) val = asset.rebalance_margin_up;
+        asset.rebalance_margin_down = val;
+    } else {
+        let val = (asset.rebalance_margin_up || 0) + delta;
+        val = parseFloat(val.toFixed(2));
+        // Garantir que não seja menor que o piso
+        if (val < asset.rebalance_margin_down) val = asset.rebalance_margin_down;
+        asset.rebalance_margin_up = val;
+    }
+    updateAssetsTable();
+}
+
 function updateAssetCustomMargin(id, field, value) {
     const asset = assets.find(a => a.id === id);
     if (asset) {
-        asset[field] = value === '' ? null : parseFloat(value);
+        let val = value === '' ? null : parseFloat(value);
+        if (field === 'rebalance_margin_down' && val !== null && asset.rebalance_margin_up !== null && val > asset.rebalance_margin_up) {
+            val = asset.rebalance_margin_up;
+        }
+        if (field === 'rebalance_margin_up' && val !== null && asset.rebalance_margin_down !== null && val < asset.rebalance_margin_down) {
+            val = asset.rebalance_margin_down;
+        }
+        asset[field] = val;
+        updateAssetsTable();
     }
 }
 
@@ -655,6 +754,15 @@ function updateAssetAllocation(id, value) {
     const asset = assets.find(a => a.id === id);
     if (asset) {
         asset.allocation = parseFloat(value) || 0;
+        
+        // Sênior UEX: Ao mudar a alocação, recalculamos as sugestões de margem se for custom_margin
+        const rebalanceType = document.getElementById('rebalance_type').value;
+        if (rebalanceType === 'custom_margin') {
+            const suggestions = getMarginSuggestions(asset.allocation);
+            asset.rebalance_margin_down = suggestions.down;
+            asset.rebalance_margin_up = suggestions.up;
+        }
+        
         updateTotal();
         updateAssetsTable(); // Atualiza os inputs hidden também
     }
