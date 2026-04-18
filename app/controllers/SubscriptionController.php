@@ -104,14 +104,35 @@ class SubscriptionController {
 
     public function success() {
         Auth::checkAuthentication();
-        // Em um fluxo real, aqui você verificaria o status do pagamento via API ou Webhook
-        // Por enquanto, vamos simular que deu certo e atualizar o plano do usuário
         $userModel = new User();
         $userId = Auth::getUserId();
-        
-        // Simulação de atualização de plano - SÊNIOR: Garantindo que o plano mude no BD
-        $expiration = date('Y-m-d H:i:s', strtotime('+1 month'));
-        if ($userModel->updatePlan($userId, 'pro', $expiration, 'monthly')) {
+
+        // O Mercado Pago retorna payment_id, collection_id e preference_id na query string
+        $paymentId   = $_GET['payment_id']   ?? $_GET['collection_id'] ?? null;
+        $planType    = 'monthly'; // Checkout Pro não distingue; ajuste conforme necessário
+        $expiration  = date('Y-m-d H:i:s', strtotime('+1 month'));
+
+        // SÊNIOR: Se tivermos o payment_id, consultamos a API para obter o tipo de plano e prazo corretos
+        if ($paymentId) {
+            try {
+                $mpService  = new MercadoPagoService();
+                $mpClient   = new \MercadoPago\Client\Payment\PaymentClient();
+                $payment    = $mpClient->get((int)$paymentId);
+                if ($payment && isset($payment->status) && $payment->status === 'approved') {
+                    // external_reference guarda o userId — confirmar que é o mesmo usuário
+                    if ((string)($payment->external_reference ?? '') !== (string)$userId) {
+                        error_log("AVISO MP: payment_id $paymentId não pertence ao usuário $userId.");
+                        $paymentId = null;
+                    }
+                } else {
+                    error_log("AVISO MP: payment_id $paymentId status: " . ($payment->status ?? 'desconhecido'));
+                }
+            } catch (\Exception $e) {
+                error_log("ERRO MP (success lookup): " . $e->getMessage());
+            }
+        }
+
+        if ($userModel->updatePlan($userId, 'pro', $expiration, $planType, $paymentId)) {
             // Atualizar a sessão para refletir o novo plano
             Auth::updateSessionPlan('pro');
         } else {

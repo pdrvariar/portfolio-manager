@@ -7,7 +7,7 @@ ob_start();
 ?>
 
 <div class="row">
-    <div class="col-md-6 mx-auto">
+    <div class="col-lg-7 col-md-9 mx-auto">
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-header bg-white py-3 border-bottom">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-person-gear me-2 text-primary"></i>Editar Usuário</h5>
@@ -16,6 +16,9 @@ ob_start();
                 <form method="POST" action="/index.php?url=<?php echo obfuscateUrl('admin/users/update/' . $user['id']); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrfToken(); ?>">
                     
+                    <!-- Dados básicos -->
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3 border-bottom pb-2">Dados da Conta</h6>
+
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nome de Usuário</label>
                         <input type="text" class="form-control bg-light" value="<?php echo htmlspecialchars($user['username']); ?>" readonly>
@@ -32,23 +35,79 @@ ob_start();
                         <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="status" class="form-label fw-bold">Status da Conta</label>
-                        <select class="form-select" id="status" name="status" required>
-                            <option value="active" <?php echo $user['status'] === 'active' ? 'selected' : ''; ?>>Ativo</option>
-                            <option value="pending" <?php echo $user['status'] === 'pending' ? 'selected' : ''; ?>>Pendente</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" value="1" <?php echo $user['is_admin'] ? 'checked' : ''; ?>>
-                            <label class="form-check-label fw-bold" for="is_admin">Privilégios de Administrador</label>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="status" class="form-label fw-bold">Status da Conta</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="active"    <?php echo $user['status'] === 'active'    ? 'selected' : ''; ?>>Ativo</option>
+                                <option value="pending"   <?php echo $user['status'] === 'pending'   ? 'selected' : ''; ?>>Pendente</option>
+                                <option value="suspended" <?php echo $user['status'] === 'suspended' ? 'selected' : ''; ?>>Suspenso</option>
+                            </select>
                         </div>
-                        <div class="form-text text-danger">Atenção: Usuários administradores têm acesso total ao sistema.</div>
+                        <div class="col-sm-6 d-flex align-items-end">
+                            <div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" value="1" <?php echo $user['is_admin'] ? 'checked' : ''; ?>>
+                                    <label class="form-check-label fw-bold" for="is_admin">Privilégios de Administrador</label>
+                                </div>
+                                <div class="form-text text-danger">Atenção: acesso total ao sistema.</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mt-5">
+                    <!-- Assinatura -->
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3 border-bottom pb-2 mt-4">Plano &amp; Assinatura</h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="plan" class="form-label fw-bold">Plano</label>
+                            <select class="form-select" id="plan" name="plan">
+                                <option value="starter" <?php echo ($user['plan'] ?? 'starter') === 'starter' ? 'selected' : ''; ?>>Starter (Gratuito)</option>
+                                <option value="pro"     <?php echo ($user['plan'] ?? '') === 'pro'     ? 'selected' : ''; ?>>PRO</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="subscription_plan_type" class="form-label fw-bold">Tipo de Assinatura</label>
+                            <select class="form-select" id="subscription_plan_type" name="subscription_plan_type">
+                                <option value="">— Nenhum —</option>
+                                <option value="monthly" <?php echo ($user['subscription_plan_type'] ?? '') === 'monthly' ? 'selected' : ''; ?>>Mensal</option>
+                                <option value="yearly"  <?php echo ($user['subscription_plan_type'] ?? '') === 'yearly'  ? 'selected' : ''; ?>>Anual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="subscription_expires_at" class="form-label fw-bold">Data de Expiração</label>
+                            <?php
+                                $expiresVal = '';
+                                if (!empty($user['subscription_expires_at'])) {
+                                    $expiresVal = date('Y-m-d\TH:i', strtotime($user['subscription_expires_at']));
+                                }
+                            ?>
+                            <input type="datetime-local" class="form-control" id="subscription_expires_at" name="subscription_expires_at" value="<?php echo $expiresVal; ?>">
+                            <div class="form-text">Deixe em branco para remover a expiração.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="last_payment_id" class="form-label fw-bold">ID do Último Pagamento</label>
+                            <input type="text" class="form-control" id="last_payment_id" name="last_payment_id" value="<?php echo htmlspecialchars($user['last_payment_id'] ?? ''); ?>" placeholder="Ex: MP-123456">
+                        </div>
+                    </div>
+
+                    <!-- Atalhos rápidos de extensão de assinatura -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Atalhos de Ativação PRO</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setProExpiry(1)">+1 mês</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setProExpiry(3)">+3 meses</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setProExpiry(6)">+6 meses</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setProExpiry(12)">+12 meses</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSubscription()">Cancelar / Remover PRO</button>
+                        </div>
+                        <div class="form-text">Os atalhos alteram os campos acima — ainda é necessário salvar.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
                         <a href="/index.php?url=<?php echo obfuscateUrl('admin/users'); ?>" class="btn btn-light px-4">
                             <i class="bi bi-arrow-left me-1"></i> Voltar
                         </a>
@@ -61,6 +120,23 @@ ob_start();
         </div>
     </div>
 </div>
+
+<script>
+function setProExpiry(months) {
+    const now = new Date();
+    now.setMonth(now.getMonth() + months);
+    const formatted = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+    document.getElementById('subscription_expires_at').value = formatted;
+    document.getElementById('plan').value = 'pro';
+    document.getElementById('subscription_plan_type').value = months >= 12 ? 'yearly' : 'monthly';
+}
+function clearSubscription() {
+    document.getElementById('plan').value = 'starter';
+    document.getElementById('subscription_expires_at').value = '';
+    document.getElementById('subscription_plan_type').value = '';
+    document.getElementById('last_payment_id').value = '';
+}
+</script>
 
 <?php
 $content = ob_get_clean();

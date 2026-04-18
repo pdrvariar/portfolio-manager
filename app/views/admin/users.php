@@ -20,12 +20,18 @@ ob_start();
                         <th>E-mail</th>
                         <th>Status</th>
                         <th>Tipo</th>
+                        <th>Plano</th>
+                        <th>Tipo Assinatura</th>
+                        <th>Expiração</th>
                         <th>Criado em</th>
                         <th class="text-end pe-3">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($users as $user): ?>
+                    <?php
+                        $isExpired = !empty($user['subscription_expires_at']) && strtotime($user['subscription_expires_at']) < time();
+                    ?>
                     <tr>
                         <td class="ps-3"><?php echo $user['id']; ?></td>
                         <td>
@@ -36,12 +42,38 @@ ob_start();
                         <td>
                             <?php if ($user['status'] === 'active'): ?>
                                 <span class="badge bg-success">Ativo</span>
+                            <?php elseif ($user['status'] === 'suspended'): ?>
+                                <span class="badge bg-danger">Suspenso</span>
                             <?php else: ?>
                                 <span class="badge bg-warning">Pendente</span>
                             <?php endif; ?>
                         </td>
                         <td>
                             <?php echo $user['is_admin'] ? '<span class="badge bg-danger">Admin</span>' : 'Investidor'; ?>
+                        </td>
+                        <td>
+                            <?php if (($user['plan'] ?? 'starter') === 'pro'): ?>
+                                <span class="badge bg-primary"><i class="bi bi-star-fill me-1"></i>PRO</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Starter</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($user['subscription_plan_type'])): ?>
+                                <?php echo $user['subscription_plan_type'] === 'yearly' ? '<span class="badge bg-info text-dark">Anual</span>' : '<span class="badge bg-info text-dark">Mensal</span>'; ?>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($user['subscription_expires_at'])): ?>
+                                <span class="<?php echo $isExpired ? 'text-danger fw-bold' : 'text-success'; ?>">
+                                    <?php echo date('d/m/Y', strtotime($user['subscription_expires_at'])); ?>
+                                    <?php if ($isExpired): ?><i class="bi bi-exclamation-triangle-fill ms-1" title="Expirada"></i><?php endif; ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
                         </td>
                         <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                         <td class="text-end pe-3">

@@ -190,7 +190,8 @@ class User {
      * Atualização administrativa completa de um usuário.
      */
     public function adminUpdate($id, $data) {
-        $sql = "UPDATE users SET full_name = ?, email = ?, status = ?, is_admin = ?, plan = ? WHERE id = ?";
+        $sql = "UPDATE users SET full_name = ?, email = ?, status = ?, is_admin = ?, plan = ?,
+                subscription_expires_at = ?, subscription_plan_type = ?, last_payment_id = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             $data['full_name'],
@@ -198,6 +199,9 @@ class User {
             $data['status'],
             $data['is_admin'],
             $data['plan'],
+            !empty($data['subscription_expires_at']) ? $data['subscription_expires_at'] : null,
+            !empty($data['subscription_plan_type']) ? $data['subscription_plan_type'] : null,
+            !empty($data['last_payment_id']) ? $data['last_payment_id'] : null,
             $id
         ]);
     }

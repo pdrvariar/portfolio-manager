@@ -64,7 +64,11 @@ class AdminController {
                 'full_name' => sanitize($_POST['full_name']),
                 'email' => sanitize($_POST['email']),
                 'status' => $_POST['status'],
-                'is_admin' => isset($_POST['is_admin']) ? 1 : 0
+                'is_admin' => isset($_POST['is_admin']) ? 1 : 0,
+                'plan' => in_array($_POST['plan'] ?? '', ['starter', 'pro']) ? $_POST['plan'] : 'starter',
+                'subscription_expires_at' => !empty($_POST['subscription_expires_at']) ? $_POST['subscription_expires_at'] : null,
+                'subscription_plan_type' => in_array($_POST['subscription_plan_type'] ?? '', ['monthly', 'yearly']) ? $_POST['subscription_plan_type'] : null,
+                'last_payment_id' => sanitize($_POST['last_payment_id'] ?? '')
             ];
 
             if ($this->userModel->adminUpdate($id, $data)) {
