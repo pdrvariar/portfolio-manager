@@ -168,7 +168,6 @@ class BacktestService {
         // NOVOS PARÂMETROS
         $simulationType = $portfolio['simulation_type'] ?? 'standard';
         $rebalanceType = $portfolio['rebalance_type'] ?? 'full'; // NOVO: Captura o tipo de rebalanceamento
-        $rebalanceMargin = (float)($portfolio['rebalance_margin'] ?? 0) / 100; // NOVO: Margem para rebalanceamento
         $depositAmount = (float)($portfolio['deposit_amount'] ?? 0);
         $depositCurrency = $portfolio['deposit_currency'] ?? 'BRL';
         $depositFrequency = $portfolio['deposit_frequency'] ?? 'monthly';
@@ -704,16 +703,16 @@ class BacktestService {
                     $selicCash = 0; // Caixa é integralmente investido no rebalanceamento
                 }
 
-                if ($rebalanceType === 'buy_only' || $rebalanceType === 'with_margin' || $rebalanceType === 'custom_margin') {
+                if ($rebalanceType === 'buy_only' || $rebalanceType === 'custom_margin') {
                     // ============================================
-                    // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS OU COM MARGENS (GLOBAL OU CUSTOMIZADA)
+                    // LÓGICA DE REBALANCEAMENTO: APENAS COMPRAS OU COM MARGENS CUSTOMIZADAS
                     // ============================================
                     
                     // Inicializa caixa disponível com o que foi injetado (SELIC)
                     $availableToInvest = $selicCashInjected;
 
                     // Se for rebalanceamento COM MARGENS, identifica excessos além da margem e vende primeiro
-                    if ($rebalanceType === 'with_margin' || $rebalanceType === 'custom_margin') {
+                    if ($rebalanceType === 'custom_margin') {
                         foreach ($assets as $asset) {
                             $assetId = $asset['asset_id'];
                             $targetPct = (float)$asset['allocation_percentage'] / 100;
@@ -721,15 +720,9 @@ class BacktestService {
                             $currentValue = $currentBalances[$assetId];
 
                             // Margem de tolerância: Alvo + margem_up (em pontos percentuais)
-                            $toleranceLimit = 0;
-                            if ($rebalanceType === 'with_margin') {
-                                // Margem Global: Alvo * (1 + margem)
-                                $toleranceLimit = $targetValue * (1 + $rebalanceMargin);
-                            } else {
-                                // Margem Customizada: Margem absoluta informada pelo usuário (ex: 55%)
-                                $marginUpPct = isset($asset['rebalance_margin_up']) ? (float)$asset['rebalance_margin_up'] : 0;
-                                $toleranceLimit = $rebalanceBase * ($marginUpPct / 100);
-                            }
+                            // Margem Customizada: Margem absoluta informada pelo usuário (ex: 55%)
+                            $marginUpPct = isset($asset['rebalance_margin_up']) ? (float)$asset['rebalance_margin_up'] : 0;
+                            $toleranceLimit = $rebalanceBase * ($marginUpPct / 100);
 
                             if ($currentValue > $toleranceLimit + 0.001) {
                                 // Vende apenas o que exceder o ALVO
