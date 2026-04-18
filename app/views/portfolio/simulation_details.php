@@ -45,6 +45,38 @@ ob_start();
         </small>
     </div>
     <div class="card-body p-3">
+
+        <!-- Nota explicativa sobre as cotações e o Capital Inicial -->
+        <div class="alert d-flex gap-2 align-items-start py-3 px-3 mb-3 small border-0 rounded-3" style="background:#eef6fd;">
+            <i class="bi bi-lightbulb-fill flex-shrink-0 mt-1" style="color:#3b82f6;font-size:1rem;"></i>
+            <div style="color:#374151;line-height:1.6;">
+                <strong style="color:#1e3a5f;font-size:.85rem;letter-spacing:.01em;">
+                    📅 Como ler a coluna Mês/Ano
+                </strong>
+                <p class="mb-2 mt-1">
+                    Cada período exibido nesta tabela tem sua performance calculada com base no
+                    <strong>preço de fechamento do último dia útil do respectivo mês</strong> —
+                    incluindo cotações, compras, vendas, aportes e rebalanceamentos.
+                </p>
+                <p class="mb-1"><strong style="color:#1e3a5f;">Exemplos para facilitar a leitura:</strong></p>
+                <ul class="mb-0 ps-3" style="list-style:disc;">
+                    <li class="mb-1">
+                        A linha <strong>07/2015</strong> representa o desempenho do portfólio usando as cotações
+                        do <strong>último dia útil de julho de 2015</strong> — neste caso, 31/07/2015.
+                    </li>
+                    <li>
+                        Se o histórico apresenta uma linha marcada como <strong>Capital Inicial</strong> aparentemente
+                        <em>um mês antes</em> do início da simulação, não se preocupe: esse comportamento é
+                        intencional. A compra dos ativos com o capital inicial é feita com base nas cotações
+                        do <strong>último dia útil do mês anterior</strong> ao início.
+                        Assim, uma simulação que começa em <strong>01/2015</strong> utiliza os preços de
+                        fechamento de <strong>dezembro/2014</strong> — que pode corresponder ao dia&nbsp;29,
+                        30&nbsp;ou&nbsp;31, dependendo do calendário de mercado daquele ano.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <table id="detailsTable" class="table table-hover align-middle mb-0 w-100">
             <thead class="table-light">
                 <tr>
