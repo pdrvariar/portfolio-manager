@@ -1150,6 +1150,9 @@ class BacktestService {
         // Maior Alta e Maior Queda Mensal (da Estratégia)
         $maxMonthlyGain = !empty($strategyReturns) ? max($strategyReturns) : 0;
         $maxMonthlyLoss = !empty($strategyReturns) ? min($strategyReturns) : 0;
+
+        // Max Drawdown (da Estratégia, sem aportes)
+        $maxDrawdown = $this->calculateMaxDrawdown(array_values($valuesWithoutDeposits));
         
         // CORREÇÃO: Se houver apenas um mês (data base + 1 mês), o array strategyReturns terá 1 elemento.
         // O primeiro retorno (do mês base para o primeiro mês real) deve ser capturado corretamente.
@@ -1185,6 +1188,7 @@ class BacktestService {
             'final_without_deposits' => $finalWithoutDeposits,
             'max_monthly_gain' => $maxMonthlyGain * 100,
             'max_monthly_loss' => $maxMonthlyLoss * 100,
+            'max_drawdown' => $maxDrawdown * 100,
             'total_tax_paid' => $metadata['total_tax_paid'] ?? 0
         ];
     }
