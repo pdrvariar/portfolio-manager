@@ -81,28 +81,21 @@ foreach ($simulations as $s) {
     if ($bestSharpe === null || (float)$s['sharpe_ratio'] > (float)$bestSharpe['sharpe_ratio']) $bestSharpe = $s;
     if ($bestReturn === null || (float)$s['annual_return'] > (float)$bestReturn['annual_return']) $bestReturn = $s;
 }
+
+// Breadcrumb injetado no layout
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+];
+if ($selectedPortfolio) {
+    $breadcrumbs[] = ['label' => htmlspecialchars($selectedPortfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $selectedPortfolio['id'])];
+}
+$breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
 ?>
 
-<!-- ── Breadcrumb + Cabeçalho ── -->
+<!-- ── Cabeçalho ── -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1 small">
-                <li class="breadcrumb-item">
-                    <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>" class="text-decoration-none text-muted">
-                        <i class="bi bi-grid-1x2 me-1"></i>Portfólios
-                    </a>
-                </li>
-                <?php if ($selectedPortfolio): ?>
-                <li class="breadcrumb-item">
-                    <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $selectedPortfolio['id']) ?>" class="text-decoration-none text-muted">
-                        <?= htmlspecialchars($selectedPortfolio['name']) ?>
-                    </a>
-                </li>
-                <?php endif; ?>
-                <li class="breadcrumb-item active">Histórico de Simulações</li>
-            </ol>
-        </nav>
         <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-clock-history text-primary"></i>
             Histórico de Simulações

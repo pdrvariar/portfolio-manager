@@ -6,6 +6,14 @@
  */
 
 $title = 'Editar Portfólio: ' . htmlspecialchars($portfolio['name']);
+
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => htmlspecialchars($portfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolio['id'])],
+    ['label' => 'Editar', 'url' => '#'],
+];
+
 ob_start();
 ?>
 

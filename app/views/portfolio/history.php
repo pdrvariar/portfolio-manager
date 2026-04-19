@@ -5,6 +5,14 @@
  */
 
 $title = 'Histórico de Simulações — ' . htmlspecialchars($portfolio['name']);
+
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => htmlspecialchars($portfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolio['id'])],
+    ['label' => 'Histórico', 'url' => '#'],
+];
+
 ob_start();
 
 $freqLabels = [
@@ -25,24 +33,9 @@ $rebalTypeLabels = [
 ];
 ?>
 
-<!-- ── Breadcrumb + Cabeçalho ────────────────────────────────────────── -->
+<!-- ── Cabeçalho ────────────────────────────────────────── -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1 small">
-                <li class="breadcrumb-item">
-                    <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>" class="text-decoration-none text-muted">
-                        <i class="bi bi-grid-1x2 me-1"></i>Portfólios
-                    </a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>" class="text-decoration-none text-muted">
-                        <?= htmlspecialchars($portfolio['name']) ?>
-                    </a>
-                </li>
-                <li class="breadcrumb-item active">Histórico</li>
-            </ol>
-        </nav>
         <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-clock-history text-primary"></i>
             Histórico de Simulações

@@ -83,53 +83,96 @@ function logActivity($message, $userId = null) {
     file_put_contents($logFile, $logMessage, FILE_APPEND);
 }
 
-function renderBreadcrumbs($params) {
-    // Início sempre no Dashboard
-    $breadcrumbs = [
-        // Use obfuscateUrl aqui também para manter o padrão
-        ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')]
-    ];
+/**
+ * Renderiza a trilha de navegação (breadcrumb) de forma padronizada.
+ *
+ * @param array|null $customBreadcrumbs  Array de itens ['label'=>'...','url'=>'...'] injetado pela view.
+ *                                       Quando fornecido, é usado diretamente (permite incluir nomes dinâmicos).
+ *                                       Quando null, a trilha é gerada automaticamente a partir de $params.
+ * @param array      $params             Parâmetros do Router (controller, action, id…).
+ */
+function renderBreadcrumbs($customBreadcrumbs = null, $params = []) {
 
-    $controller = strtolower(str_replace('Controller', '', $params['controller'] ?? ''));
-    $action = $params['action'] ?? '';
+    $home = ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')];
 
-    // Mapeamento de nomes amigáveis para os Controllers
-    $labels = [
-        'portfolio'    => 'Portfólios',
-        'asset'        => 'Ativos',
-        'profile'      => 'Meu Perfil',
-        'admin'        => 'Admin',
-        'subscription' => 'Assinatura'
-    ];
+    if ($customBreadcrumbs !== null) {
+        // A view forneceu os itens completos — usa diretamente.
+        $items = $customBreadcrumbs;
+    } else {
+        // ── Geração automática a partir dos parâmetros do roteador ──────────
+        $items = [$home];
 
-    if (isset($labels[$controller])) {
-        // Para assinatura, talvez não queiramos um link clicável se já estiver na tela de planos
-        $url = "/index.php?url=" . obfuscateUrl($controller);
-        if ($controller === 'subscription' && $action === 'upgrade') {
-            $breadcrumbs[] = ['label' => $labels[$controller], 'url' => '#'];
-        } else {
-            $breadcrumbs[] = ['label' => $labels[$controller], 'url' => $url];
+        $controller = strtolower(str_replace('Controller', '', $params['controller'] ?? ''));
+        $action     = $params['action'] ?? '';
+
+        // Mapeamento controller → label + rota base
+        $controllerMap = [
+            'portfolio'    => ['label' => 'Portfólios',  'url' => 'portfolio'],
+            'asset'        => ['label' => 'Ativos',       'url' => 'assets'],
+            'profile'      => ['label' => 'Meu Perfil',   'url' => 'profile'],
+            'admin'        => ['label' => 'Admin',         'url' => 'admin'],
+            'subscription' => ['label' => 'Planos',        'url' => 'upgrade'],
+        ];
+
+        if (isset($controllerMap[$controller])) {
+            $cm = $controllerMap[$controller];
+            // Na página raiz do controller, o item é inativo (sem link)
+            $isRoot = in_array($action, ['index', 'upgrade', 'dashboard']);
+            $items[] = [
+                'label' => $cm['label'],
+                'url'   => $isRoot ? '#' : '/index.php?url=' . obfuscateUrl($cm['url']),
+            ];
+        }
+
+        // Sub-seções do Admin
+        if ($controller === 'admin') {
+            if (in_array($action, ['users', 'editUser', 'updateUser'])) {
+                $items[] = [
+                    'label' => 'Usuários',
+                    'url'   => ($action === 'users') ? '#' : '/index.php?url=' . obfuscateUrl('admin/users'),
+                ];
+            } elseif (in_array($action, ['assets', 'updateAssetQuotes'])) {
+                $items[] = ['label' => 'Ativos', 'url' => '#'];
+            }
+        }
+
+        // Mapeamento action → rótulo do item final
+        $actionLabels = [
+            'create'            => 'Novo Portfólio',
+            'edit'              => 'Editar',
+            'editUser'          => 'Editar Usuário',
+            'import'            => 'Importar Dados',
+            'view'              => 'Detalhes',
+            'runSimulation'     => 'Nova Simulação',
+            'allSimulations'    => 'Histórico de Simulações',
+            'history'           => 'Histórico',
+            'simulationDetails' => 'Detalhes da Simulação',
+            'clone'             => 'Duplicar',
+            'success'           => 'Assinatura Confirmada',
+            'failure'           => 'Pagamento Recusado',
+            'pending'           => 'Pagamento Pendente',
+            'checkout'          => 'Checkout',
+            'changePassword'    => 'Alterar Senha',
+        ];
+
+        if (isset($actionLabels[$action])) {
+            $items[] = ['label' => $actionLabels[$action], 'url' => '#'];
         }
     }
 
-    // Adiciona a ação específica (Editar, Visualizar, etc)
-    if ($action === 'view') $breadcrumbs[] = ['label' => 'Detalhes', 'url' => '#'];
-    if ($action === 'edit' || $action === 'editUser') $breadcrumbs[] = ['label' => 'Edição', 'url' => '#'];
-    if ($action === 'import') $breadcrumbs[] = ['label' => 'Importação', 'url' => '#'];
-    if ($action === 'success') $breadcrumbs[] = ['label' => 'Sucesso', 'url' => '#'];
-    if ($action === 'failure') $breadcrumbs[] = ['label' => 'Falha', 'url' => '#'];
-
-    $html = '<nav aria-label="breadcrumb"><ol class="breadcrumb mb-4 shadow-sm p-2 bg-white rounded">';
-    foreach ($breadcrumbs as $index => $crumb) {
-        $active = ($index === count($breadcrumbs) - 1);
-        $html .= sprintf(
-            '<li class="breadcrumb-item %s">%s</li>',
-            $active ? 'active text-primary fw-bold' : '',
-            $active ? sanitize($crumb['label']) : '<a href="'.$crumb['url'].'" class="text-decoration-none">'.$crumb['label'].'</a>'
-        );
+    // ── Renderização ────────────────────────────────────────────────────────
+    $html     = '<nav aria-label="breadcrumb"><ol class="breadcrumb small mb-3">';
+    $lastIdx  = count($items) - 1;
+    foreach ($items as $i => $crumb) {
+        if ($i === $lastIdx) {
+            // Item ativo: exibe o label sem escapar HTML (pode conter ícone)
+            $html .= '<li class="breadcrumb-item active fw-semibold" aria-current="page">' . $crumb['label'] . '</li>';
+        } else {
+            $html .= '<li class="breadcrumb-item"><a href="' . $crumb['url'] . '" class="text-decoration-none">' . $crumb['label'] . '</a></li>';
+        }
     }
     $html .= '</ol></nav>';
-    
+
     return $html;
 }
 

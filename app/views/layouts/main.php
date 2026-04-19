@@ -168,8 +168,8 @@
         </div>
     </nav>    
     <main class="container py-4">
-        <?php if (Auth::isLoggedIn() && isset($this->params)): ?>
-            <?php echo renderBreadcrumbs($this->params); ?>
+        <?php if (Auth::isLoggedIn()): ?>
+            <?php echo renderBreadcrumbs($breadcrumbs ?? null, $this->params ?? []); ?>
         <?php endif; ?>
 
         <?php if ($error = Session::getFlash('error')): ?>

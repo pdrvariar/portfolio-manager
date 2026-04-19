@@ -4,6 +4,13 @@
  * @var array $historicalData Lista de registros históricos (reference_date, price)
  */
 $title = $asset['name'] . ' - Detalhes';
+
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Ativos', 'url' => '/index.php?url=' . obfuscateUrl('assets')],
+    ['label' => htmlspecialchars($asset['name']), 'url' => '#'],
+];
+
 ob_start();
 ?>
 <div class="container mt-4">

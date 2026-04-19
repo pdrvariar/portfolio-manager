@@ -10,19 +10,20 @@
  */
 
 $title = 'Detalhes da Simulação: ' . htmlspecialchars($portfolio['name']);
+
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => htmlspecialchars($portfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolio['id'])],
+    ['label' => 'Detalhes da Simulação', 'url' => '#'],
+];
+
 ob_start();
 ?>
 
-<!-- ─── Cabeçalho / Breadcrumb ─────────────────────────────────────────────── -->
+<!-- ─── Cabeçalho ─────────────────────────────────────────────── -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1">
-                <li class="breadcrumb-item"><a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>">Portfólios</a></li>
-                <li class="breadcrumb-item"><a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>"><?= htmlspecialchars($portfolio['name']) ?></a></li>
-                <li class="breadcrumb-item active">Detalhes da Simulação</li>
-            </ol>
-        </nav>
         <h2 class="fw-bold mb-0">Progresso Mensal Detalhado</h2>
         <p class="text-muted small mb-0">Análise profunda da evolução de cada ativo mês a mês.</p>
     </div>

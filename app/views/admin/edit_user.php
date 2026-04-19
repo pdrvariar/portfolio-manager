@@ -3,6 +3,14 @@
  * @var array $user Dados do usuário a ser editado
  */
 $title = 'Editar Usuário: ' . htmlspecialchars($user['username']);
+
+$breadcrumbs = [
+    ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+    ['label' => 'Admin', 'url' => '/index.php?url=' . obfuscateUrl('admin')],
+    ['label' => 'Usuários', 'url' => '/index.php?url=' . obfuscateUrl('admin/users')],
+    ['label' => htmlspecialchars($user['username']), 'url' => '#'],
+];
+
 ob_start();
 ?>
 
