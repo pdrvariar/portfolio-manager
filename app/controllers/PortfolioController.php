@@ -548,21 +548,44 @@ class PortfolioController {
         $id = $this->params['id'] ?? null;
 
         if (!$id) {
-            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            // Redireciona para a tela unificada se não tiver ID
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations'));
             exit;
         }
 
-        $portfolio = $this->portfolioModel->findById($id);
-        if (!$portfolio || ($portfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
-            Session::setFlash('error', 'Acesso negado.');
-            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
-            exit;
+        // Redireciona para a tela unificada com o filtro pré-selecionado
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations') . '&portfolio_id=' . (int)$id);
+        exit;
+    }
+
+    public function allSimulations() {
+        Auth::checkAuthentication();
+        $userId = Auth::getCurrentUserId();
+
+        // Portfólio selecionado no filtro (0 = todos)
+        $portfolioId = isset($_GET['portfolio_id']) ? (int)$_GET['portfolio_id'] : 0;
+
+        // Busca todos os portfólios do usuário para popular o filtro
+        $portfolios = $this->portfolioModel->getUserPortfolios($userId, false);
+
+        // Garante que o portfolio_id informado pertence ao usuário
+        $selectedPortfolio = null;
+        if ($portfolioId) {
+            foreach ($portfolios as $p) {
+                if ((int)$p['id'] === $portfolioId) {
+                    $selectedPortfolio = $p;
+                    break;
+                }
+            }
+            if (!$selectedPortfolio) {
+                $portfolioId = 0; // reset se não for do usuário
+            }
         }
 
         $simulationModel = new SimulationResult();
-        $simulations = $simulationModel->getHistoryByPortfolio($id, 10);
+        $simulations = $simulationModel->getAllHistoryForUser($userId, $portfolioId ?: null, 200);
 
-        require_once __DIR__ . '/../views/portfolio/history.php';
+        require_once __DIR__ . '/../views/portfolio/all_simulations.php';
     }
 
     public function simulationDetails() {

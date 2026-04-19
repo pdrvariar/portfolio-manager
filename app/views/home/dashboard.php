@@ -165,13 +165,26 @@ ob_start();
                             <span class="small fw-bold text-dark">Meu Perfil</span>
                         </a>
                     </div>
+                    <div class="col-12">
+                        <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulations') ?>" class="btn btn-action-quick w-100 py-3 text-center rounded-4 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-clock-history fs-4 text-primary"></i>
+                            <div class="text-start">
+                                <div class="small fw-bold text-dark lh-1">Histórico de Simulações</div>
+                                <div class="text-muted" style="font-size:.72rem;">Todas as simulações</div>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted ms-auto"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header py-3 border-bottom">
+            <div class="card-header py-3 border-bottom d-flex align-items-center justify-content-between">
                 <h6 class="mb-0 fw-bold">Atividade Recente</h6>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulations') ?>" class="btn btn-sm btn-link text-decoration-none fw-bold p-0 small">
+                    Ver todas <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($latestSimulations)): ?>
