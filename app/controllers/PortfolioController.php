@@ -126,7 +126,7 @@ class PortfolioController {
         if ($monthlyCount >= $limit) {
             $msg = $isPro 
                 ? "Você atingiu o limite de 1000 simulações mensais do seu plano PRO."
-                : "Você atingiu o limite de 20 simulações mensais do plano Starter. Faça um upgrade para o PRO para aumentar seu limite para 100!";
+                : "Você atingiu o limite de 20 simulações mensais do plano Starter. Faça um upgrade para o PRO para aumentar seu limite para 1000!";
             Session::setFlash('error', $msg);
             header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolioId));
             exit;

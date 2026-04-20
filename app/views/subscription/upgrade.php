@@ -123,7 +123,7 @@ ob_start();
                                 <li class="mb-3 d-flex align-items-start">
                                     <i class="bi bi-calculator text-primary me-3 fs-5"></i>
                                     <div>
-                                        <strong>100 Simulações mensais:</strong>
+                                        <strong>1000 Simulações mensais:</strong>
                                         <p class="small text-muted mb-0">Enquanto o plano Starter permite apenas 20 execuções por mês.</p>
                                     </div>
                                 </li>
