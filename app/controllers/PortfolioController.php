@@ -156,6 +156,13 @@ class PortfolioController {
             exit;
         }
 
+        // PRO-only feature guard
+        if (!Auth::isPro()) {
+            Session::setFlash('error', 'A Simulação Avançada é exclusiva do Plano PRO. Faça upgrade para desbloquear!');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
         // Check ownership
         $portfolio = $this->portfolioModel->findById($portfolioId);
         if (!$portfolio || $portfolio['user_id'] != $userId) {

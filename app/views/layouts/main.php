@@ -217,6 +217,7 @@
                             <h6 class="fw-bold mb-3 small text-uppercase text-primary"><i class="bi bi-check2-circle me-2"></i>Vantagens do Plano PRO:</h6>
                             <ul class="list-unstyled mb-0 small">
                                 <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> 100 Simulações mensais</li>
+                                <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> Simulação Avançada (Monte Carlo)</li>
                                 <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> Histórico completo de dados</li>
                                 <li class="mb-2"><i class="bi bi-check-lg text-success me-2"></i> Cálculo automático de impostos</li>
                                 <li><i class="bi bi-check-lg text-success me-2"></i> Estratégias de aporte avançadas</li>

@@ -127,11 +127,20 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
            class="btn btn-primary rounded-pill px-4 shadow-sm">
             <i class="bi bi-play-fill me-1"></i> Nova Simulação
         </a>
+        <?php if (Auth::isPro()): ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run-advanced/' . $selectedPortfolio['id']) ?>"
            class="btn btn-warning rounded-pill px-4 shadow-sm"
            title="Gera automaticamente até 20 cenários com alocações variando pela volatilidade dos ativos">
             <i class="bi bi-stars me-1"></i> Simulação Avançada
         </a>
+        <?php else: ?>
+        <button type="button" class="btn btn-warning rounded-pill px-4 shadow-sm position-relative"
+            onclick="showPaywallModal('Simulação Avançada (Monte Carlo)', 'Gere automaticamente até 20 cenários otimizados por volatilidade e encontre a alocação com o melhor Sharpe Ratio. Descubra combinações que você nunca imaginaria — exclusivo para assinantes PRO.')"
+            title="Simulação Avançada — Recurso PRO">
+            <i class="bi bi-stars me-1"></i> Simulação Avançada
+            <i class="bi bi-lock-fill ms-1" style="font-size:.75rem;opacity:.85;"></i>
+        </button>
+        <?php endif; ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $selectedPortfolio['id']) ?>"
            class="btn btn-outline-secondary rounded-pill px-3">
             <i class="bi bi-arrow-left me-1"></i> Voltar
