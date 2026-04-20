@@ -174,7 +174,7 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
 <?php endif; ?>
 
 <!-- ── Filtro de Portfólio ── -->
-<div class="card border-0 shadow-sm rounded-4 mb-4" id="filterCard">
+<div class="card border-0 shadow-sm rounded-4 mb-3" id="filterCard">
     <div class="card-body py-3 px-4">
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -197,6 +197,213 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                 <i class="bi bi-briefcase me-1"></i><?= htmlspecialchars(mb_strlen($p['name']) > 22 ? mb_substr($p['name'],0,20).'…' : $p['name']) ?>
             </a>
             <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+
+<!-- ── Filtros Avançados (colapsável) ── -->
+<div class="card border-0 shadow-sm rounded-4 mb-4" id="advancedFilterCard">
+    <!-- Cabeçalho do painel -->
+    <div class="card-body py-0 px-0">
+        <button id="advFilterToggle" type="button"
+                class="w-100 d-flex align-items-center justify-content-between px-4 py-3 bg-transparent border-0 text-start"
+                aria-expanded="false" aria-controls="advFilterBody">
+            <div class="d-flex align-items-center gap-2">
+                <div class="adv-filter-icon-wrap">
+                    <i class="bi bi-sliders2 text-primary"></i>
+                </div>
+                <span class="fw-bold text-dark" style="font-size:.9rem;">Filtros Avançados de Métricas</span>
+                <span id="advFilterBadge" class="badge rounded-pill bg-primary ms-1 d-none" style="font-size:.7rem;">0</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span id="advFilterResultCount" class="text-muted d-none" style="font-size:.75rem;"></span>
+                <i class="bi bi-chevron-down adv-filter-chevron" style="transition:transform .25s;font-size:.85rem;color:#6c757d;"></i>
+            </div>
+        </button>
+
+        <div id="advFilterBody" class="collapse px-4 pb-4">
+            <div class="adv-filter-divider mb-3"></div>
+
+            <div class="row g-3" id="advFilterGrid">
+                <!-- Retorno Anual Com Aportes -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-percent text-success"></i>
+                            Ret. Anual c/ Aportes
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_annual_return_min"
+                                   data-field="annual_return" data-bound="min"
+                                   placeholder="Min %" step="0.1">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_annual_return_max"
+                                   data-field="annual_return" data-bound="max"
+                                   placeholder="Máx %" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                <!-- Retorno Anual Estratégia -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-trophy text-primary"></i>
+                            Ret. Anual Estratégia
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_strategy_annual_return_min"
+                                   data-field="strategy_annual_return" data-bound="min"
+                                   placeholder="Min %" step="0.1">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_strategy_annual_return_max"
+                                   data-field="strategy_annual_return" data-bound="max"
+                                   placeholder="Máx %" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                <!-- Volatilidade -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-activity text-warning"></i>
+                            Volatilidade
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_volatility_min"
+                                   data-field="volatility" data-bound="min"
+                                   placeholder="Min %" step="0.1" min="0">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_volatility_max"
+                                   data-field="volatility" data-bound="max"
+                                   placeholder="Máx %" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+                <!-- Sharpe -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-speedometer2 text-success"></i>
+                            Índice Sharpe
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_sharpe_ratio_min"
+                                   data-field="sharpe_ratio" data-bound="min"
+                                   placeholder="Min" step="0.01">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_sharpe_ratio_max"
+                                   data-field="sharpe_ratio" data-bound="max"
+                                   placeholder="Máx" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <!-- Drawdown Máximo -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-arrow-down-circle text-danger"></i>
+                            Drawdown Máx.
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_max_drawdown_min"
+                                   data-field="max_drawdown" data-bound="min"
+                                   placeholder="Min %" step="0.1" min="0">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_max_drawdown_max"
+                                   data-field="max_drawdown" data-bound="max"
+                                   placeholder="Máx %" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+                <!-- ROI -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-tags text-info"></i>
+                            ROI
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_roi_min"
+                                   data-field="roi" data-bound="min"
+                                   placeholder="Min %" step="0.1">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_roi_max"
+                                   data-field="roi" data-bound="max"
+                                   placeholder="Máx %" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                <!-- Calmar -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-shield-check text-warning"></i>
+                            Calmar
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_calmar_min"
+                                   data-field="calmar" data-bound="min"
+                                   placeholder="Min" step="0.01">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_calmar_max"
+                                   data-field="calmar" data-bound="max"
+                                   placeholder="Máx" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <!-- Maior Queda Mensal -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-arrow-down-left text-danger"></i>
+                            Maior Queda Mensal
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_max_monthly_loss_min"
+                                   data-field="max_monthly_loss" data-bound="min"
+                                   placeholder="Min %" step="0.1" min="0">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_max_monthly_loss_max"
+                                   data-field="max_monthly_loss" data-bound="max"
+                                   placeholder="Máx %" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+                <!-- Maior Alta Mensal -->
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="adv-filter-group">
+                        <div class="adv-filter-label">
+                            <i class="bi bi-arrow-up-right text-success"></i>
+                            Maior Alta Mensal
+                        </div>
+                        <div class="adv-filter-inputs">
+                            <input type="number" class="adv-filter-input" id="f_max_monthly_gain_min"
+                                   data-field="max_monthly_gain" data-bound="min"
+                                   placeholder="Min %" step="0.1" min="0">
+                            <span class="adv-filter-sep">–</span>
+                            <input type="number" class="adv-filter-input" id="f_max_monthly_gain_max"
+                                   data-field="max_monthly_gain" data-bound="max"
+                                   placeholder="Máx %" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rodapé do painel -->
+            <div class="d-flex align-items-center justify-content-between mt-4 pt-3 adv-filter-footer">
+                <div class="text-muted small d-flex align-items-center gap-2">
+                    <i class="bi bi-lightbulb text-warning"></i>
+                    <span>Deixe campos vazios para ignorar o critério. Valores em <strong>%</strong> onde indicado.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" id="advFilterClear" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-none">
+                        <i class="bi bi-x-circle me-1"></i>Limpar Filtros
+                    </button>
+                    <button type="button" id="advFilterApply" class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+                        <i class="bi bi-funnel-fill me-1"></i>Aplicar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -325,12 +532,31 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                         <th class="text-end" style="width:11%">Valor Final</th>
                         <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Com aportes</small></th>
                         <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Estratégia</small></th>
-                        <th class="text-end" style="width:7%">Volatili-<br>dade</th>
-                        <th class="text-end" style="width:7%">Sharpe</th>
-                        <th class="text-end" style="width:8%">Drawdown<br>Máx.</th>
-                        <th class="text-end" style="width:7%">ROI</th>
-                        <th class="text-end" style="width:7%">Calmar</th>
-                        <th class="text-end pe-3" style="width:9%">Ganho Bruto</th>
+                        <th class="text-end" style="width:7%">Volatili-<br>dade
+                            <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
+                               data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="Volatilidade anualizada: mede o quanto o retorno da carteira oscila. Quanto menor, mais estável. Verde ≤10%, Amarelo ≤20%, Vermelho >20%."></i>
+                        </th>
+                        <th class="text-end" style="width:7%">Sharpe
+                            <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
+                               data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="Índice de Sharpe: retorno obtido por unidade de risco assumido. ≥1 = excelente · 0,5–1 = bom · <0,5 = fraco. Quanto maior, melhor a relação risco×retorno."></i>
+                        </th>
+                        <th class="text-end" style="width:8%">Drawdown<br>Máx.
+                            <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
+                               data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="Drawdown Máximo: maior queda percentual do patrimônio, do pico ao vale, ao longo de todo o período simulado. Quanto menor (em módulo), mais protegido o portfólio contra perdas."></i>
+                        </th>
+                        <th class="text-end" style="width:7%">ROI
+                            <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
+                               data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="ROI (Return on Investment): retorno percentual total sobre todo o capital investido (aporte inicial + aportes periódicos). Indica o lucro líquido em relação ao que foi investido."></i>
+                        </th>
+                        <th class="text-end" style="width:7%">Calmar
+                            <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
+                               data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="Índice de Calmar: retorno anual da estratégia dividido pelo Drawdown Máximo. Mede a recompensa em relação à pior queda. ≥1 = excelente · 0,5–1 = razoável · <0,5 = fraco."></i>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -419,11 +645,8 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                     <td class="text-end small <?= $roi >= 0 ? 'text-success' : 'text-danger' ?>">
                         <?= ($roi >= 0 ? '+' : '') . number_format($roi, 2, ',', '.') ?>%
                     </td>
-                    <td class="text-end small <?= $calmar === null ? 'text-muted' : ($calmar >= 1 ? 'text-success fw-bold' : ($calmar >= 0.5 ? 'text-warning' : 'text-danger')) ?>">
+                    <td class="text-end pe-3 small <?= $calmar === null ? 'text-muted' : ($calmar >= 1 ? 'text-success fw-bold' : ($calmar >= 0.5 ? 'text-warning' : 'text-danger')) ?>">
                         <?php if ($calmar === null): ?>—<?php else: ?><?= number_format($calmar, 2, ',', '.') ?><?php endif; ?>
-                    </td>
-                    <td class="text-end pe-3 small fw-bold <?= $gain >= 0 ? 'text-success' : 'text-danger' ?>">
-                        <?= ($gain >= 0 ? '+' : '') . formatCurrency($gain, $cur) ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -713,6 +936,75 @@ $additional_css = '
     /* ── Row selected ── */
     tr.sim-selected td { background-color: rgba(13,110,253,.07) !important; }
     tr.sim-selected .sim-checkbox { accent-color: #0d6efd; }
+
+    /* ── Advanced Filter Panel ── */
+    #advancedFilterCard { overflow: hidden; }
+    #advFilterToggle {
+        cursor: pointer;
+        border-radius: 1rem !important;
+        transition: background .18s;
+    }
+    #advFilterToggle:hover { background: rgba(13,110,253,.04) !important; }
+    #advFilterToggle[aria-expanded="true"] { background: rgba(13,110,253,.04) !important; border-radius: 1rem 1rem 0 0 !important; }
+    #advFilterToggle[aria-expanded="true"] .adv-filter-chevron { transform: rotate(180deg); }
+    .adv-filter-icon-wrap {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: rgba(13,110,253,.1); display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+    }
+    .adv-filter-divider { border-top: 1px solid var(--border-color, #dee2e6); }
+    .adv-filter-group {
+        background: var(--bg-body, #f8f9fa);
+        border: 1.5px solid var(--border-color, #e9ecef);
+        border-radius: 12px;
+        padding: 12px 14px 10px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .adv-filter-group:focus-within {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.08);
+    }
+    .adv-filter-group.has-value {
+        border-color: rgba(13,110,253,.5);
+        background: rgba(13,110,253,.04);
+    }
+    .adv-filter-label {
+        font-size: .68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .06em; color: var(--text-muted, #6c757d);
+        display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+        white-space: nowrap;
+    }
+    .adv-filter-inputs {
+        display: flex; align-items: center; gap: 4px;
+    }
+    .adv-filter-input {
+        flex: 1 1 0; min-width: 0;
+        border: 1px solid var(--border-color, #dee2e6);
+        border-radius: 8px; padding: 5px 8px;
+        font-size: .78rem; background: var(--bg-card, #fff);
+        color: var(--text-main, #212529);
+        transition: border-color .18s;
+        width: 100%;
+        -moz-appearance: textfield;
+    }
+    .adv-filter-input::-webkit-inner-spin-button,
+    .adv-filter-input::-webkit-outer-spin-button { opacity: .5; }
+    .adv-filter-input:focus { outline: none; border-color: #0d6efd; }
+    .adv-filter-sep {
+        color: var(--text-muted, #adb5bd); font-size: .75rem;
+        font-weight: 700; flex-shrink: 0;
+    }
+    .adv-filter-footer { border-top: 1px solid var(--border-color, #dee2e6); }
+    /* Active filter badge pulse */
+    @keyframes badgePop { 0%{transform:scale(.5);opacity:0} 70%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+    #advFilterBadge { animation: badgePop .25s ease; }
+
+    /* Dark mode overrides */
+    [data-theme="dark"] #advFilterToggle:hover,
+    [data-theme="dark"] #advFilterToggle[aria-expanded="true"] { background: rgba(255,255,255,.04) !important; }
+    [data-theme="dark"] .adv-filter-group { background: var(--bg-card); border-color: var(--border-color); }
+    [data-theme="dark"] .adv-filter-group.has-value { background: rgba(13,110,253,.08); }
+    [data-theme="dark"] .adv-filter-input { background: var(--bg-body); border-color: var(--border-color); color: var(--text-main); }
 </style>';
 
 $compareUrlBase     = '/index.php?url=' . obfuscateUrl('portfolio/compare');
@@ -950,13 +1242,18 @@ function buildChildRow(simId, portfolioId) {
 const COMPARE_URL_BASE = "{$compareUrlBase}";
 
 $(document).ready(function () {
+    // Ativar tooltips Bootstrap nos ícones (i) dos cabeçalhos
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        new bootstrap.Tooltip(el, { html: false });
+    });
+
     // Column indexes: now there's an extra checkbox col at index 0
     // cols: 0=checkbox, 1=expand, 2=#id, [3=portfolio?], 3/4=simDate, 4/5=createdAt, ...
     const colOffset = SHOW_PORTFOLIO_COL ? 1 : 0;
     // text-end columns (value/return/etc.) — shifted by 1 due to new checkbox col
     const textEndCols = SHOW_PORTFOLIO_COL
-        ? [6,7,8,9,10,11,12,13,14]
-        : [5,6,7,8,9,10,11,12,13];
+        ? [6,7,8,9,10,11,12,13]
+        : [5,6,7,8,9,10,11,12];
 
     const table = $("#allHistoryTable").DataTable({
         order: [[4 + colOffset, "desc"]],
@@ -1107,6 +1404,151 @@ $(document).ready(function () {
             });
         }
     });
+
+    // ── Advanced Metric Filters ──────────────────────────────────────────────
+
+    // Toggle panel
+    const advToggle = document.getElementById("advFilterToggle");
+    const advBody   = document.getElementById("advFilterBody");
+    const advChevron = advToggle.querySelector(".adv-filter-chevron");
+    const bsCollapse = new bootstrap.Collapse(advBody, { toggle: false });
+
+    advToggle.addEventListener("click", function () {
+        bsCollapse.toggle();
+        const expanded = advToggle.getAttribute("aria-expanded") === "true";
+        advToggle.setAttribute("aria-expanded", String(!expanded));
+    });
+    advBody.addEventListener("shown.bs.collapse",  () => { advToggle.setAttribute("aria-expanded","true"); });
+    advBody.addEventListener("hidden.bs.collapse", () => { advToggle.setAttribute("aria-expanded","false"); });
+
+    // Read filter values from inputs
+    function getAdvFilters() {
+        const filters = {};
+        document.querySelectorAll(".adv-filter-input").forEach(function(inp) {
+            const field = inp.dataset.field;
+            const bound = inp.dataset.bound;
+            const val   = inp.value.trim();
+            if (!filters[field]) filters[field] = {};
+            if (val !== "") filters[field][bound] = parseFloat(val);
+        });
+        return filters;
+    }
+
+    // Count active (filled) filter inputs
+    function countActiveFilters(filters) {
+        let n = 0;
+        Object.values(filters).forEach(function(bounds) {
+            if (bounds.min !== undefined) n++;
+            if (bounds.max !== undefined) n++;
+        });
+        return n;
+    }
+
+    // Update badge + clear button
+    function updateAdvFilterUI(activeCount) {
+        const badge  = document.getElementById("advFilterBadge");
+        const clearBtn = document.getElementById("advFilterClear");
+        if (activeCount > 0) {
+            badge.textContent = activeCount;
+            badge.classList.remove("d-none");
+            clearBtn.classList.remove("d-none");
+        } else {
+            badge.classList.add("d-none");
+            clearBtn.classList.add("d-none");
+        }
+        // Highlight groups that have values
+        document.querySelectorAll(".adv-filter-group").forEach(function(grp) {
+            const inputs = grp.querySelectorAll(".adv-filter-input");
+            const anyFilled = Array.from(inputs).some(i => i.value.trim() !== "");
+            grp.classList.toggle("has-value", anyFilled);
+        });
+    }
+
+    // Get metric value for a sim row (calmar computed on-the-fly)
+    function getMetricValue(simId, field) {
+        const m = METRICS[simId] || {};
+        if (field === "calmar") {
+            const dd  = Math.abs(parseFloat(m.max_drawdown || 0));
+            const str = parseFloat(m.strategy_annual_return || 0);
+            return dd > 0 ? str / dd : null;
+        }
+        if (field === "max_drawdown")   return Math.abs(parseFloat(m.max_drawdown   || 0));
+        if (field === "max_monthly_loss") return Math.abs(parseFloat(m.max_monthly_loss || 0));
+        const val = m[field];
+        return (val === null || val === undefined || val === "") ? null : parseFloat(val);
+    }
+
+    // Custom DataTable search function
+    let advFilters = {};
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData, counter) {
+        if (settings.nTable.id !== "allHistoryTable") return true;
+        if (Object.keys(advFilters).length === 0) return true;
+
+        // Get sim ID from the actual DOM row
+        const tr    = table.row(dataIndex).node();
+        if (!tr) return true;
+        const simId = $(tr).attr("data-sim-id");
+        if (!simId) return true;
+
+        for (const [field, bounds] of Object.entries(advFilters)) {
+            const val = getMetricValue(simId, field);
+            if (val === null) continue; // skip null values (don't exclude)
+            if (bounds.min !== undefined && val < bounds.min) return false;
+            if (bounds.max !== undefined && val > bounds.max) return false;
+        }
+        return true;
+    });
+
+    function applyAdvFilters() {
+        advFilters = getAdvFilters();
+        // Remove empty filter groups
+        Object.keys(advFilters).forEach(k => {
+            if (Object.keys(advFilters[k]).length === 0) delete advFilters[k];
+        });
+        const activeCount = countActiveFilters(advFilters);
+        updateAdvFilterUI(activeCount);
+
+        table.draw();
+
+        // Update result count
+        const resultCount = document.getElementById("advFilterResultCount");
+        if (activeCount > 0) {
+            const shown = table.rows({ search: 'applied' }).count();
+            const total = table.rows().count();
+            resultCount.textContent = shown + " de " + total + " simulações";
+            resultCount.classList.remove("d-none");
+        } else {
+            resultCount.classList.add("d-none");
+        }
+    }
+
+    // Apply on button click
+    document.getElementById("advFilterApply").addEventListener("click", applyAdvFilters);
+
+    // Also apply on Enter key in any filter input
+    document.querySelectorAll(".adv-filter-input").forEach(function(inp) {
+        inp.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") applyAdvFilters();
+        });
+        // Live highlight of group
+        inp.addEventListener("input", function() {
+            const grp = inp.closest(".adv-filter-group");
+            const anyFilled = Array.from(grp.querySelectorAll(".adv-filter-input")).some(i => i.value.trim() !== "");
+            grp.classList.toggle("has-value", anyFilled);
+        });
+    });
+
+    // Clear filters
+    document.getElementById("advFilterClear").addEventListener("click", function() {
+        document.querySelectorAll(".adv-filter-input").forEach(i => { i.value = ""; });
+        advFilters = {};
+        updateAdvFilterUI(0);
+        document.getElementById("advFilterResultCount").classList.add("d-none");
+        table.draw();
+    });
+
+    // Auto-open filter panel if any filter is active on page load
+    // (useful for back-navigation persistence — no server state needed here)
 });
 
 // ── Modal: Criar Novo Portfólio a partir do Snapshot ──
