@@ -155,6 +155,57 @@ class SimulationResult {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Retorna simulações específicas por ID, garantindo que pertencem ao usuário.
+     */
+    public function getByIds(array $ids, int $userId): array {
+        if (empty($ids)) return [];
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $params = array_merge($ids, [$userId]);
+        $sql = "SELECT sr.id, sr.portfolio_id, sr.simulation_date, sr.created_at,
+                       sr.total_value, sr.annual_return, sr.strategy_annual_return,
+                       sr.volatility, sr.sharpe_ratio, sr.max_drawdown,
+                       sr.total_invested, sr.total_deposits, sr.interest_earned, sr.roi,
+                       sr.strategy_return, sr.max_monthly_gain, sr.max_monthly_loss,
+                       sr.total_tax_paid,
+                       ss.portfolio_config, ss.assets_config,
+                       p.name as portfolio_name, p.output_currency
+                FROM simulation_results sr
+                LEFT JOIN simulation_snapshots ss ON ss.simulation_id = sr.id
+                JOIN portfolios p ON p.id = sr.portfolio_id
+                WHERE sr.id IN ({$placeholders}) AND p.user_id = ?
+                ORDER BY FIELD(sr.id, {$placeholders})";
+        // FIELD() is MySQL-specific; for SQLite compatibility use a fallback
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(array_merge($ids, [$userId], $ids));
+            return $stmt->fetchAll();
+        } catch (\Exception $e) {
+            // SQLite fallback (no FIELD())
+            $sql2 = "SELECT sr.id, sr.portfolio_id, sr.simulation_date, sr.created_at,
+                            sr.total_value, sr.annual_return, sr.strategy_annual_return,
+                            sr.volatility, sr.sharpe_ratio, sr.max_drawdown,
+                            sr.total_invested, sr.total_deposits, sr.interest_earned, sr.roi,
+                            sr.strategy_return, sr.max_monthly_gain, sr.max_monthly_loss,
+                            sr.total_tax_paid,
+                            ss.portfolio_config, ss.assets_config,
+                            p.name as portfolio_name, p.output_currency
+                     FROM simulation_results sr
+                     LEFT JOIN simulation_snapshots ss ON ss.simulation_id = sr.id
+                     JOIN portfolios p ON p.id = sr.portfolio_id
+                     WHERE sr.id IN ({$placeholders}) AND p.user_id = ?";
+            $stmt2 = $this->db->prepare($sql2);
+            $stmt2->execute(array_merge($ids, [$userId]));
+            $rows = $stmt2->fetchAll();
+            // Reorder to match requested $ids order
+            $indexed = [];
+            foreach ($rows as $r) $indexed[(int)$r['id']] = $r;
+            $ordered = [];
+            foreach ($ids as $id) { if (isset($indexed[$id])) $ordered[] = $indexed[$id]; }
+            return $ordered;
+        }
+    }
+
     public function getStatistics($userId = null) {
         $sql = "SELECT 
                 COUNT(*) as total_simulations,

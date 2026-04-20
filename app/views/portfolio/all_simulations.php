@@ -253,7 +253,8 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
      style="background:#eef6fd;color:#374151;">
     <i class="bi bi-info-circle-fill flex-shrink-0" style="color:#3b82f6;"></i>
     Clique em <kbd><i class="bi bi-chevron-down"></i></kbd> ou em qualquer linha para ver a
-    <strong>configuração completa</strong> e reproduzir a simulação quando quiser.
+    <strong>configuração completa</strong>. Marque até <strong>5 simulações</strong> e clique em
+    <strong>Comparar</strong> para ver um comparativo detalhado lado a lado.
 </div>
 
 <!-- ── Tabela ── -->
@@ -263,7 +264,12 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
             <table id="allHistoryTable" class="table table-hover align-middle mb-0 w-100">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-3 py-3" style="width:3%">&nbsp;</th>
+                        <th class="ps-3 py-3" style="width:3%">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="selectAllSims" title="Selecionar/desmarcar todas">
+                            </div>
+                        </th>
+                        <th style="width:3%">&nbsp;</th>
                         <th style="width:4%">#</th>
                         <?php if (!$selectedPortfolio): ?>
                         <th style="width:13%">Portfólio</th>
@@ -298,7 +304,16 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                 <tr class="<?= $isBest ? 'table-success' : '' ?>"
                     data-sim-id="<?= $sim['id'] ?>"
                     data-portfolio-id="<?= $sim['portfolio_id'] ?>">
-                    <td class="ps-3 text-center">
+                    <td class="ps-3" onclick="event.stopPropagation()">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input sim-checkbox" type="checkbox"
+                                   value="<?= $sim['id'] ?>"
+                                   data-sim-id="<?= $sim['id'] ?>"
+                                   data-label="Simulação #<?= $sim['id'] ?> — <?= htmlspecialchars($sim['portfolio_name']) ?>"
+                                   title="Selecionar para comparar">
+                        </div>
+                    </td>
+                    <td class="ps-1 text-center">
                         <button class="btn btn-sm btn-outline-secondary border-0 btn-expand rounded-circle p-0"
                                 style="width:28px;height:28px;line-height:1;" title="Ver configuração">
                             <i class="bi bi-chevron-down" style="font-size:.75rem;"></i>
@@ -354,6 +369,30 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                 <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── Floating Compare Bar ── -->
+<div id="compareBar" class="compare-bar d-none">
+    <div class="compare-bar-inner d-flex align-items-center gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <div class="compare-bar-icon">
+                <i class="bi bi-bar-chart-steps text-white fs-5"></i>
+            </div>
+            <div>
+                <div class="text-white fw-bold" style="font-size:.9rem;">Comparar Simulações</div>
+                <div class="text-white-50 small" id="compareCount">0 selecionadas</div>
+            </div>
+        </div>
+        <div id="compareChips" class="d-flex flex-wrap gap-2 flex-grow-1"></div>
+        <div class="d-flex gap-2 flex-shrink-0 ms-auto">
+            <button id="clearCompare" class="btn btn-outline-light rounded-pill px-3 btn-sm">
+                <i class="bi bi-x-circle me-1"></i>Limpar
+            </button>
+            <a id="compareBtn" href="#" class="btn btn-warning rounded-pill px-4 fw-bold shadow btn-sm">
+                <i class="bi bi-table me-1"></i>Ver Comparativo
+            </a>
         </div>
     </div>
 </div>
@@ -550,7 +589,43 @@ $additional_css = '
     [data-theme="dark"] .config-pill { background:var(--bg-body) !important; border-color:var(--border-color) !important; color:var(--text-main) !important; }
     [data-theme="dark"] .asset-bar-wrap { background:var(--border-color) !important; }
     [data-theme="dark"] tr.dt-hasChild td { background-color:rgba(13,110,253,.08) !important; }
+
+    /* ── Compare Bar ── */
+    .compare-bar {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 1050;
+        background: linear-gradient(135deg, #1a1f36 0%, #0d1b2a 100%);
+        border-top: 2px solid rgba(255,193,7,.5);
+        padding: 14px 24px;
+        box-shadow: 0 -4px 24px rgba(0,0,0,.35);
+        animation: slideUp .3s ease;
+    }
+    .compare-bar-inner { max-width: 1320px; margin: 0 auto; }
+    .compare-bar-icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        background: rgba(255,193,7,.2); border: 1px solid rgba(255,193,7,.4);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .compare-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+        border-radius: 20px; padding: 3px 10px 3px 10px; font-size: .78rem;
+        color: #fff; white-space: nowrap;
+    }
+    .compare-chip .chip-remove {
+        cursor: pointer; opacity: .6; transition: opacity .15s;
+        background: none; border: none; color: #fff; padding: 0; line-height: 1;
+    }
+    .compare-chip .chip-remove:hover { opacity: 1; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .shake { animation: shake .4s ease; }
+
+    /* ── Row selected ── */
+    tr.sim-selected td { background-color: rgba(13,110,253,.07) !important; }
+    tr.sim-selected .sim-checkbox { accent-color: #0d6efd; }
 </style>';
+
+$compareUrlBase     = '/index.php?url=' . obfuscateUrl('portfolio/compare');
 
 $additional_js = <<<ENDJS
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -750,19 +825,23 @@ function buildChildRow(simId, portfolioId) {
         '</div>';
 }
 
+const COMPARE_URL_BASE = "{$compareUrlBase}";
+
 $(document).ready(function () {
-    // Column indexes depend on whether portfolio column is shown
+    // Column indexes: now there's an extra checkbox col at index 0
+    // cols: 0=checkbox, 1=expand, 2=#id, [3=portfolio?], 3/4=simDate, 4/5=createdAt, ...
     const colOffset = SHOW_PORTFOLIO_COL ? 1 : 0;
+    // text-end columns (value/return/etc.) — shifted by 1 due to new checkbox col
     const textEndCols = SHOW_PORTFOLIO_COL
-        ? [5,6,7,8,9,10,11,12]
-        : [4,5,6,7,8,9,10,11];
+        ? [6,7,8,9,10,11,12,13]
+        : [5,6,7,8,9,10,11,12];
 
     const table = $("#allHistoryTable").DataTable({
-        order: [[3 + colOffset, "desc"]],
+        order: [[4 + colOffset, "desc"]],
         pageLength: 25,
         autoWidth: false,
         columnDefs: [
-            { orderable: false, searchable: false, targets: [0] },
+            { orderable: false, searchable: false, targets: [0, 1] },
             { className: "text-end", targets: textEndCols }
         ],
         language: {
@@ -782,6 +861,7 @@ $(document).ready(function () {
         dom:"<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-sm-end'f>><'row'<'col-12'tr>><'row mt-3 align-items-center'<'col-sm-5 text-muted small'i><'col-sm-7'p>>"
     });
 
+    // ── Expand button ──
     $("#allHistoryTable tbody").on("click", "button.btn-expand", function (e) {
         e.stopPropagation();
         const btn        = $(this);
@@ -806,8 +886,104 @@ $(document).ready(function () {
 
     $("#allHistoryTable tbody").on("click", "tr", function (e) {
         if ($(this).hasClass("child")) return;
-        if ($(e.target).closest("button, a, input, select").length) return;
+        if ($(e.target).closest("button, a, input, select, .form-check").length) return;
         $(this).find(".btn-expand").trigger("click");
+    });
+
+    // ── Compare selection ──
+    const MAX_SELECT = 5;
+    let selectedSims = {}; // {id: label}
+
+    function updateCompareBar() {
+        const count = Object.keys(selectedSims).length;
+        const bar   = $("#compareBar");
+        const chips = $("#compareChips");
+        const btn   = $("#compareBtn");
+
+        if (count === 0) {
+            bar.addClass("d-none");
+            return;
+        }
+        bar.removeClass("d-none");
+        $("#compareCount").text(count + (count === 1 ? " selecionada" : " selecionadas") + " (mín. 2 para comparar)");
+
+        chips.empty();
+        Object.entries(selectedSims).forEach(([id, label]) => {
+            chips.append(
+                '<span class="compare-chip">' +
+                '<i class="bi bi-bar-chart-line" style="font-size:.7rem;opacity:.7;"></i>' +
+                label +
+                '<button class="chip-remove" data-id="' + id + '" title="Remover">' +
+                '<i class="bi bi-x-lg" style="font-size:.65rem;"></i></button></span>'
+            );
+        });
+
+        if (count >= 2) {
+            const ids = Object.keys(selectedSims).map(function(id){ return 'ids[]=' + id; }).join('&');
+            btn.attr("href", COMPARE_URL_BASE + '&' + ids).removeClass("disabled");
+        } else {
+            btn.attr("href", "#").addClass("disabled");
+        }
+    }
+
+    // Checkbox change
+    $("#allHistoryTable tbody").on("change", ".sim-checkbox", function () {
+        const cb    = $(this);
+        const id    = cb.val();
+        const label = cb.data("label");
+        const tr    = cb.closest("tr");
+
+        if (cb.is(":checked")) {
+            if (Object.keys(selectedSims).length >= MAX_SELECT) {
+                cb.prop("checked", false);
+                // Flash the bar
+                $("#compareBar").addClass("shake");
+                setTimeout(() => $("#compareBar").removeClass("shake"), 500);
+                return;
+            }
+            selectedSims[id] = label;
+            tr.addClass("sim-selected");
+        } else {
+            delete selectedSims[id];
+            tr.removeClass("sim-selected");
+        }
+        updateCompareBar();
+    });
+
+    // Chip remove
+    $("#compareChips").on("click", ".chip-remove", function () {
+        const id = $(this).data("id");
+        delete selectedSims[id];
+        $(`.sim-checkbox[value="` + id + `"]`).prop("checked", false).closest("tr").removeClass("sim-selected");
+        updateCompareBar();
+    });
+
+    // Clear all
+    $("#clearCompare").on("click", function () {
+        selectedSims = {};
+        $(".sim-checkbox").prop("checked", false);
+        $("tr.sim-selected").removeClass("sim-selected");
+        $("#selectAllSims").prop("checked", false);
+        updateCompareBar();
+    });
+
+    // Select all (only visible page rows, up to MAX)
+    $("#selectAllSims").on("change", function () {
+        const checked = $(this).is(":checked");
+        if (!checked) {
+            // Uncheck all
+            $(".sim-checkbox:checked").each(function () {
+                $(this).prop("checked", false).trigger("change");
+            });
+        } else {
+            // Check up to MAX visible rows
+            table.rows({ page: 'current' }).nodes().each(function () {
+                const cb = $(this).find(".sim-checkbox");
+                if (!cb.is(":checked") && Object.keys(selectedSims).length < MAX_SELECT) {
+                    cb.prop("checked", true).trigger("change");
+                }
+            });
+        }
     });
 });
 </script>

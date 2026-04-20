@@ -588,6 +588,33 @@ class PortfolioController {
         require_once __DIR__ . '/../views/portfolio/all_simulations.php';
     }
 
+    public function compareSimulations() {
+        Auth::checkAuthentication();
+        $userId = Auth::getCurrentUserId();
+
+        $rawIds = $_GET['ids'] ?? [];
+        if (!is_array($rawIds)) $rawIds = explode(',', $rawIds);
+        $ids = array_map('intval', array_filter($rawIds));
+        $ids = array_unique(array_slice($ids, 0, 5));
+
+        if (count($ids) < 2) {
+            Session::setFlash('warning', 'Selecione pelo menos 2 simulações para comparar.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations'));
+            exit;
+        }
+
+        $simulationModel = new SimulationResult();
+        $simulations = $simulationModel->getByIds($ids, $userId);
+
+        if (count($simulations) < 2) {
+            Session::setFlash('error', 'Simulações não encontradas ou sem permissão de acesso.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations'));
+            exit;
+        }
+
+        require_once __DIR__ . '/../views/portfolio/compare_simulations.php';
+    }
+
     public function simulationDetails() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
