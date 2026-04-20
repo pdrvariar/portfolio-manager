@@ -30,7 +30,8 @@ ob_start();
 
 <!-- Benefícios principais -->
 <section class="mb-5">
-    <h2 class="text-center fw-bold mb-4">Por que usar o Smart Returns?</h2>
+    <h2 class="text-center fw-bold mb-2">Por que usar o Smart Returns?</h2>
+    <p class="text-center text-muted mb-4" style="max-width:640px;margin:0 auto;">Uma plataforma completa para simular, analisar e comparar portfólios de investimentos com dados históricos reais.</p>
     <div class="row g-4">
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
@@ -46,7 +47,7 @@ ob_start();
                 <div class="card-body text-center p-4">
                     <div class="fs-1 mb-3">⚖️</div>
                     <h3 class="h5 fw-bold">Rebalanceamento Inteligente</h3>
-                    <p class="text-muted">Teste estratégias de rebalanceamento automático. Direcione aportes para os ativos que precisam de equilíbrio e otimize sua carteira.</p>
+                    <p class="text-muted">Teste estratégias de rebalanceamento automático — total, parcial ou por bandas. Direcione aportes para os ativos que precisam de equilíbrio e otimize sua carteira.</p>
                 </div>
             </div>
         </div>
@@ -55,7 +56,34 @@ ob_start();
                 <div class="card-body text-center p-4">
                     <div class="fs-1 mb-3">📊</div>
                     <h3 class="h5 fw-bold">Métricas Profissionais</h3>
-                    <p class="text-muted">Sharpe Ratio, Drawdown máximo, volatilidade, CAGR e muito mais. Analise o risco e o retorno da sua carteira como um profissional.</p>
+                    <p class="text-muted">Sharpe Ratio, Drawdown máximo, volatilidade, CAGR, melhor e pior mês. Analise o risco e o retorno da sua carteira como um profissional.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="fs-1 mb-3">🔍</div>
+                    <h3 class="h5 fw-bold">Histórico & Pesquisa de Simulações</h3>
+                    <p class="text-muted">Acesse todas as suas simulações anteriores, filtre por portfólio, data ou tipo e retome qualquer análise com um clique.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="fs-1 mb-3">⚡</div>
+                    <h3 class="h5 fw-bold">Comparativo de Simulações</h3>
+                    <p class="text-muted">Compare até 5 simulações lado a lado em uma tabela detalhada com pontuação automática. Descubra qual estratégia vence em cada indicador.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="fs-1 mb-3">🗂️</div>
+                    <h3 class="h5 fw-bold">Detalhamento Completo</h3>
+                    <p class="text-muted">Visualize o snapshot completo de cada simulação: configurações, ativos, alocações e todos os resultados salvos — mesmo que o portfólio mude no futuro.</p>
                 </div>
             </div>
         </div>
@@ -73,7 +101,7 @@ ob_start();
                 <div class="card-body text-center p-4">
                     <div class="fs-1 mb-3">🧮</div>
                     <h3 class="h5 fw-bold">Simulação de Impostos</h3>
-                    <p class="text-muted">Calcule automaticamente o imposto de renda sobre seus investimentos. Veja o resultado real após dedução dos impostos (plano PRO).</p>
+                    <p class="text-muted">Calcule automaticamente o imposto de renda sobre seus investimentos. Veja o resultado real líquido após dedução dos impostos (plano PRO).</p>
                 </div>
             </div>
         </div>
