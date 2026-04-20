@@ -397,7 +397,8 @@ $isSelicMonthlyConflict = (
                  style="background: var(--hero-deposits-bg);">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small bg-success">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small"
+                              style="background:var(--hero-deposits-icon);color:#fff;letter-spacing:.05em;">
                             <i class="bi bi-cash-stack me-1"></i> Total de Aportes
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
@@ -407,7 +408,7 @@ $isSelicMonthlyConflict = (
                         </button>
                     </div>
                     <div>
-                        <div class="fs-2 fw-bold text-success lh-1 mb-1">
+                        <div class="fs-2 fw-bold lh-1 mb-1" style="color: var(--hero-deposits-icon);">
                             <?php echo formatCurrency($metrics['total_deposits'], $portfolio['output_currency']); ?>
                         </div>
                         <div class="text-muted small mt-2">
@@ -419,7 +420,7 @@ $isSelicMonthlyConflict = (
             </div>
             <?php else: ?>
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%);">
+                 style="background: var(--hero-deposits-empty-bg);">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small bg-secondary">
@@ -450,7 +451,7 @@ $isSelicMonthlyConflict = (
             $isPro = Auth::isPro();
             ?>
             <div id="tax-paid-card" class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
-                 style="background: <?= $isPro && $hasTax ? 'var(--hero-tax-bg)' : 'linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%)' ?>;">
+                 style="background: <?= $isPro && $hasTax ? 'var(--hero-tax-bg)' : 'var(--hero-empty-bg)' ?>;">
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span id="tax-paid-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $isPro && $hasTax ? 'bg-danger' : 'bg-secondary' ?>">

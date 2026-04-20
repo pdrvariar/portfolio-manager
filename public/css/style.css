@@ -24,6 +24,9 @@
     --hero-initial-bg: linear-gradient(135deg,#f0f4ff 0%,#dde8fd 100%);
     --hero-initial-icon: #4a6cf7;
     --hero-deposits-bg: linear-gradient(135deg,#edfbf3 0%,#c7f0da 100%);
+    --hero-deposits-icon: #16a34a;
+    --hero-deposits-empty-bg: linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%);
+    --hero-empty-bg: linear-gradient(135deg,#f7f8fa 0%,#ebedf0 100%);
     --hero-final-pos-bg: linear-gradient(135deg,#eef5ff 0%,#c7dafc 100%);
     --hero-final-neg-bg: linear-gradient(135deg,#fff1f3 0%,#ffd5da 100%);
     --hero-tax-bg: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
@@ -51,6 +54,9 @@
     --hero-initial-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     --hero-initial-icon: #60a5fa;
     --hero-deposits-bg: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+    --hero-deposits-icon: #4ade80;
+    --hero-deposits-empty-bg: linear-gradient(135deg, #1e293b 0%, #161b22 100%);
+    --hero-empty-bg: linear-gradient(135deg, #1e293b 0%, #161b22 100%);
     --hero-final-pos-bg: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
     --hero-final-neg-bg: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
     --hero-tax-bg: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
