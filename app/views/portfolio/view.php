@@ -80,33 +80,44 @@ ob_start();
                 <?php endif; ?>
             </p>
         </div>
-        <div class="col-md-4 text-end">
-            <div class="btn-group shadow-sm">
+        <div class="col-md-4 text-end d-flex align-items-center justify-content-end gap-2 flex-wrap">
+            <!-- Ações principais -->
+            <div class="btn-group shadow-sm" role="group" aria-label="Ações da simulação">
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Histórico de Simulações">
-                    <i class="bi bi-clock-history"></i> Histórico
+                    <i class="bi bi-clock-history me-1"></i> Histórico
                 </a>
-                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-info text-white" title="Detalhes da Simulação">
-                    <i class="bi bi-list-check"></i> Detalhes
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-outline-info" title="Detalhes da Simulação">
+                    <i class="bi bi-list-check me-1"></i> Detalhes
                 </a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-primary">
-                    <i class="bi bi-play-fill"></i> Simular
+                    <i class="bi bi-play-fill me-1"></i> Simular
                 </a>
-                <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar">
-                    <i class="bi bi-files"></i>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar estratégia">
+                    <i class="bi bi-files me-1"></i> Clonar
                 </a>
-
-                <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
-                    <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <form action="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta estratégia?')">
-                        <input type="hidden" name="csrf_token" value="<?= Session::getCsrfToken() ?>">
-                        <button type="submit" class="btn btn-outline-danger no-spinner" title="Excluir">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </form>
-                <?php endif; ?>
             </div>
+
+            <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
+            <!-- Ações de gestão -->
+            <div class="btn-group shadow-sm" role="group" aria-label="Gestão da estratégia">
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"
+                   class="btn btn-outline-secondary"
+                   title="Editar estratégia"
+                   data-bs-toggle="tooltip" data-bs-placement="bottom">
+                    <i class="bi bi-pencil-square me-1"></i> Editar
+                </a>
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        title="Excluir estratégia"
+                        data-bs-toggle="tooltip" data-bs-placement="bottom"
+                        onclick="if(confirm('Tem certeza que deseja excluir esta estratégia?')) { document.getElementById('delete-portfolio-form').submit(); }">
+                    <i class="bi bi-trash3 me-1"></i> Excluir
+                </button>
+            </div>
+            <form id="delete-portfolio-form" action="/index.php?url=<?= obfuscateUrl('portfolio/delete/' . $portfolio['id']) ?>" method="POST" class="d-none">
+                <input type="hidden" name="csrf_token" value="<?= Session::getCsrfToken() ?>">
+            </form>
+            <?php endif; ?>
         </div>
     </div>
 
