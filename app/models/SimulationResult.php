@@ -16,13 +16,13 @@ class SimulationResult {
         return $stmt->fetchAll();
     }
 
-    public function getHistoryByPortfolio($portfolioId, $limit = 10) {
+    public function getHistoryByPortfolio($portfolioId, $limit = 50) {
         $sql = "SELECT sr.id, sr.simulation_date, sr.created_at,
                        sr.total_value, sr.annual_return, sr.strategy_annual_return,
                        sr.volatility, sr.sharpe_ratio, sr.max_drawdown,
                        sr.total_invested, sr.total_deposits, sr.interest_earned, sr.roi,
                        sr.strategy_return, sr.max_monthly_gain, sr.max_monthly_loss,
-                       sr.total_tax_paid,
+                       sr.total_tax_paid, sr.advanced_simulation_group, sr.allocation_label,
                        ss.portfolio_config, ss.assets_config
                 FROM simulation_results sr
                 LEFT JOIN simulation_snapshots ss ON ss.simulation_id = sr.id
@@ -31,6 +31,26 @@ class SimulationResult {
                 LIMIT ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$portfolioId, $limit]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Returns all simulations belonging to an advanced simulation group.
+     */
+    public function getByAdvancedGroup($groupId, $portfolioId) {
+        $sql = "SELECT sr.id, sr.simulation_date, sr.created_at,
+                       sr.total_value, sr.annual_return, sr.strategy_annual_return,
+                       sr.volatility, sr.sharpe_ratio, sr.max_drawdown,
+                       sr.total_invested, sr.total_deposits, sr.interest_earned, sr.roi,
+                       sr.strategy_return, sr.max_monthly_gain, sr.max_monthly_loss,
+                       sr.total_tax_paid, sr.advanced_simulation_group, sr.allocation_label,
+                       ss.portfolio_config, ss.assets_config
+                FROM simulation_results sr
+                LEFT JOIN simulation_snapshots ss ON ss.simulation_id = sr.id
+                WHERE sr.portfolio_id = ? AND sr.advanced_simulation_group = ?
+                ORDER BY sr.sharpe_ratio DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$portfolioId, $groupId]);
         return $stmt->fetchAll();
     }
 
@@ -141,7 +161,7 @@ class SimulationResult {
                        sr.volatility, sr.sharpe_ratio, sr.max_drawdown,
                        sr.total_invested, sr.total_deposits, sr.interest_earned, sr.roi,
                        sr.strategy_return, sr.max_monthly_gain, sr.max_monthly_loss,
-                       sr.total_tax_paid,
+                       sr.total_tax_paid, sr.advanced_simulation_group, sr.allocation_label,
                        ss.portfolio_config, ss.assets_config,
                        p.name as portfolio_name, p.output_currency
                 FROM simulation_results sr

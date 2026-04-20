@@ -33,6 +33,16 @@ $rebalTypeLabels = [
 $sortedPortfolios = $portfolios;
 usort($sortedPortfolios, fn($a,$b) => strcasecmp($a['name'], $b['name']));
 
+// Advanced simulation group filter (passed from controller)
+$advancedGroup = $advancedGroup ?? null; // already set by controller
+
+// If a group is active, filter only those simulations for display  
+$displaySimulations = $simulations;
+if ($advancedGroup) {
+    $displaySimulations = array_filter($simulations, fn($s) => ($s['advanced_simulation_group'] ?? '') === $advancedGroup);
+    $displaySimulations = array_values($displaySimulations);
+}
+
 // Build JS data structures
 $snapshotsJs = [];
 $metricsJs   = [];
@@ -56,6 +66,8 @@ foreach ($simulations as $sim) {
         'max_monthly_gain'       => $sim['max_monthly_gain']        ?? null,
         'max_monthly_loss'       => $sim['max_monthly_loss']        ?? null,
         'portfolio_name'         => $sim['portfolio_name']          ?? null,
+        'advanced_group'         => $sim['advanced_simulation_group'] ?? null,
+        'allocation_label'       => $sim['allocation_label']        ?? null,
     ];
 }
 
@@ -75,9 +87,9 @@ $csrfTokenJson = json_encode($csrfToken);
 $baseHistoryUrl = obfuscateUrl('portfolio/simulations');
 
 // Summary stats
-$totalCount = count($simulations);
+$totalCount = count($displaySimulations);
 $bestSharpe = null; $bestReturn = null;
-foreach ($simulations as $s) {
+foreach ($displaySimulations as $s) {
     if ($bestSharpe === null || (float)$s['sharpe_ratio'] > (float)$bestSharpe['sharpe_ratio']) $bestSharpe = $s;
     if ($bestReturn === null || (float)$s['annual_return'] > (float)$bestReturn['annual_return']) $bestReturn = $s;
 }
@@ -114,6 +126,11 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
            class="btn btn-primary rounded-pill px-4 shadow-sm">
             <i class="bi bi-play-fill me-1"></i> Nova Simulação
         </a>
+        <a href="/index.php?url=<?= obfuscateUrl('portfolio/run-advanced/' . $selectedPortfolio['id']) ?>"
+           class="btn btn-warning rounded-pill px-4 shadow-sm"
+           title="Gera automaticamente até 20 cenários com alocações variando pela volatilidade dos ativos">
+            <i class="bi bi-stars me-1"></i> Simulação Avançada
+        </a>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $selectedPortfolio['id']) ?>"
            class="btn btn-outline-secondary rounded-pill px-3">
             <i class="bi bi-arrow-left me-1"></i> Voltar
@@ -126,6 +143,34 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
         <?php endif; ?>
     </div>
 </div>
+
+<?php if ($advancedGroup): ?>
+<!-- ── Advanced Simulation Group Banner ── -->
+<div class="alert border-0 rounded-4 mb-3 shadow-sm d-flex align-items-center gap-3"
+     style="background:linear-gradient(135deg,#fff8e1 0%,#fff3cd 100%); border-left: 4px solid #fd7e14 !important;">
+    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+         style="width:42px;height:42px;">
+        <i class="bi bi-stars text-white fs-5"></i>
+    </div>
+    <div class="flex-grow-1">
+        <div class="fw-bold" style="color:#9a4a00;font-size:.9rem;">
+            Simulação Avançada · <?= $totalCount ?> cenário<?= $totalCount != 1 ? 's' : '' ?> gerado<?= $totalCount != 1 ? 's' : '' ?>
+        </div>
+        <div class="text-muted small">
+            Alocações geradas automaticamente por <strong>Volatilidade Inversa + Monte Carlo</strong>.
+            A linha destacada em verde é o melhor cenário pelo Índice Sharpe.
+            <?php if ($selectedPortfolio): ?>
+            <a href="/index.php?url=<?= $baseHistoryUrl ?>&portfolio_id=<?= $selectedPortfolio['id'] ?>" class="ms-2 link-secondary small">
+                <i class="bi bi-x-circle me-1"></i>Limpar filtro de grupo
+            </a>
+            <?php endif; ?>
+        </div>
+    </div>
+    <span class="badge rounded-pill px-3 py-2" style="background:#fd7e14;font-size:.78rem;">
+        MC Group
+    </span>
+</div>
+<?php endif; ?>
 
 <!-- ── Filtro de Portfólio ── -->
 <div class="card border-0 shadow-sm rounded-4 mb-4" id="filterCard">
@@ -283,13 +328,14 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                         <th class="text-end" style="width:7%">Sharpe</th>
                         <th class="text-end" style="width:8%">Drawdown<br>Máx.</th>
                         <th class="text-end" style="width:7%">ROI</th>
+                        <th class="text-end" style="width:7%">Calmar</th>
                         <th class="text-end pe-3" style="width:9%">Ganho Bruto</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php
                 $bestId = $bestSharpe ? $bestSharpe['id'] : null;
-                foreach ($simulations as $sim):
+                foreach ($displaySimulations as $sim):
                     $isBest  = ($sim['id'] == $bestId);
                     $annRet  = (float)$sim['annual_return'];
                     $strRet  = (float)($sim['strategy_annual_return'] ?? 0);
@@ -300,6 +346,8 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                     $gain    = (float)($sim['interest_earned'] ?? 0);
                     $final   = (float)$sim['total_value'];
                     $cur     = $sim['output_currency'] ?? 'BRL';
+                    $calmar  = ($dd > 0) ? $strRet / $dd : null;
+                    $isAdv   = !empty($sim['advanced_simulation_group']);
                 ?>
                 <tr class="<?= $isBest ? 'table-success' : '' ?>"
                     data-sim-id="<?= $sim['id'] ?>"
@@ -322,6 +370,7 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                     <td>
                         <span class="badge <?= $isBest ? 'bg-success' : 'bg-light text-muted border' ?> rounded-pill px-2"><?= $sim['id'] ?></span>
                         <?php if ($isBest): ?><i class="bi bi-trophy-fill text-success ms-1" title="Melhor Sharpe"></i><?php endif; ?>
+                        <?php if ($isAdv): ?><i class="bi bi-stars ms-1" style="color:#fd7e14;" title="Simulação Avançada (Monte Carlo)"></i><?php endif; ?>
                     </td>
                     <?php if (!$selectedPortfolio): ?>
                     <td>
@@ -332,7 +381,14 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                         </a>
                     </td>
                     <?php endif; ?>
-                    <td><span class="fw-medium text-dark small"><?= date('d/m/Y', strtotime($sim['simulation_date'])) ?></span></td>
+                    <td>
+                        <span class="fw-medium text-dark small"><?= date('d/m/Y', strtotime($sim['simulation_date'])) ?></span>
+                        <?php if ($isAdv && !empty($sim['allocation_label'])): ?>
+                        <div class="text-muted" style="font-size:.65rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;" title="<?= htmlspecialchars($sim['allocation_label']) ?>">
+                            <i class="bi bi-stars" style="color:#fd7e14;"></i> <?= htmlspecialchars($sim['allocation_label']) ?>
+                        </div>
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <span class="text-muted small">
                             <?= date('d/m/Y', strtotime($sim['created_at'])) ?><br>
@@ -361,6 +417,9 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                     </td>
                     <td class="text-end small <?= $roi >= 0 ? 'text-success' : 'text-danger' ?>">
                         <?= ($roi >= 0 ? '+' : '') . number_format($roi, 2, ',', '.') ?>%
+                    </td>
+                    <td class="text-end small <?= $calmar === null ? 'text-muted' : ($calmar >= 1 ? 'text-success fw-bold' : ($calmar >= 0.5 ? 'text-warning' : 'text-danger')) ?>">
+                        <?php if ($calmar === null): ?>—<?php else: ?><?= number_format($calmar, 2, ',', '.') ?><?php endif; ?>
                     </td>
                     <td class="text-end pe-3 small fw-bold <?= $gain >= 0 ? 'text-success' : 'text-danger' ?>">
                         <?= ($gain >= 0 ? '+' : '') . formatCurrency($gain, $cur) ?>
@@ -426,6 +485,18 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">ROI</span>
                     <span class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periódicos).</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="d-flex align-items-start gap-2">
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Calmar</span>
+                    <span class="text-muted" style="font-size:.75rem;">Retorno anual da estratégia ÷ Drawdown máx. ≥ 1 = excelente. Recompensa vs pior queda.</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-stars mt-1 flex-shrink-0" style="color:#fd7e14;font-size:.85rem;"></i>
+                    <span class="text-muted" style="font-size:.75rem;">Ícone laranja = simulação gerada pelo modo <strong>Simulação Avançada</strong> (Monte Carlo + Volatilidade Inversa).</span>
                 </div>
             </div>
         </div>
@@ -718,9 +789,14 @@ function buildChildRow(simId, portfolioId) {
             kpi("bi-activity","Volatilidade",fmt(vol)+"%",volColor)+
             kpi("bi-speedometer2","Índice Sharpe",fmt(sharpe),sharpeColor)+
             kpi("bi-arrow-down-circle","Drawdown Máx.","−"+fmt(dd)+"%",ddColor)+
+            (dd > 0 ? kpi("bi-shield-check","Calmar<br><small style='font-size:.6rem;opacity:.7;'>ret.estr./drawdown</small>",
+                (function(){const c=strReturn/dd;return (c>=1?'<span class="text-success fw-bold">':'<span class="'+(c>=0.5?"text-warning":"text-danger")+'">') + fmt(c) + '</span>';})(),
+                strReturn/dd >= 1 ? "text-success" : (strReturn/dd >= 0.5 ? "text-warning" : "text-danger")) : "")+
             kpi("bi-arrow-up-right","Melhor Mês","+"+fmt(maxGain)+"%","text-success")+
             kpi("bi-arrow-down-left","Pior Mês","−"+fmt(maxLoss)+"%","text-danger")+
         '</div>'+
+        (m.allocation_label ? '<div class="result-group-label mt-3"><i class="bi bi-stars me-1" style="color:#fd7e14;"></i>Cenário de Alocação (Monte Carlo)</div>'+
+            '<div class="d-flex flex-wrap gap-2"><span class="config-pill"><i class="bi bi-pie-chart text-warning"></i><strong>'+m.allocation_label+'</strong></span></div>' : '')+
         '</div>';
 
     if (!data || !data.portfolio) {
@@ -833,8 +909,8 @@ $(document).ready(function () {
     const colOffset = SHOW_PORTFOLIO_COL ? 1 : 0;
     // text-end columns (value/return/etc.) — shifted by 1 due to new checkbox col
     const textEndCols = SHOW_PORTFOLIO_COL
-        ? [6,7,8,9,10,11,12,13]
-        : [5,6,7,8,9,10,11,12];
+        ? [6,7,8,9,10,11,12,13,14]
+        : [5,6,7,8,9,10,11,12,13];
 
     const table = $("#allHistoryTable").DataTable({
         order: [[4 + colOffset, "desc"]],

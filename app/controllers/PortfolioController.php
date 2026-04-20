@@ -146,6 +146,67 @@ class PortfolioController {
         exit;
     }
 
+    public function runAdvancedSimulation() {
+        Auth::checkAuthentication();
+        $portfolioId = $this->params['id'] ?? null;
+        $userId = $_SESSION['user_id'];
+
+        if (!$portfolioId) {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        // Check ownership
+        $portfolio = $this->portfolioModel->findById($portfolioId);
+        if (!$portfolio || $portfolio['user_id'] != $userId) {
+            Session::setFlash('error', 'Portfólio não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        // Check monthly simulation limit (each advanced run uses up to 20 slots)
+        $simulationModel = new SimulationResult();
+        $monthlyCount = $simulationModel->countMonthlySimulations($userId);
+        $isPro = Auth::isPro();
+        $hardLimit = $isPro ? 1000 : 20;
+        $scenarioCount = $isPro ? 20 : 5; // Starter gets 5 scenarios, PRO gets 20
+
+        if ($monthlyCount + $scenarioCount > $hardLimit) {
+            $remaining = max(0, $hardLimit - $monthlyCount);
+            if ($remaining < 2) {
+                $msg = $isPro 
+                    ? "Você atingiu o limite de simulações mensais do plano PRO."
+                    : "Limite de simulações mensais atingido. Faça upgrade para o Plano PRO!";
+                Session::setFlash('error', $msg);
+                header('Location: /index.php?url=' . obfuscateUrl('portfolio/history/' . $portfolioId));
+                exit;
+            }
+            $scenarioCount = $remaining;
+        }
+
+        set_time_limit(300); // Up to 5 min for 20 simulations
+
+        $backtestService = new BacktestService();
+        $result = $backtestService->runAdvancedSimulation($portfolioId, $scenarioCount);
+
+        if ($result['success']) {
+            $dateStr = date('m/Y', strtotime($result['effective_end']));
+            $best = $result['best'];
+            $bestSharpe = number_format($best['metrics']['sharpe_ratio'], 2, ',', '.');
+            $bestReturn = number_format($best['metrics']['strategy_annual_return'], 2, ',', '.');
+            Session::setFlash('success', 
+                "✅ Simulação Avançada concluída! {$result['count']} cenários gerados até $dateStr. " .
+                "Melhor cenário: Sharpe $bestSharpe · Retorno anual da estratégia $bestReturn% " .
+                "· Alocação: {$best['label']}"
+            );
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/history/' . $portfolioId) . '&group=' . urlencode($result['group_id']));
+        } else {
+            Session::setFlash('error', $result['message']);
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio/history/' . $portfolioId));
+        }
+        exit;
+    }
+
     public function view() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;
@@ -548,13 +609,17 @@ class PortfolioController {
         $id = $this->params['id'] ?? null;
 
         if (!$id) {
-            // Redireciona para a tela unificada se não tiver ID
             header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations'));
             exit;
         }
 
+        $extra = '';
+        if (!empty($_GET['group'])) {
+            $extra = '&group=' . urlencode($_GET['group']);
+        }
+
         // Redireciona para a tela unificada com o filtro pré-selecionado
-        header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations') . '&portfolio_id=' . (int)$id);
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/simulations') . '&portfolio_id=' . (int)$id . $extra);
         exit;
     }
 
@@ -584,6 +649,9 @@ class PortfolioController {
 
         $simulationModel = new SimulationResult();
         $simulations = $simulationModel->getAllHistoryForUser($userId, $portfolioId ?: null, 200);
+
+        // Advanced simulation group filter
+        $advancedGroup = isset($_GET['group']) ? trim($_GET['group']) : null;
 
         require_once __DIR__ . '/../views/portfolio/all_simulations.php';
     }

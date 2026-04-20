@@ -64,6 +64,7 @@ ob_start();
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>"         class="btn btn-sm btn-outline-success rounded-pill px-3"   title="Simular"><i class="bi bi-play-fill me-1"></i>Simular</a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>"     class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="Histórico"><i class="bi bi-clock-history me-1"></i>Histórico</a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-sm btn-outline-info rounded-pill px-3" title="Detalhes"><i class="bi bi-list-check me-1"></i>Detalhes</a>
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/run-advanced/' . $portfolio['id']) ?>"  class="btn btn-sm btn-outline-warning rounded-pill px-3" title="Simulação Avançada (Monte Carlo)"><i class="bi bi-stars me-1"></i>Sim. Avançada</a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>"       class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="Clonar"><i class="bi bi-files me-1"></i>Clonar</a>
                 <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
                     <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"   class="btn btn-sm btn-outline-warning rounded-pill px-3"   title="Editar"><i class="bi bi-pencil me-1"></i>Editar</a>
@@ -130,6 +131,7 @@ ob_start();
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>"     class="btn btn-sm btn-white border px-2" title="Histórico de Simulações"><i class="bi bi-clock-history" style="color:#6f42c1;"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Detalhes da Simulação"><i class="bi bi-list-check text-info"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>"         class="btn btn-sm btn-white border px-2" title="Simular"><i class="bi bi-play-fill text-success"></i></a>
+                                <a href="/index.php?url=<?= obfuscateUrl('portfolio/run-advanced/' . $portfolio['id']) ?>" class="btn btn-sm btn-white border px-2" title="Simulação Avançada: gera até 20 cenários automáticos com alocações otimizadas por volatilidade"><i class="bi bi-stars" style="color:#fd7e14;"></i></a>
                                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>"       class="btn btn-sm btn-white border px-2" title="Clonar"><i class="bi bi-files text-secondary"></i></a>
                                 <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
                                     <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"   class="btn btn-sm btn-white border px-2" title="Editar"><i class="bi bi-pencil text-warning"></i></a>

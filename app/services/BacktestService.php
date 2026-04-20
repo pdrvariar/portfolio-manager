@@ -6,6 +6,460 @@ class BacktestService {
         $this->db = Database::getInstance()->getConnection();
     }
     
+    // =========================================================
+    // ADVANCED SIMULATION (Monte Carlo with Inverse Volatility)
+    // =========================================================
+
+    /**
+     * Runs up to $count simulations with random allocations biased by inverse
+     * volatility (more volatile assets receive lower allocation weight).
+     * All results are saved under the same $groupId so the history view can
+     * filter/highlight them as a batch.
+     *
+     * Returns an array with 'success', 'group_id', 'count', 'best' keys.
+     */
+    public function runAdvancedSimulation($portfolioId, $count = 20) {
+        $portfolio = $this->getPortfolioData($portfolioId);
+        $assets    = $this->getPortfolioAssetsData($portfolioId);
+
+        if (!$portfolio || empty($assets)) {
+            return ['success' => false, 'message' => 'Dados do portfólio não encontrados.'];
+        }
+
+        if (count($assets) < 2) {
+            return ['success' => false, 'message' => 'São necessários pelo menos 2 ativos para a simulação avançada.'];
+        }
+
+        // --- Effective date range ---
+        $effectiveDates = $this->calculateEffectiveRange($assets, $portfolio['start_date'], $portfolio['end_date']);
+        if (!Auth::isPro()) {
+            $endDate = new DateTime($effectiveDates['end']);
+            $fiveYearsLimit = (clone $endDate)->modify('-5 years')->format('Y-m-d');
+            if ($effectiveDates['start'] < $fiveYearsLimit) {
+                $effectiveDates['start'] = $fiveYearsLimit;
+                $effectiveDates['valid'] = ($effectiveDates['start'] <= $effectiveDates['end']);
+            }
+        }
+        if (!$effectiveDates['valid']) {
+            return ['success' => false, 'message' => 'Nenhum dos ativos possui dados em comum no período selecionado.'];
+        }
+
+        // --- Historical data (shared across all simulations) ---
+        $historicalData = $this->loadHistoricalData($assets, $effectiveDates['start'], $effectiveDates['end']);
+        if (empty($historicalData)) {
+            return ['success' => false, 'message' => 'Dados históricos insuficientes para o período.'];
+        }
+
+        // --- Calculate per-asset volatility from historical prices ---
+        $volatilities = $this->calculateAssetVolatilities($assets, $historicalData);
+
+        // --- Build per-asset margin bounds when rebalance_type = 'custom_margin' ---
+        // rebalance_margin_down = absolute min allocation % (e.g. 46)
+        // rebalance_margin_up   = absolute max allocation % (e.g. 55)
+        $marginBounds = null;
+        if (($portfolio['rebalance_type'] ?? '') === 'custom_margin') {
+            $marginBounds = [];
+            $sumLo = 0.0;
+            $sumHi = 0.0;
+            foreach ($assets as $a) {
+                $lo = isset($a['rebalance_margin_down']) && $a['rebalance_margin_down'] !== null
+                    ? max(0.0, (float)$a['rebalance_margin_down'] / 100)
+                    : 0.0;
+                $hi = isset($a['rebalance_margin_up']) && $a['rebalance_margin_up'] !== null
+                    ? min(1.0, (float)$a['rebalance_margin_up'] / 100)
+                    : 1.0;
+                // Guarantee lo <= hi
+                if ($lo > $hi) { $lo = $hi; }
+                $marginBounds[$a['asset_id']] = ['lo' => $lo, 'hi' => $hi];
+                $sumLo += $lo;
+                $sumHi += $hi;
+            }
+            // Feasibility check: if constraints are contradictory, ignore them
+            if ($sumLo > 1.0001 || $sumHi < 0.9999) {
+                $marginBounds = null; // not feasible, fall back to unconstrained
+            }
+        }
+
+        // --- Generate allocation scenarios ---
+        $count       = max(2, min(20, (int)$count));
+        $allocations = $this->generateAllocationScenarios($assets, $volatilities, $count, $marginBounds);
+
+        // --- Unique group ID for this batch ---
+        $groupId = $this->generateGroupId();
+
+        $savedCount = 0;
+        $bestResult = null;
+        $bestSharpe = PHP_INT_MIN;
+
+        foreach ($allocations as $scenario) {
+            // Clone assets array and override allocation_percentage
+            $scenarioAssets = $assets;
+            foreach ($scenarioAssets as &$a) {
+                $a['allocation_percentage'] = $scenario['weights'][$a['asset_id']] ?? 0;
+            }
+            unset($a);
+
+            // Build a temporary portfolio clone with new allocations
+            $tempPortfolio = $portfolio;
+
+            // Run backtest
+            $results = $this->executeBacktest($tempPortfolio, $scenarioAssets, $historicalData);
+            $metrics = $this->calculateMetrics($results);
+            $chartData = $this->generateCharts($results, $scenarioAssets);
+
+            // Save with group identifier
+            $simulationId = $this->saveAdvancedResults(
+                $portfolioId,
+                $metrics,
+                $chartData,
+                $effectiveDates['end'],
+                $groupId,
+                $scenario['label']
+            );
+
+            $this->saveAssetDetails($simulationId, $results, $scenarioAssets);
+            $this->saveSnapshot($simulationId, $tempPortfolio, $scenarioAssets);
+
+            $savedCount++;
+            if ($metrics['sharpe_ratio'] > $bestSharpe) {
+                $bestSharpe  = $metrics['sharpe_ratio'];
+                $bestResult  = ['simulation_id' => $simulationId, 'metrics' => $metrics, 'label' => $scenario['label']];
+            }
+        }
+
+        return [
+            'success'  => true,
+            'group_id' => $groupId,
+            'count'    => $savedCount,
+            'best'     => $bestResult,
+            'effective_end' => $effectiveDates['end'],
+        ];
+    }
+
+    /**
+     * Calculates annualised volatility for each asset from the loaded historical data.
+     * Assets with no price variation (e.g. TAXA_MENSAL) get a synthetic low volatility.
+     */
+    private function calculateAssetVolatilities($assets, $historicalData) {
+        $volatilities = [];
+        $dates = array_keys($historicalData);
+
+        foreach ($assets as $asset) {
+            $assetId = $asset['asset_id'];
+            $prices  = [];
+            foreach ($dates as $d) {
+                if (isset($historicalData[$d][$assetId])) {
+                    $prices[] = (float)$historicalData[$d][$assetId];
+                }
+            }
+
+            if (count($prices) < 2) {
+                $volatilities[$assetId] = 0.01; // very low fallback
+                continue;
+            }
+
+            $returns = [];
+            if ($asset['asset_type'] === 'TAXA_MENSAL' || $asset['asset_type'] === 'INFLACAO') {
+                // For rate-based assets the price IS the monthly return (%)
+                foreach ($prices as $p) {
+                    $returns[] = $p / 100;
+                }
+            } else {
+                for ($i = 1; $i < count($prices); $i++) {
+                    if ($prices[$i - 1] > 0) {
+                        $returns[] = ($prices[$i] / $prices[$i - 1]) - 1;
+                    }
+                }
+            }
+
+            $vol = $this->calculateVolatility($returns); // already annualised
+            $volatilities[$assetId] = max($vol, 0.0001);
+        }
+
+        return $volatilities;
+    }
+
+    /**
+     * Generates $count allocation scenarios:
+     *   Scenario 0  → pure inverse-volatility weighting
+     *   Scenarios 1…N → inverse-volatility base + Dirichlet-like random noise
+     *
+     * When $marginBounds is provided (custom_margin rebalance type), each generated
+     * allocation is clamped to [lo_i, hi_i] per asset via iterative projection so
+     * the total stays exactly 100%.
+     *
+     * Each weight is rounded to 1 decimal place and the remainder is given to
+     * the largest weight so the total is always exactly 100.
+     */
+    private function generateAllocationScenarios($assets, $volatilities, $count, $marginBounds = null) {
+        $assetIds = array_column($assets, 'asset_id');
+
+        // Base inverse-volatility weights (fractions 0–1 summing to 1)
+        $invVols = [];
+        foreach ($assetIds as $id) {
+            $invVols[$id] = 1.0 / $volatilities[$id];
+        }
+        $invVolSum   = array_sum($invVols);
+        $baseWeights = [];
+        foreach ($assetIds as $id) {
+            $baseWeights[$id] = $invVols[$id] / $invVolSum;
+        }
+
+        // If custom margins are active, also clamp the base weights so scenario 0
+        // is already a feasible starting point within the declared ranges.
+        if ($marginBounds !== null) {
+            $baseWeights = $this->clampWeightsToMargins($baseWeights, $assetIds, $marginBounds);
+        }
+
+        $scenarios = [];
+
+        for ($s = 0; $s < $count; $s++) {
+            if ($s === 0) {
+                // Pure inverse-volatility (already clamped if margins active)
+                $weights = $baseWeights;
+                $label   = $marginBounds !== null
+                    ? 'Vol. Inversa (dentro das margens)'
+                    : 'Volatilidade Inversa (puro)';
+            } else {
+                // Dirichlet-like sample biased by inverse-volatility base weights
+                $concentration = mt_rand(3, 15);
+                $gammas = [];
+                foreach ($assetIds as $id) {
+                    $alpha       = max(0.5, $baseWeights[$id] * $concentration);
+                    $gammas[$id] = $this->sampleGamma($alpha);
+                }
+                $gammaSum = array_sum($gammas);
+                $weights  = [];
+                foreach ($assetIds as $id) {
+                    $weights[$id] = $gammas[$id] / $gammaSum;
+                }
+
+                // Apply margin clamping before building the label
+                if ($marginBounds !== null) {
+                    $weights = $this->clampWeightsToMargins($weights, $assetIds, $marginBounds);
+                }
+
+                // Label: top 3 assets with their %
+                arsort($weights);
+                $labelParts = [];
+                $c = 0;
+                foreach ($weights as $id => $w) {
+                    $code = '';
+                    foreach ($assets as $a) {
+                        if ($a['asset_id'] == $id) { $code = $a['code']; break; }
+                    }
+                    $labelParts[] = $code . ' ' . round($w * 100, 1) . '%';
+                    if (++$c >= 3) break;
+                }
+                $label = 'Cenário ' . $s . ': ' . implode(' | ', $labelParts);
+            }
+
+            // Round to 1 decimal and fix total to exactly 100%
+            $pcts      = [];
+            $totalPct  = 0;
+            $maxId     = null;
+            $maxVal    = -1;
+            foreach ($assetIds as $id) {
+                $pct       = round($weights[$id] * 100, 1);
+                $pcts[$id] = $pct;
+                $totalPct += $pct;
+                if ($pct > $maxVal) { $maxVal = $pct; $maxId = $id; }
+            }
+            $diff          = round(100 - $totalPct, 1);
+            $pcts[$maxId] += $diff;
+
+            // After rounding, re-check that the largest adjusted value is still within its margin.
+            // If it violated the upper bound, spread the diff to the second-largest instead.
+            if ($marginBounds !== null && $maxId !== null) {
+                $hi = $marginBounds[$maxId]['hi'] * 100;
+                if ($pcts[$maxId] > $hi + 0.05) {
+                    // Revert this asset to its hi, find another asset to absorb the diff
+                    $excess = $pcts[$maxId] - $hi;
+                    $pcts[$maxId] = $hi;
+                    // Give excess to the asset with most room below its hi
+                    $bestReceiver = null;
+                    $mostRoom     = -1;
+                    foreach ($assetIds as $id) {
+                        if ($id === $maxId) continue;
+                        $room = $marginBounds[$id]['hi'] * 100 - $pcts[$id];
+                        if ($room > $mostRoom) { $mostRoom = $room; $bestReceiver = $id; }
+                    }
+                    if ($bestReceiver !== null) {
+                        $pcts[$bestReceiver] += round($excess, 1);
+                    }
+                }
+            }
+
+            $scenarios[] = ['weights' => $pcts, 'label' => $label];
+        }
+
+        return $scenarios;
+    }
+
+    /**
+     * Iterative clamping projection: ensures each weight[id] ∈ [lo_i, hi_i]
+     * while keeping sum = 1.0.
+     *
+     * Algorithm (Dykstra-like):
+     *  Repeat until stable:
+     *    1. For each asset exceeding hi: set to hi, collect surplus.
+     *    2. For each asset below lo: set to lo, collect deficit.
+     *    3. Redistribute surplus/deficit proportionally among free assets.
+     */
+    private function clampWeightsToMargins(array $weights, array $assetIds, array $marginBounds): array {
+        $maxIter = 50;
+        for ($iter = 0; $iter < $maxIter; $iter++) {
+            $changed = false;
+
+            // Step 1: collect surplus from assets above hi
+            $surplus = 0.0;
+            $freeIds = [];
+            foreach ($assetIds as $id) {
+                $hi = $marginBounds[$id]['hi'];
+                if ($weights[$id] > $hi + 1e-9) {
+                    $surplus += $weights[$id] - $hi;
+                    $weights[$id] = $hi;
+                    $changed = true;
+                }
+            }
+
+            // Step 2: collect deficit from assets below lo
+            $deficit = 0.0;
+            foreach ($assetIds as $id) {
+                $lo = $marginBounds[$id]['lo'];
+                if ($weights[$id] < $lo - 1e-9) {
+                    $deficit += $lo - $weights[$id];
+                    $weights[$id] = $lo;
+                    $changed = true;
+                }
+            }
+
+            // Net adjustment needed
+            $net = $surplus - $deficit; // positive = need to distribute outward, negative = need to absorb
+
+            if (abs($net) < 1e-9 && !$changed) break;
+
+            // Identify "free" assets (not pinned at a boundary)
+            foreach ($assetIds as $id) {
+                $lo = $marginBounds[$id]['lo'];
+                $hi = $marginBounds[$id]['hi'];
+                $w  = $weights[$id];
+                // Free if it has room to absorb (net > 0) or to give (net < 0)
+                if ($net > 0 && $w < $hi - 1e-9) $freeIds[] = $id;
+                if ($net < 0 && $w > $lo + 1e-9) $freeIds[] = $id;
+            }
+            $freeIds = array_unique($freeIds);
+
+            if (!empty($freeIds) && abs($net) > 1e-9) {
+                $freeSum = 0.0;
+                foreach ($freeIds as $id) { $freeSum += $weights[$id]; }
+                if ($freeSum > 1e-9) {
+                    foreach ($freeIds as $id) {
+                        $weights[$id] += $net * ($weights[$id] / $freeSum);
+                    }
+                } else {
+                    // Equal distribution as fallback
+                    $share = $net / count($freeIds);
+                    foreach ($freeIds as $id) { $weights[$id] += $share; }
+                }
+                $changed = true;
+            }
+
+            if (!$changed) break;
+            $freeIds = [];
+        }
+
+        // Final normalisation to guarantee sum = 1.0
+        $total = array_sum($weights);
+        if ($total > 1e-9) {
+            foreach ($assetIds as $id) { $weights[$id] /= $total; }
+        }
+
+        return $weights;
+    }
+
+    /**
+     * Sample from Gamma(alpha, 1) using Marsaglia–Tsang method.
+     * Works for alpha >= 0.5.
+     */
+    private function sampleGamma($alpha) {
+        if ($alpha < 1) {
+            // Boost then scale back
+            return $this->sampleGamma($alpha + 1) * pow(mt_rand(1, PHP_INT_MAX) / PHP_INT_MAX, 1.0 / $alpha);
+        }
+        $d = $alpha - 1.0 / 3.0;
+        $c = 1.0 / sqrt(9.0 * $d);
+        while (true) {
+            do {
+                $x = $this->sampleNormal();
+                $v = 1.0 + $c * $x;
+            } while ($v <= 0);
+            $v = $v * $v * $v;
+            $u = mt_rand(1, PHP_INT_MAX) / PHP_INT_MAX;
+            if ($u < 1 - 0.0331 * ($x * $x) * ($x * $x)) return $d * $v;
+            if (log($u) < 0.5 * $x * $x + $d * (1 - $v + log($v))) return $d * $v;
+        }
+    }
+
+    /** Box–Muller normal(0,1) sample */
+    private function sampleNormal() {
+        $u1 = mt_rand(1, PHP_INT_MAX) / PHP_INT_MAX;
+        $u2 = mt_rand(1, PHP_INT_MAX) / PHP_INT_MAX;
+        return sqrt(-2 * log($u1)) * cos(2 * M_PI * $u2);
+    }
+
+    private function generateGroupId() {
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+    }
+
+    private function saveAdvancedResults($portfolioId, $metrics, $chartData, $endDate, $groupId, $allocationLabel) {
+        $sql = "INSERT INTO simulation_results 
+            (portfolio_id, simulation_date, total_value, annual_return, volatility, 
+            max_drawdown, sharpe_ratio, chart_data, total_deposits, total_invested, 
+            interest_earned, roi, strategy_return, strategy_annual_return, 
+            max_monthly_gain, max_monthly_loss, total_tax_paid, 
+            real_roi, real_roi_annual, total_inflation,
+            advanced_simulation_group, allocation_label) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $portfolioId,
+            $endDate,
+            $metrics['final_value'],
+            $metrics['annual_return'],
+            $metrics['volatility'],
+            $metrics['max_drawdown'],
+            $metrics['sharpe_ratio'],
+            json_encode($chartData),
+            $metrics['total_deposits'] ?? 0,
+            $metrics['total_invested'] ?? $metrics['initial_value'],
+            $metrics['interest_earned'] ?? 0,
+            $metrics['roi'] ?? 0,
+            $metrics['strategy_return'] ?? 0,
+            $metrics['strategy_annual_return'] ?? 0,
+            $metrics['max_monthly_gain'] ?? 0,
+            $metrics['max_monthly_loss'] ?? 0,
+            $metrics['total_tax_paid'] ?? 0,
+            $metrics['real_roi'] ?? 0,
+            $metrics['real_roi_annual'] ?? 0,
+            $metrics['total_inflation'] ?? 0,
+            $groupId,
+            $allocationLabel
+        ]);
+        return $this->db->lastInsertId();
+    }
+
+    // =========================================================
+    // END ADVANCED SIMULATION
+    // =========================================================
+
     public function runSimulation($portfolioId) {
         $portfolio = $this->getPortfolioData($portfolioId);
         $assets = $this->getPortfolioAssetsData($portfolioId);
