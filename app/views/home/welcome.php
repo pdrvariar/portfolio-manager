@@ -118,7 +118,7 @@ ob_start();
 </section>
 
 <!-- Como funciona -->
-<section class="mb-5 py-4 px-4 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+<section class="mb-5 py-4 px-4 rounded-3 como-funciona-section">
     <h2 class="text-center fw-bold mb-4">Como funciona?</h2>
     <div class="row g-4 align-items-center">
         <div class="col-md-3 text-center">
@@ -155,5 +155,18 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
+
+$additional_css = '
+<style>
+.como-funciona-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+[data-theme="dark"] .como-funciona-section {
+    background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.08) 100%);
+    border: 1px solid rgba(255,255,255,.08);
+}
+</style>
+';
+
 include_once __DIR__ . '/../layouts/main.php';
 ?>
