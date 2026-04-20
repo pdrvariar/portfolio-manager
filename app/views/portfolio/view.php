@@ -1459,7 +1459,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toFixed(4)}%`;
+                                return `${context.dataset.label}: ${context.raw.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:4})}%`;
                             }
                         }
                     }
@@ -1486,7 +1486,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Retorno: ${context.raw.toFixed(4)}%`;
+                                return `Retorno: ${context.raw.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:4})}%`;
                             }
                         }
                     }
@@ -1514,7 +1514,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Performance: ${context.raw.toFixed(4)}%`;
+                                return `Performance: ${context.raw.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:4})}%`;
                             }
                         }
                     }
@@ -1775,7 +1775,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             label: function(context) {
                                 let label = context.dataset.label || '';
                                 if (label) { label += ': '; }
-                                label += context.parsed.y.toFixed(4) + '%';
+                                label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:4}) + '%';
                                 return label;
                             }
                         }
