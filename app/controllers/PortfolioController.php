@@ -604,6 +604,114 @@ class PortfolioController {
         exit;
     }
 
+    /**
+     * Cria um novo portfólio a partir do snapshot de uma simulação.
+     */
+    public function createFromSnapshot() {
+        Auth::checkAuthentication();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $simulationId = (int)($_POST['simulation_id'] ?? 0);
+        $newName      = trim($_POST['portfolio_name'] ?? '');
+
+        if (!$simulationId || $newName === '') {
+            Session::setFlash('error', 'Parâmetros inválidos. Informe um nome para o novo portfólio.');
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/index.php?url=' . obfuscateUrl('portfolio/simulations')));
+            exit;
+        }
+
+        // Validação de limite de portfólios para Plano Starter
+        if (!Auth::isPro()) {
+            $userId = Auth::getCurrentUserId();
+            $existing = $this->portfolioModel->getUserPortfolios($userId, false);
+            if (count($existing) >= 2) {
+                Session::setFlash('warning', 'O Plano Starter permite no máximo 2 portfólios. Faça upgrade para o Plano PRO para criar ilimitados.');
+                header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/index.php?url=' . obfuscateUrl('portfolio/simulations')));
+                exit;
+            }
+        }
+
+        // Carrega o snapshot
+        $db       = Database::getInstance()->getConnection();
+        $stmt     = $db->prepare("SELECT ss.portfolio_config, ss.assets_config, sr.portfolio_id FROM simulation_snapshots ss JOIN simulation_results sr ON sr.id = ss.simulation_id WHERE ss.simulation_id = ?");
+        $stmt->execute([$simulationId]);
+        $snapshot = $stmt->fetch();
+
+        if (!$snapshot) {
+            Session::setFlash('error', 'Snapshot não encontrado para esta simulação.');
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/index.php?url=' . obfuscateUrl('portfolio/simulations')));
+            exit;
+        }
+
+        // Verifica se a simulação pertence a um portfólio do usuário
+        $originalPortfolio = $this->portfolioModel->findById($snapshot['portfolio_id']);
+        if (!$originalPortfolio || ($originalPortfolio['user_id'] != $_SESSION['user_id'] && !Auth::isAdmin())) {
+            Session::setFlash('error', 'Acesso negado.');
+            header('Location: /index.php?url=' . obfuscateUrl('portfolio'));
+            exit;
+        }
+
+        $pc = json_decode($snapshot['portfolio_config'], true);
+        $ac = json_decode($snapshot['assets_config'],    true);
+
+        // Cria o novo portfólio com o nome fornecido e as configs do snapshot
+        $newPortfolioId = $this->portfolioModel->create([
+            'user_id'                       => $_SESSION['user_id'],
+            'name'                          => $newName,
+            'description'                   => 'Criado a partir da simulação #' . $simulationId . ' do portfólio "' . $originalPortfolio['name'] . '".',
+            'initial_capital'               => $pc['initial_capital'],
+            'start_date'                    => $pc['start_date'],
+            'end_date'                      => $pc['end_date'] ?? null,
+            'rebalance_frequency'           => $pc['rebalance_frequency'],
+            'output_currency'               => $pc['output_currency'],
+            'simulation_type'               => $pc['simulation_type'] ?? 'standard',
+            'rebalance_type'                => $pc['rebalance_type'] ?? 'full',
+            'rebalance_margin'              => $pc['rebalance_margin'] ?? null,
+            'deposit_amount'                => $pc['deposit_amount'] ?? null,
+            'deposit_currency'              => $pc['deposit_currency'] ?? null,
+            'deposit_frequency'             => $pc['deposit_frequency'] ?? null,
+            'strategic_threshold'           => $pc['strategic_threshold'] ?? null,
+            'strategic_deposit_percentage'  => $pc['strategic_deposit_percentage'] ?? null,
+            'deposit_inflation_adjusted'    => $pc['deposit_inflation_adjusted'] ?? 0,
+            'use_cash_assets_for_rebalance' => $pc['use_cash_assets_for_rebalance'] ?? 0,
+            'profit_tax_rate'               => $pc['profit_tax_rate'] ?? null,
+            'profit_tax_rates_json'         => $pc['profit_tax_rates_json'] ?? null,
+            'cloned_from'                   => $snapshot['portfolio_id'],
+        ]);
+
+        if (!$newPortfolioId) {
+            Session::setFlash('error', 'Erro ao criar o portfólio. Tente novamente.');
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/index.php?url=' . obfuscateUrl('portfolio/simulations')));
+            exit;
+        }
+
+        // Aplica composição de ativos
+        $assetsForUpdate = [];
+        foreach ($ac as $asset) {
+            $assetsForUpdate[$asset['asset_id']] = [
+                'allocation'            => $asset['allocation_percentage'],
+                'performance_factor'    => $asset['performance_factor'] ?? 1.0,
+                'rebalance_margin_down' => $asset['rebalance_margin_down'] ?? null,
+                'rebalance_margin_up'   => $asset['rebalance_margin_up']   ?? null,
+            ];
+        }
+        $this->portfolioModel->updateAssets($newPortfolioId, $assetsForUpdate);
+
+        Session::setFlash('success', 'Novo portfólio "' . htmlspecialchars($newName) . '" criado com sucesso! Execute uma simulação para comparar os resultados.');
+        header('Location: /index.php?url=' . obfuscateUrl('portfolio/view/' . $newPortfolioId));
+        exit;
+    }
+
     public function history() {
         Auth::checkAuthentication();
         $id = $this->params['id'] ?? null;

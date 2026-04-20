@@ -32,6 +32,7 @@ function setupRoutes(Router $router) {
     $router->add('portfolio/history/{id:\d+}', ['controller' => 'portfolio', 'action' => 'history']);
     $router->add('portfolio/simulations', ['controller' => 'portfolio', 'action' => 'allSimulations']);
     $router->add('portfolio/apply-snapshot/{id:\d+}', ['controller' => 'portfolio', 'action' => 'applySnapshot']);
+    $router->add('portfolio/create-from-snapshot', ['controller' => 'portfolio', 'action' => 'createFromSnapshot']);
     $router->add('portfolio/compare', ['controller' => 'portfolio', 'action' => 'compareSimulations']);
 
     // --- Rotas de Ativos ---

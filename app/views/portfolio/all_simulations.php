@@ -75,10 +75,11 @@ foreach ($simulations as $sim) {
 $portfolioUrlsJs = [];
 foreach ($portfolios as $p) {
     $portfolioUrlsJs[$p['id']] = [
-        'apply'  => '/index.php?url=' . obfuscateUrl('portfolio/apply-snapshot/' . $p['id']),
-        'run'    => '/index.php?url=' . obfuscateUrl('portfolio/run/' . $p['id']),
-        'view'   => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $p['id']),
-        'name'   => $p['name'],
+        'apply'            => '/index.php?url=' . obfuscateUrl('portfolio/apply-snapshot/' . $p['id']),
+        'create_from_snap' => '/index.php?url=' . obfuscateUrl('portfolio/create-from-snapshot'),
+        'run'              => '/index.php?url=' . obfuscateUrl('portfolio/run/' . $p['id']),
+        'view'             => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $p['id']),
+        'name'             => $p['name'],
     ];
 }
 
@@ -661,6 +662,24 @@ $additional_css = '
     [data-theme="dark"] .asset-bar-wrap { background:var(--border-color) !important; }
     [data-theme="dark"] tr.dt-hasChild td { background-color:rgba(13,110,253,.08) !important; }
 
+    /* ── Action Cards (snapshot actions) ── */
+    .action-card {
+        display: flex; flex-direction: column;
+        border-radius: 12px; padding: 14px 16px;
+        border: 1.5px solid transparent;
+        transition: box-shadow .18s, transform .15s;
+    }
+    .action-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.1); transform: translateY(-2px); }
+    .action-card-warning { background: rgba(255,193,7,.07); border-color: rgba(255,193,7,.35); }
+    .action-card-success { background: rgba(25,135,84,.07); border-color: rgba(25,135,84,.3); }
+    .action-card-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .action-card-warning .action-card-icon { color: #e6a800; }
+    .action-card-success .action-card-icon { color: #157347; }
+    .action-card-title { font-size: .88rem; font-weight: 700; margin-bottom: 4px; color: var(--text-main,#212529); }
+    .action-card-desc { font-size: .75rem; color: var(--text-muted,#6c757d); line-height: 1.45; }
+    [data-theme="dark"] .action-card-warning { background: rgba(255,193,7,.1); border-color: rgba(255,193,7,.3); }
+    [data-theme="dark"] .action-card-success { background: rgba(25,135,84,.1); border-color: rgba(25,135,84,.3); }
+
     /* ── Compare Bar ── */
     .compare-bar {
         position: fixed; bottom: 0; left: 0; right: 0; z-index: 1050;
@@ -873,20 +892,47 @@ function buildChildRow(simId, portfolioId) {
           '</tr></thead><tbody>'+assetsRows+'</tbody></table></div>'
         : "";
 
-    const applyUrl = pUrls.apply || "#";
+    const applyUrl       = pUrls.apply || "#";
+    const createSnapUrl  = pUrls.create_from_snap || "#";
+    const pDisplayName   = pUrls.name ? pUrls.name : "este portfólio";
+
     const applyBtn =
-        '<div class="mt-4 pt-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-3">'+
-        '<div class="d-flex align-items-start gap-2">'+
-        '<i class="bi bi-lightbulb-fill text-warning fs-5 flex-shrink-0 mt-1"></i>'+
-        '<div><div class="fw-bold child-config-title" style="font-size:.85rem;">Quer repetir esta simulação?</div>'+
-        '<div class="text-muted" style="font-size:.75rem;">Aplica todos os parâmetros e alocações ao portfólio atual. Depois execute uma nova simulação para comparar.</div>'+
-        '</div></div>'+
-        '<form method="POST" action="'+applyUrl+'" onsubmit="return confirm(\'Atenção: isso irá substituir as configurações atuais do portfólio.\\n\\nCapital, período, aportes, rebalanceamento e ativos serão alterados.\\n\\nDeseja continuar?\')">' +
+        '<div class="mt-4 pt-3 border-top">'+
+        '<div class="d-flex align-items-center gap-2 mb-3">'+
+        '<i class="bi bi-lightbulb-fill text-warning fs-5"></i>'+
+        '<span class="fw-bold child-config-title" style="font-size:.88rem;">O que deseja fazer com esta configuração?</span>'+
+        '</div>'+
+        '<div class="row g-3">'+
+        /* ── Card: Aplicar ao portfólio atual ── */
+        '<div class="col-12 col-md-6">'+
+        '<div class="action-card action-card-warning h-100">'+
+        '<div class="action-card-icon"><i class="bi bi-arrow-counterclockwise"></i></div>'+
+        '<div class="action-card-body">'+
+        '<div class="action-card-title">Aplicar ao Portfólio Atual</div>'+
+        '<div class="action-card-desc">Substitui as configurações de <strong>'+pDisplayName+'</strong> pelos parâmetros desta simulação. Ação reversível via edição.</div>'+
+        '</div>'+
+        '<form method="POST" action="'+applyUrl+'" onsubmit="return confirm(\'Atenção: isso irá substituir as configurações atuais do portfólio.\\n\\nCapital, período, aportes, rebalanceamento e ativos serão alterados.\\n\\nDeseja continuar?\')">'+
         '<input type="hidden" name="csrf_token" value="'+CSRF_TOKEN+'">'+
         '<input type="hidden" name="simulation_id" value="'+simId+'">'+
-        '<button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm no-spinner">'+
+        '<button type="submit" class="btn btn-warning rounded-pill px-4 fw-semibold shadow-sm no-spinner w-100 mt-2">'+
         '<i class="bi bi-arrow-counterclockwise me-2"></i>Aplicar ao Portfólio'+
-        '</button></form></div>';
+        '</button></form>'+
+        '</div></div>'+
+        /* ── Card: Criar novo portfólio ── */
+        '<div class="col-12 col-md-6">'+
+        '<div class="action-card action-card-success h-100">'+
+        '<div class="action-card-icon"><i class="bi bi-plus-circle"></i></div>'+
+        '<div class="action-card-body">'+
+        '<div class="action-card-title">Criar Novo Portfólio</div>'+
+        '<div class="action-card-desc">Gera um portfólio novo com exatamente esta configuração, sem alterar nenhum portfólio existente.</div>'+
+        '</div>'+
+        '<button type="button" class="btn btn-success rounded-pill px-4 fw-semibold shadow-sm w-100 mt-2"'+
+        ' data-sim-id="'+simId+'" data-create-url="'+createSnapUrl+'" data-bs-toggle="modal" data-bs-target="#createFromSnapshotModal" onclick="prepareCreateFromSnapshot(this)">'+
+        '<i class="bi bi-plus-lg me-2"></i>Criar Novo Portfólio'+
+        '</button>'+
+        '</div></div>'+
+        '</div>'+ /* /row */
+        '</div>'; /* /border-top */
 
     return '<div class="child-config p-3 m-2">'+
         summaryHtml+
@@ -1062,10 +1108,75 @@ $(document).ready(function () {
         }
     });
 });
+
+// ── Modal: Criar Novo Portfólio a partir do Snapshot ──
+function prepareCreateFromSnapshot(btn) {
+    const simId     = btn.getAttribute('data-sim-id');
+    const createUrl = btn.getAttribute('data-create-url');
+    document.getElementById('cfsSimId').value      = simId;
+    document.getElementById('cfsFormAction').action = createUrl;
+    // Sugestão automática de nome
+    const snap = SNAPSHOTS[simId];
+    const dateStr = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
+    const periodStr = snap && snap.portfolio && snap.portfolio.start_date
+        ? snap.portfolio.start_date.substring(0,7).split('-').reverse().join('/')
+        : '';
+    const suggested = 'Portfólio — Simulação #' + simId + (periodStr ? ' (' + periodStr + ')' : '');
+    const nameInput = document.getElementById('cfsPortfolioName');
+    nameInput.value = suggested;
+    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 400);
+}
 </script>
 ENDJS;
 
-$content = ob_get_clean();
+// ── Modal HTML (outside ob_get_clean output, added to $content) ──
+$modalHtml = <<<HTML
+<!-- Modal: Criar Novo Portfólio a partir do Snapshot -->
+<div class="modal fade" id="createFromSnapshotModal" tabindex="-1" aria-labelledby="cfsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10" style="width:44px;height:44px;">
+            <i class="bi bi-folder-plus text-success fs-4"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold mb-0" id="cfsModalLabel">Criar Novo Portfólio</h5>
+            <p class="text-muted mb-0" style="font-size:.78rem;">A partir da configuração desta simulação</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form method="POST" id="cfsFormAction">
+        <div class="modal-body px-4 pt-3 pb-2">
+          <input type="hidden" name="csrf_token" value="{$csrfToken}">
+          <input type="hidden" name="simulation_id" id="cfsSimId" value="">
+          <div class="mb-1">
+            <label for="cfsPortfolioName" class="form-label fw-semibold" style="font-size:.85rem;">
+              <i class="bi bi-tag me-1 text-success"></i>Nome do novo portfólio
+            </label>
+            <input type="text" class="form-control form-control-lg rounded-3" id="cfsPortfolioName" name="portfolio_name"
+              placeholder="Ex: Estratégia Conservadora 2025" maxlength="80" required autofocus>
+            <div class="form-text" style="font-size:.73rem;">Escolha um nome descritivo para identificar facilmente este portfólio.</div>
+          </div>
+          <div class="alert alert-success border-0 rounded-3 d-flex align-items-start gap-2 mt-3 mb-0 py-2 px-3" style="font-size:.78rem;background:rgba(25,135,84,.07);">
+            <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
+            <span>Será criado um portfólio com todos os parâmetros e ativos desta simulação. <strong>Nenhum portfólio existente será alterado.</strong></span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pt-2 pb-4 gap-2">
+          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success rounded-pill px-5 fw-semibold shadow-sm">
+            <i class="bi bi-plus-lg me-2"></i>Criar Portfólio
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+HTML;
+
+$content = ob_get_clean() . $modalHtml;
 include_once __DIR__ . '/../layouts/main.php';
 ?>
 
