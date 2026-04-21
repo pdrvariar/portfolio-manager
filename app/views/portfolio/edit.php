@@ -401,12 +401,13 @@ ob_start();
                                 <span class="ms-2 cursor-pointer" onclick="showPaywallModal('Limite de Ativos', 'No plano Starter você pode adicionar até 5 ativos por portfólio. No plano PRO, não há limites.')">🔒</span>
                             <?php endif; ?>
                         </h5>
+
                         <div class="table-responsive mb-3">
                             <table class="table table-hover align-middle" id="assetsTable">
                                 <thead class="table-light">
                                 <tr>
                                     <th>Ativo e Disponibilidade Histórica</th>
-                                    <th style="width: 160px;">Alocação (%)</th>
+                                    <th style="width: 175px;">Alocação (%)</th>
                                     <th style="width: 140px;">Fator Perf.</th>
                                     <th style="width: 50px;"></th>
                                 </tr>
@@ -431,7 +432,8 @@ ob_start();
                                     </td>
                                     <td>
                                         <div class="input-group">
-                                            <input type="number" class="form-control" id="assetAllocation" step="0.01" min="0" max="100" placeholder="0.00">
+                                            <input type="number" class="form-control" id="assetAllocation" step="0.01" min="0" max="100" placeholder="0.00"
+                                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addAsset();}">
                                             <span class="input-group-text">%</span>
                                         </div>
                                     </td>
@@ -439,13 +441,23 @@ ob_start();
                                         <input type="number" class="form-control" id="assetFactor" step="0.01" min="0.1" max="10" value="1.00">
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-success" onclick="addAsset()"><i class="bi bi-plus-lg"></i></button>
+                                        <button type="button" class="btn btn-success" onclick="addAsset()" title="Adicionar ativo"><i class="bi bi-plus-lg"></i></button>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="table-secondary">
                                     <td class="text-end fw-bold">TOTAL DA CARTEIRA:</td>
-                                    <td class="fw-bold"><span id="totalAllocation">0</span>%</td>
-                                    <td colspan="2"></td>
+                                    <td>
+                                        <span id="totalAllocation" class="fw-bold fs-5">0</span><span class="fw-bold">%</span>
+                                        <span id="totalDiff" class="ms-2 badge small"></span>
+                                    </td>
+                                    <td colspan="2" class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="distributeEqually()" title="Divide 100% igualmente entre todos os ativos">
+                                            <i class="bi bi-distribute-horizontal me-1"></i>Igualar
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="normalizeToHundred()" title="Escala proporcionalmente para que a soma seja exatamente 100%">
+                                            <i class="bi bi-arrows-angle-contract me-1"></i>Normalizar 100%
+                                        </button>
+                                    </td>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -727,7 +739,6 @@ ob_start();
 
         function updateTable() {
             const tbody = document.getElementById('assetsBody');
-            const totalSpan = document.getElementById('totalAllocation');
             const rebalanceType = document.getElementById('rebalance_type').value;
             const isCustomMargin = rebalanceType === 'custom_margin';
             let total = 0;
@@ -802,15 +813,19 @@ ob_start();
                 <td>
                     <div class="input-group input-group-sm">
                         <input type="number" name="assets[${asset.asset_id}][allocation]"
-                            value="${asset.allocation.toFixed(2)}" step="any" class="form-control fw-bold text-primary"
-                            oninput="updateAssetData(${asset.asset_id}, 'allocation', this.value)">
-                        <span class="input-group-text">%</span>
+                            value="${asset.allocation.toFixed(2)}" step="0.01" min="0" max="100"
+                            class="form-control form-control-lg fw-bold text-primary allocation-input"
+                            style="font-size:1.05rem;"
+                            oninput="liveAllocationUpdate(${asset.asset_id}, this.value)"
+                            onblur="commitAllocation(${asset.asset_id}, this.value)">
+                        <span class="input-group-text fw-bold">%</span>
                     </div>
                 </td>
                 <td>
                     <input type="number" name="assets[${asset.asset_id}][performance_factor]"
-                        value="${asset.factor}" step="0.01" class="form-control form-control-sm"
-                        oninput="updateAssetData(${asset.asset_id}, 'factor', this.value)">
+                        value="${asset.factor}" step="0.01" min="0.1" max="10"
+                        class="form-control form-control-sm"
+                        onchange="updateFactor(${asset.asset_id}, this.value)">
                 </td>
                 ${marginFields}
                 <td>
@@ -821,8 +836,7 @@ ob_start();
         `;
             });
 
-            totalSpan.innerText = total.toFixed(2);
-            checkTotal(total);
+            refreshTotalDisplay(total);
             validatePortfolioRange(); // Valida as datas após qualquer mudança na lista
             
             // Re-inicializa tooltips se houver
@@ -895,43 +909,106 @@ ob_start();
 
         function updateAssetData(assetId, field, value) {
             const asset = assets.find(a => a.asset_id == assetId);
-            if (asset) {
-                if (field === 'allocation') {
-                    asset.allocation = parseFloat(value) || 0;
-                    
-                    // Sênior UEX: Ao mudar a alocação, recalculamos as sugestões de margem se for custom_margin
-                    const rebalanceType = document.getElementById('rebalance_type').value;
-                    if (rebalanceType === 'custom_margin') {
-                        const suggestions = getMarginSuggestions(asset.allocation);
-                        asset.rebalance_margin_down = suggestions.down;
-                        asset.rebalance_margin_up = suggestions.up;
-                        // Forçamos o update da linha inteira para atualizar o slider e sugestões
-                        updateTable();
-                    }
-                }
-                else if (field === 'factor') asset.factor = parseFloat(value) || 0;
-                else if (field === 'rebalance_margin_down') {
-                    let val = value === '' ? null : parseFloat(value);
-                    if (val !== null && asset.rebalance_margin_up !== null && val > asset.rebalance_margin_up) {
-                        val = asset.rebalance_margin_up;
-                    }
-                    asset.rebalance_margin_down = val;
-                }
-                else if (field === 'rebalance_margin_up') {
-                    let val = value === '' ? null : parseFloat(value);
-                    if (val !== null && asset.rebalance_margin_down !== null && val < asset.rebalance_margin_down) {
-                        val = asset.rebalance_margin_down;
-                    }
-                    asset.rebalance_margin_up = val;
-                }
-                updateTable();
+            if (!asset) return;
 
-                if (field === 'allocation') {
-                    let total = assets.reduce((sum, a) => sum + a.allocation, 0);
-                    document.getElementById('totalAllocation').innerText = total.toFixed(2);
-                    checkTotal(total);
+            if (field === 'rebalance_margin_down') {
+                let val = value === '' ? null : parseFloat(value);
+                if (val !== null && asset.rebalance_margin_up !== null && val > asset.rebalance_margin_up) {
+                    val = asset.rebalance_margin_up;
                 }
+                asset.rebalance_margin_down = val;
+                updateTable();
+            } else if (field === 'rebalance_margin_up') {
+                let val = value === '' ? null : parseFloat(value);
+                if (val !== null && asset.rebalance_margin_down !== null && val < asset.rebalance_margin_down) {
+                    val = asset.rebalance_margin_down;
+                }
+                asset.rebalance_margin_up = val;
+                updateTable();
             }
+        }
+
+        // Atualização ao vivo do total enquanto digita (SEM reconstruir a tabela)
+        function liveAllocationUpdate(assetId, value) {
+            const asset = assets.find(a => a.asset_id == assetId);
+            if (!asset) return;
+            asset.allocation = parseFloat(value) || 0;
+            const total = assets.reduce((s, a) => s + a.allocation, 0);
+            refreshTotalDisplay(total);
+        }
+
+        // Commit ao sair do campo (onblur) — recria tabela só se necessário
+        function commitAllocation(assetId, value) {
+            const asset = assets.find(a => a.asset_id == assetId);
+            if (!asset) return;
+            asset.allocation = parseFloat(value) || 0;
+            const rebalanceType = document.getElementById('rebalance_type').value;
+            if (rebalanceType === 'custom_margin') {
+                // Recalcula sugestões de margem e atualiza
+                const suggestions = getMarginSuggestions(asset.allocation);
+                asset.rebalance_margin_down = suggestions.down;
+                asset.rebalance_margin_up = suggestions.up;
+                updateTable();
+            } else {
+                // Apenas revalida datas sem reconstruir a tabela
+                const total = assets.reduce((s, a) => s + a.allocation, 0);
+                refreshTotalDisplay(total);
+                validatePortfolioRange();
+            }
+        }
+
+        // Atualiza o fator de desempenho (sem reconstruir a tabela)
+        function updateFactor(assetId, value) {
+            const asset = assets.find(a => a.asset_id == assetId);
+            if (asset) asset.factor = parseFloat(value) || 1.0;
+        }
+
+        // Atualiza display do total + badge de diferença
+        function refreshTotalDisplay(total) {
+            document.getElementById('totalAllocation').innerText = total.toFixed(2);
+            const diff = parseFloat((total - 100).toFixed(2));
+            const diffEl = document.getElementById('totalDiff');
+            if (Math.abs(diff) < 0.01) {
+                diffEl.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>OK</span>';
+            } else if (diff > 0) {
+                diffEl.innerHTML = `<span class="badge bg-danger">+${diff.toFixed(2)}% excesso</span>`;
+            } else {
+                diffEl.innerHTML = `<span class="badge bg-warning text-dark">${Math.abs(diff).toFixed(2)}% faltando</span>`;
+            }
+            checkTotal(total);
+        }
+
+        // Distribuir igualmente entre todos os ativos
+        function distributeEqually() {
+            if (assets.length === 0) return;
+            const share = parseFloat((100 / assets.length).toFixed(2));
+            let assigned = 0;
+            assets.forEach((a, i) => {
+                if (i < assets.length - 1) {
+                    a.allocation = share;
+                    assigned += share;
+                } else {
+                    // Último ativo recebe o restante para fechar 100%
+                    a.allocation = parseFloat((100 - assigned).toFixed(2));
+                }
+            });
+            updateTable();
+        }
+
+        // Normalizar proporcionalmente para 100%
+        function normalizeToHundred() {
+            const total = assets.reduce((s, a) => s + a.allocation, 0);
+            if (total === 0) { alert('Nenhuma alocação para normalizar.'); return; }
+            assets.forEach(a => {
+                a.allocation = parseFloat((a.allocation * 100 / total).toFixed(2));
+            });
+            // Corrige erro de arredondamento no último ativo
+            const newTotal = assets.reduce((s, a) => s + a.allocation, 0);
+            const remainder = parseFloat((100 - newTotal).toFixed(2));
+            if (Math.abs(remainder) > 0 && assets.length > 0) {
+                assets[assets.length - 1].allocation = parseFloat((assets[assets.length - 1].allocation + remainder).toFixed(2));
+            }
+            updateTable();
         }
 
         function checkTotal(total) {
