@@ -151,9 +151,9 @@ class MercadoPagoService {
             $request_options = new \MercadoPago\Client\Common\RequestOptions();
             $request_options->setCustomHeaders(["X-Idempotency-Key: refund_" . $mpPaymentId]);
 
-            $body = $amount > 0 ? ['amount' => $amount] : [];
+            $refundAmount = $amount > 0 ? (float)$amount : null;
 
-            $refund = $refundClient->refund((int)$mpPaymentId, $body, $request_options);
+            $refund = $refundClient->refund((int)$mpPaymentId, $refundAmount, $request_options);
 
             if (!$refund || !isset($refund->id)) {
                 error_log("ERRO MP (Refund): resposta inválida – " . json_encode($refund));
