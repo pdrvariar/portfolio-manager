@@ -14,74 +14,154 @@ class AdminController {
     
     public function dashboard() {
         Auth::checkAdmin();
-        
-        // Estatísticas
-        $stats = $this->getStats();
+        $stats      = $this->getStats();
         $activities = $this->getLatestActivities();
-        
         require_once __DIR__ . '/../views/admin/dashboard.php';
     }
     
     public function users() {
         Auth::checkAdmin();
-        
         $users = $this->userModel->getAllUsers();
-        
         require_once __DIR__ . '/../views/admin/users.php';
     }
 
     public function editUser() {
         Auth::checkAdmin();
         $id = $this->params['id'] ?? null;
-        
         if (!$id) {
             header('Location: /index.php?url=' . obfuscateUrl('admin/users'));
             exit;
         }
-
         $user = $this->userModel->findById($id);
         if (!$user) {
             Session::setFlash('error', 'Usuário não encontrado.');
             header('Location: /index.php?url=' . obfuscateUrl('admin/users'));
             exit;
         }
-
         require_once __DIR__ . '/../views/admin/edit_user.php';
     }
 
     public function updateUser() {
         Auth::checkAdmin();
         $id = $this->params['id'] ?? null;
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id) {
             if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
                 Session::setFlash('error', 'Segurança: Token inválido.');
                 header('Location: /index.php?url=' . obfuscateUrl('admin/users/edit/' . $id));
                 exit;
             }
-
             $data = [
-                'full_name' => sanitize($_POST['full_name']),
-                'email' => sanitize($_POST['email']),
-                'status' => $_POST['status'],
-                'is_admin' => isset($_POST['is_admin']) ? 1 : 0,
-                'plan' => in_array($_POST['plan'] ?? '', ['starter', 'pro']) ? $_POST['plan'] : 'starter',
-                'subscription_expires_at' => !empty($_POST['subscription_expires_at']) ? $_POST['subscription_expires_at'] : null,
-                'subscription_plan_type' => in_array($_POST['subscription_plan_type'] ?? '', ['monthly', 'yearly']) ? $_POST['subscription_plan_type'] : null,
-                'last_payment_id' => sanitize($_POST['last_payment_id'] ?? '')
+                'full_name'                => sanitize($_POST['full_name']),
+                'email'                    => sanitize($_POST['email']),
+                'status'                   => $_POST['status'],
+                'is_admin'                 => isset($_POST['is_admin']) ? 1 : 0,
+                'plan'                     => in_array($_POST['plan'] ?? '', ['starter', 'pro']) ? $_POST['plan'] : 'starter',
+                'subscription_expires_at'  => !empty($_POST['subscription_expires_at']) ? $_POST['subscription_expires_at'] : null,
+                'subscription_plan_type'   => in_array($_POST['subscription_plan_type'] ?? '', ['monthly', 'yearly']) ? $_POST['subscription_plan_type'] : null,
+                'last_payment_id'          => sanitize($_POST['last_payment_id'] ?? '')
             ];
-
             if ($this->userModel->adminUpdate($id, $data)) {
                 Session::setFlash('success', 'Usuário atualizado com sucesso!');
             } else {
                 Session::setFlash('error', 'Erro ao atualizar o usuário.');
             }
-
             header('Location: /index.php?url=' . obfuscateUrl('admin/users'));
             exit;
         }
     }
-    
+
+    // ─────────────────────────────────────────────────────────────
+    // PAINEL DE ASSINATURAS
+    // ─────────────────────────────────────────────────────────────
+
+    public function subscriptions() {
+        Auth::checkAdmin();
+        $subModel     = new Subscription();
+        $subscriptions = $subModel->getAllWithUsers();
+        $stats         = $subModel->getRevenueStats();
+        require_once __DIR__ . '/../views/admin/subscriptions.php';
+    }
+
+    public function cancelSubscription() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if (!$id || !Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Ação inválida.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+            exit;
+        }
+        $subModel = new Subscription();
+        $sub      = $subModel->findById($id);
+        if ($sub) {
+            $subModel->cancel($id, 'immediate');
+            $userModel = new User();
+            $userModel->updatePlan($sub['user_id'], 'starter', null, null, $sub['mp_payment_id'], 'canceled');
+            Session::setFlash('success', 'Assinatura cancelada com sucesso.');
+            logActivity("Admin cancelou assinatura ID {$id}", Auth::getUserId());
+        } else {
+            Session::setFlash('error', 'Assinatura não encontrada.');
+        }
+        header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+        exit;
+    }
+
+    public function refundSubscription() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if (!$id || !Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Ação inválida.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+            exit;
+        }
+        $subModel = new Subscription();
+        $sub      = $subModel->findById($id);
+        if (!$sub || empty($sub['mp_payment_id'])) {
+            Session::setFlash('error', 'Assinatura ou payment ID não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+            exit;
+        }
+        $mpService = new MercadoPagoService();
+        $refund    = $mpService->processRefund($sub['mp_payment_id'], (float)$sub['amount_paid']);
+        if ($refund && isset($refund->id)) {
+            $subModel->markRefunded($id, (string)$refund->id, (float)$sub['amount_paid']);
+            $userModel = new User();
+            $userModel->updatePlan($sub['user_id'], 'starter', null, null, $sub['mp_payment_id'], 'refunded');
+            try {
+                $userData = $userModel->findById($sub['user_id']);
+                EmailService::sendRefundConfirmation($userData['email'], $userData['full_name'], (float)$sub['amount_paid']);
+            } catch (Exception $e) { /* silencioso */ }
+            Session::setFlash('success', 'Reembolso processado com sucesso.');
+            logActivity("Admin reembolsou assinatura ID {$id}", Auth::getUserId());
+        } else {
+            Session::setFlash('error', 'Falha ao processar reembolso via MP.');
+        }
+        header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+        exit;
+    }
+
+    public function reactivateSubscription() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if (!$id || !Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Ação inválida.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+            exit;
+        }
+        $subModel = new Subscription();
+        $sub      = $subModel->findById($id);
+        if ($sub) {
+            $subModel->updateStatus($id, 'active');
+            $userModel = new User();
+            $userModel->updatePlan($sub['user_id'], 'pro', $sub['expires_at'], $sub['plan_type'], $sub['mp_payment_id'], 'active');
+            Session::setFlash('success', 'Assinatura reativada com sucesso.');
+            logActivity("Admin reativou assinatura ID {$id}", Auth::getUserId());
+        } else {
+            Session::setFlash('error', 'Assinatura não encontrada.');
+        }
+        header('Location: /index.php?url=' . obfuscateUrl('admin/subscriptions'));
+        exit;
+    }
+
     public function assets() {
         Auth::checkAdmin();
         
@@ -151,25 +231,33 @@ class AdminController {
     
     private function getStats() {
         $db = Database::getInstance()->getConnection();
-        
         $stats = [];
-        
-        // Users count
+
         $stmt = $db->query("SELECT COUNT(*) as total FROM users");
         $stats['users'] = $stmt->fetch()['total'];
-        
-        // Portfolios count
+
         $stmt = $db->query("SELECT COUNT(*) as total FROM portfolios");
         $stats['portfolios'] = $stmt->fetch()['total'];
-        
-        // Simulations count
+
         $stmt = $db->query("SELECT COUNT(*) as total FROM simulation_results");
         $stats['simulations'] = $stmt->fetch()['total'];
-        
-        // Assets count
+
         $stmt = $db->query("SELECT COUNT(*) as total FROM system_assets");
         $stats['assets'] = $stmt->fetch()['total'];
-        
+
+        // Métricas de assinatura
+        try {
+            $subModel             = new Subscription();
+            $subStats             = $subModel->getRevenueStats();
+            $stats['sub_active']  = $subStats['active_count']  ?? 0;
+            $stats['sub_mrr']     = $subStats['mrr']           ?? 0;
+            $stats['sub_revenue'] = $subStats['total_revenue'] ?? 0;
+        } catch (Exception $e) {
+            $stats['sub_active']  = 0;
+            $stats['sub_mrr']     = 0;
+            $stats['sub_revenue'] = 0;
+        }
+
         return $stats;
     }
 

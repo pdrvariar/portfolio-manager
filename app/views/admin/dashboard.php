@@ -64,6 +64,43 @@ ob_start();
     </div>
 </div>
 
+<!-- Métricas de Receita -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <div class="bg-soft-success rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-currency-dollar fs-4 text-success"></i>
+                </div>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">MRR (Mensal)</h6>
+                <h3 class="fw-bold text-success mb-0">R$ <?= number_format($stats['sub_mrr'] ?? 0, 2, ',', '.') ?></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <div class="bg-soft-primary rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-gem fs-4 text-primary"></i>
+                </div>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">Assinaturas Ativas</h6>
+                <h3 class="fw-bold text-primary mb-0"><?= $stats['sub_active'] ?? 0 ?></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <div class="bg-soft-warning rounded-circle d-inline-flex p-3 mb-3">
+                    <i class="bi bi-cash-stack fs-4 text-warning"></i>
+                </div>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">Receita Total</h6>
+                <h3 class="fw-bold mb-0">R$ <?= number_format($stats['sub_revenue'] ?? 0, 2, ',', '.') ?></h3>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-md-5">
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
@@ -113,6 +150,17 @@ ob_start();
                             <div>
                                 <h6 class="mb-0 fw-bold small">Gerar Portfólios Oficiais</h6>
                                 <p class="text-muted smaller mb-0">Criar modelos sugeridos pelo sistema</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="/index.php?url=<?= obfuscateUrl('admin/subscriptions') ?>" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light p-2 rounded-3 me-3">
+                                <i class="bi bi-credit-card text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Gestão de Assinaturas</h6>
+                                <p class="text-muted smaller mb-0">Cancelar, reembolsar e reativar assinaturas</p>
                             </div>
                         </div>
                     </a>

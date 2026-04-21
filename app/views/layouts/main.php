@@ -153,6 +153,12 @@
                             <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
                                 <li><h6 class="dropdown-header">Minha Conta</h6></li>
                                 <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('profile') ?>"><i class="bi bi-person me-2"></i>Meu Perfil</a></li>
+                                <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('subscription/manage') ?>">
+                                    <i class="bi bi-credit-card me-2"></i>Minha Assinatura
+                                    <?php if (Auth::isPro()): ?>
+                                        <span class="badge bg-success ms-1" style="font-size:0.6rem;">PRO</span>
+                                    <?php endif; ?>
+                                </a></li>
                                 <?php if (Auth::isAdmin()): ?>
                                     <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin') ?>"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
                                 <?php endif; ?>

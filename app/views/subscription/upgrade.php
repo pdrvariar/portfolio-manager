@@ -3,9 +3,17 @@ $user = Auth::getUser();
 $userModel = new User();
 $userData = $userModel->findById($user['id']);
 
-$currentExpiration = !empty($userData['subscription_expires_at']) ? date('d/m/Y', strtotime($userData['subscription_expires_at'])) : null;
+// Variáveis injetadas pelo controller
+$upgradeMode         = $upgradeMode         ?? false;
+$proratedCredit      = $proratedCredit      ?? 0;
+$proratedYearlyPrice = $proratedYearlyPrice ?? 179.40;
+$activeSub           = $activeSub           ?? null;
 
-$title = 'Desbloquear Plano PRO';
+$currentExpiration = !empty($userData['subscription_expires_at'])
+    ? date('d/m/Y', strtotime($userData['subscription_expires_at']))
+    : null;
+
+$title = $upgradeMode ? 'Upgrade para PRO Anual' : 'Desbloquear Plano PRO';
 ob_start();
 ?>
 
@@ -47,18 +55,32 @@ ob_start();
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="text-center mb-5">
-            <h2 class="fw-bold display-5">Escolha seu Plano PRO</h2>
-            <p class="lead text-muted">Maximize seus retornos com inteligência e ferramentas exclusivas.</p>
+            <h2 class="fw-bold display-5">
+                <?= $upgradeMode ? 'Upgrade para PRO Anual' : 'Escolha seu Plano PRO' ?>
+            </h2>
+            <p class="lead text-muted">
+                <?= $upgradeMode
+                    ? 'Mude para o plano anual e economize com o crédito proporcional dos dias restantes.'
+                    : 'Maximize seus retornos com inteligência e ferramentas exclusivas.' ?>
+            </p>
             <?php if ($currentExpiration): ?>
                 <div class="alert alert-info d-inline-block mt-2">
                     <i class="bi bi-calendar-check me-2"></i>
                     Sua assinatura atual é válida até: <strong class="text-main"><?= $currentExpiration ?></strong>
                 </div>
             <?php endif; ?>
+            <?php if ($upgradeMode && $proratedCredit > 0): ?>
+                <div class="alert alert-success d-inline-block mt-2 ms-2">
+                    <i class="bi bi-gift me-2"></i>
+                    Você tem <strong>R$ <?= number_format($proratedCredit, 2, ',', '.') ?></strong>
+                    de crédito proporcional aplicado no upgrade anual!
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="row g-4 mb-5 justify-content-center">
-            <!-- Plano Mensal -->
+            <!-- Plano Mensal (oculto no modo upgrade) -->
+            <?php if (!$upgradeMode): ?>
             <div class="col-md-5">
                 <div class="card h-100 shadow-sm plan-card active" id="card-monthly" onclick="selectPlan('monthly', 29.90)">
                     <div class="card-body p-4 text-center">
@@ -77,27 +99,44 @@ ob_start();
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
 
             <!-- Plano Anual -->
             <div class="col-md-5">
-                <div class="card h-100 shadow-sm plan-card position-relative" id="card-yearly" onclick="selectPlan('yearly', 179.40)">
+                <div class="card h-100 shadow-sm plan-card position-relative <?= $upgradeMode ? 'active' : '' ?>"
+                     id="card-yearly" onclick="selectPlan('yearly', <?= $proratedYearlyPrice ?>)">
                     <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge-save">50% DE DESCONTO</span>
+                        <span class="badge-save">
+                            <?= $upgradeMode ? 'CRÉDITO APLICADO' : '50% DE DESCONTO' ?>
+                        </span>
                     </div>
                     <div class="card-body p-4 text-center">
                         <div class="d-flex justify-content-center align-items-center mb-1">
                             <h4 class="fw-bold mb-0">Anual</h4>
                         </div>
                         <div class="my-4">
-                            <div class="text-strike">R$ 358,80</div>
-                            <span class="display-5 fw-bold text-primary">R$ 179,40</span>
-                            <span class="text-muted">/ano</span>
-                            <div class="small text-success fw-bold">R$ 14,95 /mês</div>
+                            <?php if ($upgradeMode && $proratedCredit > 0): ?>
+                                <div class="text-strike">R$ 179,40</div>
+                                <span class="display-5 fw-bold text-primary">R$ <?= number_format($proratedYearlyPrice, 2, ',', '.') ?></span>
+                                <span class="text-muted">/upgrade</span>
+                                <div class="small text-success fw-bold">
+                                    Crédito de R$ <?= number_format($proratedCredit, 2, ',', '.') ?> aplicado
+                                </div>
+                            <?php else: ?>
+                                <div class="text-strike">R$ 358,80</div>
+                                <span class="display-5 fw-bold text-primary">R$ 179,40</span>
+                                <span class="text-muted">/ano</span>
+                                <div class="small text-success fw-bold">R$ 14,95 /mês</div>
+                            <?php endif; ?>
                         </div>
-                        <p class="text-muted small">O melhor custo-benefício para investidores sérios.</p>
+                        <p class="text-muted small"><?= $upgradeMode ? 'Aproveite o crédito dos seus dias restantes.' : 'O melhor custo-benefício para investidores sérios.' ?></p>
                         <hr>
                         <ul class="list-unstyled text-start mb-0">
-                            <li class="mb-2"><i class="bi bi-star-fill text-warning me-2"></i> <strong>Economize R$ 179,40 por ano</strong></li>
+                            <?php if ($upgradeMode): ?>
+                                <li class="mb-2"><i class="bi bi-arrow-up-circle text-primary me-2"></i> <strong>Upgrade imediato para Anual</strong></li>
+                            <?php else: ?>
+                                <li class="mb-2"><i class="bi bi-star-fill text-warning me-2"></i> <strong>Economize R$ 179,40 por ano</strong></li>
+                            <?php endif; ?>
                             <li class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i> Todos os recursos PRO</li>
                             <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong class="text-main"><?= date('d/m/Y', strtotime('+1 year')) ?></strong></li>
                         </ul>
@@ -159,18 +198,53 @@ ob_start();
                                 <div id="order-summary" class="bg-light-subtle p-3 rounded mb-4">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Plano selecionado:</span>
-                                        <span id="summary-plan-name" class="fw-bold text-primary">Mensal</span>
+                                        <span id="summary-plan-name" class="fw-bold text-primary">
+                                            <?= $upgradeMode ? 'Anual (com crédito)' : 'Mensal' ?>
+                                        </span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted">Total a pagar:</span>
-                                        <span id="summary-plan-price" class="fs-4 fw-bold">R$ 29,90</span>
+                                        <span id="summary-plan-price" class="fs-4 fw-bold">
+                                            R$ <?= number_format($upgradeMode ? $proratedYearlyPrice : 29.90, 2, ',', '.') ?>
+                                        </span>
                                     </div>
                                 </div>
 
-                                <div id="payment-error-container" class="alert alert-danger d-none mb-3" role="alert">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    <span id="payment-error-message"></span>
+                <?php if (getenv('APP_ENV') === 'development'): ?>
+                                <div class="alert alert-warning mb-3" style="font-size:0.82rem;">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-bug-fill me-2 fs-5"></i>
+                                        <strong class="fs-6">Modo Teste (Sandbox)</strong>
+                                    </div>
+
+                                    <div class="alert alert-danger py-2 px-3 mb-2">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        <strong>Nome do titular:</strong> digite exatamente <kbd class="fs-6">APRO</kbd> no campo "Nome como aparece no cartão" para aprovar o pagamento.<br>
+                                        <span class="text-muted" style="font-size:0.78rem;">Outros nomes provocam rejeição — é assim que o Mercado Pago controla resultados no sandbox.</span>
+                                    </div>
+                                    <div class="alert alert-info py-2 px-3 mb-2" style="font-size:0.78rem;">
+                                        <i class="bi bi-info-circle-fill me-1"></i>
+                                        <strong>Restrição do sandbox:</strong> o e-mail do comprador <strong>não pode ser o mesmo</strong> do dono do access token (<code>pdrvariar@gmail.com</code>).<br>
+                                        Se estiver logado com esse e-mail, crie outro usuário no sistema para testar.
+                                    </div>
+
+                                    <table class="table table-sm table-borderless mb-1" style="font-size:0.78rem;">
+                                        <thead class="table-light"><tr><th>Bandeira</th><th>Número</th><th>CVV</th><th>Validade</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>Mastercard</td><td><code>5031 4332 1540 6351</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
+                                            <tr><td>Visa</td><td><code>4235 6477 2802 5682</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
+                                            <tr><td>Amex</td><td><code>3753 651535 56885</code></td><td><code>1234</code></td><td><code>11/30</code></td></tr>
+                                            <tr><td>Elo Débito</td><td><code>5067 7667 8388 8311</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                    <div><strong>CPF:</strong> <code>12345678909</code> &nbsp;|&nbsp; <strong>Nome titular:</strong> <code>APRO</code> (aprovado) · <code>SECU</code> (CVV inválido) · <code>OTHE</code> (recusado)</div>
                                 </div>
+                                <?php endif; ?>
+
+                                 <div id="payment-error-container" class="alert alert-danger d-none mb-3" role="alert">
+                                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                     <span id="payment-error-message"></span>
+                                 </div>
 
                                 <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
                                 <div id="terms_warning" class="text-danger small text-center mb-3">
@@ -197,24 +271,24 @@ ob_start();
 
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
-    let selectedPlan = 'monthly';
-    let selectedPrice = 29.90;
+    const IS_UPGRADE    = <?= $upgradeMode ? 'true' : 'false' ?>;
+    const PRORATED_PRICE = <?= (float)$proratedYearlyPrice ?>;
+
+    let selectedPlan  = IS_UPGRADE ? 'yearly' : 'monthly';
+    let selectedPrice = IS_UPGRADE ? PRORATED_PRICE : 29.90;
     let cardPaymentBrickController = null;
     const mp = new MercadoPago('<?= getenv('MERCADOPAGO_PUBLIC_KEY') ?: ($_ENV['MERCADOPAGO_PUBLIC_KEY'] ?? '') ?>');
 
     function selectPlan(plan, price) {
-        selectedPlan = plan;
+        selectedPlan  = plan;
         selectedPrice = price;
 
-        // UI Updates
-        document.getElementById('card-monthly').classList.toggle('active', plan === 'monthly');
+        document.getElementById('card-monthly') && document.getElementById('card-monthly').classList.toggle('active', plan === 'monthly');
         document.getElementById('card-yearly').classList.toggle('active', plan === 'yearly');
 
-        // Update Summary
-        document.getElementById('summary-plan-name').textContent = plan === 'monthly' ? 'Mensal' : 'Anual';
+        document.getElementById('summary-plan-name').textContent = plan === 'monthly' ? 'Mensal' : (IS_UPGRADE ? 'Anual (com crédito)' : 'Anual');
         document.getElementById('summary-plan-price').textContent = 'R$ ' + price.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
-        // Reiniciar Brick se já estiver renderizado para atualizar o valor
         if (cardPaymentBrickController) {
             cardPaymentBrickController.unmount();
             renderCardPaymentBrick(mp.bricks());
@@ -225,9 +299,7 @@ ob_start();
         const settings = {
             initialization: {
                 amount: selectedPrice,
-                payer: {
-                    email: "<?= Auth::getUser()['email'] ?>",
-                },
+                payer: { email: "<?= Auth::getUser()['email'] ?>" },
             },
             customization: {
                 visual: {
@@ -235,45 +307,33 @@ ob_start();
                     hideFormTitle: true,
                     hidePaymentButton: false,
                 },
-                paymentMethods: {
-                    types: {
-                        includedByPriority: ['card']
-                    }
-                },
+                paymentMethods: { types: { includedByPriority: ['card'] } },
             },
             callbacks: {
                 onReady: () => { console.log("Brick Ready"); },
                 onSubmit: (formData) => {
-                    console.log("Form Data from Brick:", formData);
                     return new Promise((resolve, reject) => {
                         const payload = JSON.parse(json_encode_with_brick_data(formData));
-                        payload.plan_type = selectedPlan; 
-
-                        // Garantir que transaction_amount seja enviado caso o brick não tenha preenchido corretamente no json_encode
-                        if (!payload.transaction_amount) {
-                            payload.transaction_amount = selectedPrice;
-                        }
+                        payload.plan_type  = selectedPlan;
+                        payload.is_upgrade = IS_UPGRADE;
+                        if (!payload.transaction_amount) payload.transaction_amount = selectedPrice;
 
                         fetch('/index.php?url=' + '<?= obfuscateUrl('checkout') ?>', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload),
                         })
-                        .then((response) => response.json())
-                        .then((result) => {
+                        .then(r => r.json())
+                        .then(result => {
                             if (result.status === 'approved') {
                                 window.location.href = '/index.php?url=' + '<?= obfuscateUrl('subscription-success') ?>';
                                 resolve();
                             } else {
-                                const errorMsg = result.message || result.status_detail || 'Pagamento não aprovado';
-                                showPaymentError('Erro: ' + errorMsg);
+                                showPaymentError('Erro: ' + (result.message || result.status_detail || 'Pagamento não aprovado'));
                                 reject();
                             }
                         })
-                        .catch((error) => {
-                            showPaymentError("Erro ao processar. Tente novamente.");
-                            reject();
-                        });
+                        .catch(() => { showPaymentError("Erro ao processar. Tente novamente."); reject(); });
                     });
                 },
                 onError: (error) => { console.error("Brick Error:", error); },
@@ -285,32 +345,59 @@ ob_start();
     function json_encode_with_brick_data(formData) {
         const data = {
             transaction_amount: formData.transaction_amount,
-            payment_method_id: formData.payment_method_id,
+            payment_method_id:  formData.payment_method_id,
             payer: {
                 email: formData.payer.email,
                 identification: {
-                    type: formData.payer.identification.type,
+                    type:   formData.payer.identification.type,
                     number: formData.payer.identification.number ? formData.payer.identification.number.replace(/\D/g, '') : '',
                 },
             },
         };
-        if (formData.token) data.token = formData.token;
-        if (formData.installments) data.installments = formData.installments;
+        if (formData.token)                            data.token        = formData.token;
+        if (formData.installments)                     data.installments = formData.installments;
         if (formData.issuer_id && formData.issuer_id !== "") data.issuer_id = formData.issuer_id;
         return JSON.stringify(data);
     }
 
+    const MP_STATUS_MESSAGES = {
+        'cc_rejected_bad_filled_security_code': 'Código de segurança (CVV) inválido. Verifique os 3 dígitos no verso do cartão.',
+        'cc_rejected_bad_filled_date':          'Data de validade incorreta. Verifique o mês e o ano do cartão.',
+        'cc_rejected_bad_filled_other':         'Dados do cartão inválidos. Verifique as informações e tente novamente.',
+        'cc_rejected_bad_filled_card_number':   'Número do cartão incorreto. Verifique e tente novamente.',
+        'cc_rejected_blacklist':                'Cartão recusado. Entre em contato com seu banco.',
+        'cc_rejected_call_for_authorize':       'Pagamento não autorizado. Ligue para o seu banco para liberar a transação.',
+        'cc_rejected_card_disabled':            'Cartão desativado. Entre em contato com o banco emissor.',
+        'cc_rejected_duplicated_payment':       'Pagamento duplicado detectado. Aguarde alguns minutos antes de tentar novamente.',
+        'cc_rejected_high_risk':                'Pagamento recusado por segurança. Tente com outro cartão ou entre em contato com o suporte.',
+        'cc_rejected_insufficient_amount':      'Saldo insuficiente no cartão.',
+        'cc_rejected_invalid_installments':     'Número de parcelas inválido para este cartão.',
+        'cc_rejected_max_attempts':             'Número máximo de tentativas atingido. Tente novamente mais tarde.',
+        'cc_rejected_other_reason':             'Pagamento recusado pelo banco. Tente com outro cartão ou entre em contato com o suporte.',
+        'pending_contingency':                  'Pagamento em processamento. Aguarde a confirmação.',
+        'pending_review_manual':                'Pagamento em análise. Você será notificado em breve.',
+    };
+
+    function friendlyMpMessage(rawMessage) {
+        if (!rawMessage) return null;
+        for (const [key, msg] of Object.entries(MP_STATUS_MESSAGES)) {
+            if (rawMessage.includes(key)) return msg;
+        }
+        return null;
+    }
+
     function showPaymentError(message) {
         const errorContainer = document.getElementById('payment-error-container');
-        const errorMessage = document.getElementById('payment-error-message');
-        errorMessage.textContent = message;
+        const errorMessage   = document.getElementById('payment-error-message');
+        const friendly = friendlyMpMessage(message);
+        errorMessage.textContent = friendly || message;
         errorContainer.classList.remove('d-none');
         errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     document.getElementById('accept_terms').addEventListener('change', function() {
         const container = document.getElementById('paymentBrick_container');
-        const warning = document.getElementById('terms_warning');
+        const warning   = document.getElementById('terms_warning');
         if (this.checked) {
             container.classList.remove('opacity-50');
             container.style.pointerEvents = 'auto';
@@ -322,6 +409,8 @@ ob_start();
         }
     });
 
+    // Inicializar com o plano padrão selecionado
+    selectPlan(selectedPlan, selectedPrice);
     renderCardPaymentBrick(mp.bricks());
 </script>
 

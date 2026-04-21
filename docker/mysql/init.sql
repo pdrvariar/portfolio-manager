@@ -154,3 +154,38 @@ ALTER TABLE portfolios
     'smart_deposit',
     'selic_cash_deposit'
     ) DEFAULT 'standard';
+
+-- ── Gestão de Assinaturas ────────────────────────────────────
+
+ALTER TABLE users
+    ADD COLUMN subscription_status ENUM('none','active','canceled','expired','refunded') NOT NULL DEFAULT 'none' AFTER plan;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id                    INT PRIMARY KEY AUTO_INCREMENT,
+    user_id               INT NOT NULL,
+    mp_payment_id         VARCHAR(100) NULL,
+    mp_idempotency_key    VARCHAR(150) NULL,
+    plan_type             ENUM('monthly','yearly') NOT NULL DEFAULT 'monthly',
+    status                ENUM('active','canceled','expired','refunded','pending','failed') NOT NULL DEFAULT 'pending',
+    amount_paid           DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    starts_at             DATETIME NOT NULL,
+    expires_at            DATETIME NOT NULL,
+    canceled_at           DATETIME NULL,
+    cancel_type           ENUM('immediate','end_of_period') NULL,
+    refund_eligible_until DATETIME NULL,
+    refunded_at           DATETIME NULL,
+    refund_mp_id          VARCHAR(100) NULL,
+    refund_amount         DECIMAL(10,2) NULL,
+    reminder_7_sent       TINYINT(1) NOT NULL DEFAULT 0,
+    reminder_3_sent       TINYINT(1) NOT NULL DEFAULT 0,
+    reminder_1_sent       TINYINT(1) NOT NULL DEFAULT 0,
+    notes                 TEXT NULL,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id   (user_id),
+    INDEX idx_status    (status),
+    INDEX idx_expires_at(expires_at),
+    UNIQUE KEY uq_idempotency (mp_idempotency_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -1,5 +1,5 @@
 <?php
-$title = 'Assinatura Realizada!';
+$title = 'Assinatura Confirmada!';
 ob_start();
 ?>
 <div class="row justify-content-center">
@@ -8,10 +8,23 @@ ob_start();
             <div class="mb-4">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
             </div>
-            <h2 class="fw-bold mb-3">Parabéns!</h2>
-            <p class="lead text-muted mb-4">Sua assinatura do <strong>Plano PRO</strong> foi processada com sucesso. Agora você tem acesso ilimitado a todas as ferramentas.</p>
-            <div class="d-grid">
-                <a href="/index.php?url=<?= obfuscateUrl('dashboard') ?>" class="btn btn-primary btn-lg">Ir para o Dashboard</a>
+            <h2 class="fw-bold mb-3">Parabéns! 🎉</h2>
+            <p class="lead text-muted mb-2">Sua assinatura do <strong>Plano PRO</strong> foi ativada com sucesso!</p>
+            <p class="text-muted small mb-4">Você recebeu um e-mail de confirmação com os detalhes.</p>
+
+            <div class="alert alert-info text-start small mb-4">
+                <i class="bi bi-shield-check me-2"></i>
+                <strong>Garantia de 7 dias:</strong> Se não ficar satisfeito, solicite reembolso completo em
+                <a href="/index.php?url=<?= obfuscateUrl('subscription/manage') ?>" class="fw-bold">Gerenciar Assinatura</a>.
+            </div>
+
+            <div class="d-grid gap-2">
+                <a href="/index.php?url=<?= obfuscateUrl('dashboard') ?>" class="btn btn-primary btn-lg rounded-pill fw-bold">
+                    <i class="bi bi-house-door me-2"></i>Ir para o Dashboard
+                </a>
+                <a href="/index.php?url=<?= obfuscateUrl('subscription/manage') ?>" class="btn btn-outline-secondary rounded-pill">
+                    <i class="bi bi-gear me-2"></i>Gerenciar Assinatura
+                </a>
             </div>
         </div>
     </div>

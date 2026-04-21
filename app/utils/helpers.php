@@ -201,7 +201,7 @@ function deobfuscateUrl($hash) {
     if (strpos($hash, '/') !== false) return $hash;
 
     // Se for uma rota que deve ser pública ou não ofuscada
-    $publicRoutes = ['upgrade', 'checkout', 'subscription-success', 'subscription-failure', 'subscription-pending'];
+    $publicRoutes = ['upgrade', 'checkout', 'subscription-success', 'subscription-failure', 'subscription-pending', 'subscription/webhook'];
     if (in_array($hash, $publicRoutes)) return $hash;
 
     $key = getenv('URL_SECRET_KEY');

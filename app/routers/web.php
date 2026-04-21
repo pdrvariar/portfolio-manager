@@ -57,6 +57,13 @@ function setupRoutes(Router $router) {
     $router->add('subscription-success', ['controller' => 'subscription', 'action' => 'success']);
     $router->add('subscription-failure', ['controller' => 'subscription', 'action' => 'failure']);
     $router->add('subscription-pending', ['controller' => 'subscription', 'action' => 'pending']);
+    // Gestão de assinatura (self-service)
+    $router->add('subscription/manage', ['controller' => 'subscription', 'action' => 'manage']);
+    $router->add('subscription/cancel', ['controller' => 'subscription', 'action' => 'cancel']);
+    $router->add('subscription/refund', ['controller' => 'subscription', 'action' => 'refund']);
+    $router->add('subscription/upgrade-plan', ['controller' => 'subscription', 'action' => 'upgradePlan']);
+    // Webhook MP (sem autenticação de sessão)
+    $router->add('subscription/webhook', ['controller' => 'subscription', 'action' => 'webhook']);
 
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);
@@ -75,6 +82,11 @@ function setupRoutes(Router $router) {
     $router->add('admin/assets', ['controller' => 'admin', 'action' => 'assets']);
     $router->add('admin/assets/update-quotes', ['controller' => 'admin', 'action' => 'updateAssetQuotes']);
     $router->add('admin/create-default-portfolios', ['controller' => 'admin', 'action' => 'createDefaultPortfolios']);
+    // Admin — Assinaturas
+    $router->add('admin/subscriptions', ['controller' => 'admin', 'action' => 'subscriptions']);
+    $router->add('admin/subscriptions/cancel/{id:\d+}', ['controller' => 'admin', 'action' => 'cancelSubscription']);
+    $router->add('admin/subscriptions/refund/{id:\d+}', ['controller' => 'admin', 'action' => 'refundSubscription']);
+    $router->add('admin/subscriptions/reactivate/{id:\d+}', ['controller' => 'admin', 'action' => 'reactivateSubscription']);
 
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);

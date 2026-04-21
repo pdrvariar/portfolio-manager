@@ -3,6 +3,7 @@
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Client\Payment\PaymentRefundClient;
 
 class MercadoPagoService {
     public function __construct() {
@@ -64,39 +65,43 @@ class MercadoPagoService {
         }
     }
 
-    public function processPayment($paymentData, $userId) {
+    /**
+     * Processa pagamento via API transparente.
+     *
+     * @param array       $paymentData Dados do Brick/formulário
+     * @param int         $userId      ID do usuário pagante
+     * @param string|null $idempotencyKey Chave de idempotência (evita cobranças duplas)
+     */
+    public function processPayment($paymentData, $userId, $idempotencyKey = null) {
         $client = new PaymentClient();
 
-        $planType = $paymentData['plan_type'] ?? 'monthly';
+        $planType    = $paymentData['plan_type'] ?? 'monthly';
         $description = "Assinatura Plano PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal') . " - Portfolio Manager";
 
         $request = [
             "transaction_amount" => (float)$paymentData['transaction_amount'],
-            "description" => $description,
-            "payment_method_id" => $paymentData['payment_method_id'],
+            "description"        => $description,
+            "payment_method_id"  => $paymentData['payment_method_id'],
             "payer" => [
-                "email" => $paymentData['payer']['email'],
+                "email"          => $paymentData['payer']['email'],
                 "identification" => [
-                    "type" => $paymentData['payer']['identification']['type'] ?? 'CPF',
+                    "type"   => $paymentData['payer']['identification']['type'] ?? 'CPF',
                     "number" => preg_replace('/\D/', '', $paymentData['payer']['identification']['number'] ?? '')
                 ]
             ],
-            "external_reference" => (string)$userId,
+            "external_reference"  => (string)$userId,
             "statement_descriptor" => "PORTFOLIO PRO"
         ];
 
-        // SÊNIOR: Log do payload (sem dados sensíveis) para debug
         $debugRequest = $request;
         if (isset($paymentData['token'])) {
             $debugRequest['token'] = '***' . substr($paymentData['token'], -4);
         }
         error_log("MP DEBUG: Request Payload: " . json_encode($debugRequest));
 
-        // Se for cartão, adiciona token e parcelas
         if (isset($paymentData['token'])) {
-            $request["token"] = $paymentData['token'];
+            $request["token"]        = $paymentData['token'];
             $request["installments"] = (int)$paymentData['installments'];
-            // SÊNIOR: issuer_id deve ser string na API v2 ou nulo se não fornecido
             if (isset($paymentData['issuer_id']) && $paymentData['issuer_id'] !== "") {
                 $request["issuer_id"] = (string)$paymentData['issuer_id'];
             }
@@ -104,23 +109,118 @@ class MercadoPagoService {
 
         try {
             error_log("MP INFO: Processando pagamento via API (" . $paymentData['payment_method_id'] . ") para User ID: " . $userId);
-            
-            // SÊNIOR: Adicionando chave de idempotência para evitar cobranças duplicadas em caso de retry
+
             $request_options = new \MercadoPago\Client\Common\RequestOptions();
-            $request_options->setCustomHeaders(["X-Idempotency-Key: " . uniqid('pay_', true)]);
+            // Usa chave fornecida ou gera uma efêmera
+            $key = $idempotencyKey ?: uniqid('pay_', true);
+            $request_options->setCustomHeaders(["X-Idempotency-Key: " . $key]);
 
             $payment = $client->create($request, $request_options);
-            
+
             if (!$payment || !isset($payment->status)) {
                 error_log("ERRO MP: Resposta inválida da API de pagamento.");
                 return null;
             }
-            
+
             return $payment;
         } catch (Exception $e) {
             $this->logException($e, "ERRO CRÍTICO MP (Payment)");
             return null;
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // REEMBOLSO
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Processa reembolso total ou parcial de um pagamento aprovado.
+     *
+     * @param string $mpPaymentId ID do pagamento no Mercado Pago
+     * @param float  $amount      Valor a reembolsar (0 = reembolso total)
+     * @return object|null        Objeto de reembolso ou null em caso de erro
+     */
+    public function processRefund(string $mpPaymentId, float $amount = 0) {
+        try {
+            $refundClient = new PaymentRefundClient();
+
+            $request_options = new \MercadoPago\Client\Common\RequestOptions();
+            $request_options->setCustomHeaders(["X-Idempotency-Key: refund_" . $mpPaymentId]);
+
+            $body = $amount > 0 ? ['amount' => $amount] : [];
+
+            $refund = $refundClient->refund((int)$mpPaymentId, $body, $request_options);
+
+            if (!$refund || !isset($refund->id)) {
+                error_log("ERRO MP (Refund): resposta inválida – " . json_encode($refund));
+                return null;
+            }
+
+            error_log("MP REFUND OK: ID {$refund->id} para payment {$mpPaymentId}, valor R$ {$amount}");
+            return $refund;
+        } catch (Exception $e) {
+            $this->logException($e, "ERRO CRÍTICO MP (Refund)");
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // CONSULTA DE PAGAMENTO
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Consulta um pagamento diretamente na API do MP por ID.
+     */
+    public function getPaymentById(int $paymentId) {
+        try {
+            $client  = new PaymentClient();
+            $payment = $client->get($paymentId);
+            return $payment;
+        } catch (Exception $e) {
+            $this->logException($e, "ERRO MP (getPaymentById {$paymentId})");
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // WEBHOOK / ASSINATURA HMAC
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Valida a assinatura HMAC-SHA256 enviada pelo Mercado Pago no header x-signature.
+     *
+     * Documentação: https://www.mercadopago.com.br/developers/pt/docs/your-integrations/notifications/webhooks
+     *
+     * @param string $dataId      $body['data']['id']
+     * @param string $xSignature  Header 'x-signature'      (ts=...;v1=...)
+     * @param string $xRequestId  Header 'x-request-id'
+     * @return bool
+     */
+    public function verifyWebhookSignature(string $dataId, string $xSignature, string $xRequestId): bool {
+        $secret = trim(getenv('MERCADOPAGO_WEBHOOK_SECRET') ?: ($_ENV['MERCADOPAGO_WEBHOOK_SECRET'] ?? ''));
+
+        // Sem segredo configurado: logar aviso e permitir (modo lax p/ dev)
+        if (empty($secret)) {
+            error_log("MP WEBHOOK AVISO: MERCADOPAGO_WEBHOOK_SECRET não configurado. Validação ignorada.");
+            return true;
+        }
+
+        // Extrai ts e v1 do header
+        $parts = [];
+        foreach (explode(',', $xSignature) as $part) {
+            [$k, $v] = explode('=', trim($part), 2) + [1 => ''];
+            $parts[trim($k)] = trim($v);
+        }
+
+        if (empty($parts['ts']) || empty($parts['v1'])) {
+            error_log("MP WEBHOOK: header x-signature malformado: {$xSignature}");
+            return false;
+        }
+
+        $manifest = "id:{$dataId};request-id:{$xRequestId};ts:{$parts['ts']};";
+        $expected = hash_hmac('sha256', $manifest, $secret);
+
+        return hash_equals($expected, $parts['v1']);
     }
 
     private function logException($e, $context) {

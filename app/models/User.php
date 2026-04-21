@@ -160,17 +160,23 @@ class User {
     }
 
     /**
-     * Atualiza especificamente o plano do usuário.
+     * Atualiza especificamente o plano do usuário (inclui subscription_status).
+     *
+     * @param string|null $subscriptionStatus 'none'|'active'|'canceled'|'expired'|'refunded'
      */
-    public function updatePlan($id, $plan, $expiration = null, $planType = null, $paymentId = null) {
-        $sql = "UPDATE users SET plan = ?, subscription_expires_at = ?, subscription_plan_type = ?, last_payment_id = ? WHERE id = ?";
+    public function updatePlan($id, $plan, $expiration = null, $planType = null, $paymentId = null, $subscriptionStatus = null) {
+        // Infere o status a partir do plano se não fornecido explicitamente
+        if ($subscriptionStatus === null) {
+            $subscriptionStatus = ($plan === 'pro') ? 'active' : 'none';
+        }
+        $sql = "UPDATE users SET plan = ?, subscription_expires_at = ?, subscription_plan_type = ?, last_payment_id = ?, subscription_status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$plan, $expiration, $planType, $paymentId, $id]);
+        return $stmt->execute([$plan, $expiration, $planType, $paymentId, $subscriptionStatus, $id]);
     }
 
     /**
      * Verifica e atualiza o status da assinatura do usuário.
-     * Se expirada, retorna para 'starter'.
+     * Se expirada, retorna para 'starter' e marca o registro de assinatura como expirado.
      */
     public function checkSubscription($id) {
         $user = $this->findById($id);
@@ -179,7 +185,19 @@ class User {
         if ($user['plan'] === 'pro' && !empty($user['subscription_expires_at'])) {
             $expires = strtotime($user['subscription_expires_at']);
             if ($expires < time()) {
-                $this->updatePlan($id, 'starter', null, null, $user['last_payment_id']);
+                $this->updatePlan($id, 'starter', null, null, $user['last_payment_id'], 'expired');
+
+                // Atualiza o registro de assinatura
+                try {
+                    $subModel = new Subscription();
+                    $activeSub = $subModel->findActiveByUserId($id);
+                    if ($activeSub) {
+                        $subModel->markExpired($activeSub['id']);
+                    }
+                } catch (Exception $e) {
+                    error_log("checkSubscription: erro ao marcar expired: " . $e->getMessage());
+                }
+
                 return true; // Expirou
             }
         }

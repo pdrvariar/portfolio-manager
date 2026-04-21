@@ -117,6 +117,67 @@ ob_start();
                 </button>
             </div>
         </div>
+
+        <!-- Assinatura -->
+        <?php
+        $subModel  = new Subscription();
+        $activeSub = $subModel->findActiveByUserId($user['id'] ?? Auth::getUserId());
+        $refundEl  = $activeSub ? $subModel->isRefundEligible($activeSub) : false;
+        $daysLeft  = $activeSub ? $subModel->getDaysRemaining($activeSub) : 0;
+        ?>
+        <div class="card shadow-sm border-0 rounded-4 mt-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="fw-bold mb-0">Minha Assinatura</h6>
+                        <p class="text-muted small mb-0">Gerencie seu plano, cancelamento e reembolso.</p>
+                    </div>
+                    <?php if ($activeSub && $activeSub['status'] === 'active'): ?>
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-circle me-1"></i>PRO Ativa</span>
+                    <?php elseif ($activeSub && $activeSub['status'] === 'canceled'): ?>
+                        <span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-x-circle me-1"></i>Cancelada</span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary rounded-pill">Starter</span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($activeSub): ?>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2 text-center">
+                            <div class="smaller text-muted">Plano</div>
+                            <div class="fw-bold small">PRO <?= $activeSub['plan_type'] === 'yearly' ? 'Anual' : 'Mensal' ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2 text-center">
+                            <div class="smaller text-muted">Expira em</div>
+                            <div class="fw-bold small <?= $daysLeft <= 7 ? 'text-danger' : '' ?>">
+                                <?= $daysLeft ?> dias
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if ($refundEl): ?>
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <i class="bi bi-shield-check me-1"></i>
+                        <strong>Garantia ativa!</strong> Você tem <?= ceil((strtotime($activeSub['refund_eligible_until']) - time()) / 3600) ?>h para solicitar reembolso.
+                    </div>
+                <?php endif; ?>
+
+                <a href="/index.php?url=<?= obfuscateUrl('subscription/manage') ?>"
+                   class="btn btn-outline-primary rounded-pill btn-sm px-4 w-100">
+                    <i class="bi bi-gear me-1"></i>Gerenciar Assinatura
+                </a>
+                <?php else: ?>
+                <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>"
+                   class="btn btn-primary rounded-pill btn-sm px-4 w-100 fw-bold">
+                    <i class="bi bi-gem me-1"></i>Assinar Plano PRO
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
 
