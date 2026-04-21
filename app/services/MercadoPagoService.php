@@ -48,7 +48,7 @@ class MercadoPagoService {
             ],
             "notification_url"    => $baseUrl . "/index.php?url=subscription/webhook",
             "external_reference"  => (string)$userId,
-            "statement_descriptor" => "SMARTRETURNS PRO"
+            "statement_descriptor" => "SMARTRETURNS"
         ];
 
         try {
@@ -92,7 +92,7 @@ class MercadoPagoService {
                 ]
             ],
             "external_reference"  => (string)$userId,
-            "statement_descriptor" => "SMARTRETURNS PRO"
+            "statement_descriptor" => "SMARTRETURNS"
         ];
 
         $debugRequest = $request;
