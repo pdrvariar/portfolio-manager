@@ -24,17 +24,18 @@ class MercadoPagoService {
         $baseUrl = getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? 'http://localhost');
         
         $price = ($planType === 'yearly') ? 179.40 : 29.90; // R$ 14.95/mês no anual (50% desc)
-        $title = "Assinatura Plano PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal') . " - Portfolio Manager";
+        $title = "Assinatura SmartReturns PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal');
 
         $preferenceData = [
             "items" => [
                 [
-                    "id" => "plan_pro_" . $planType,
-                    "title" => $title,
-                    "description" => "Acesso ilimitado a ferramentas avançadas de análise de portfólio.",
-                    "quantity" => 1,
+                    "id"          => "plan_pro_" . $planType,
+                    "title"       => $title,
+                    "description" => "Acesso ilimitado a ferramentas avancadas de analise de portfolio.",
+                    "category_id" => "services",
+                    "quantity"    => 1,
                     "currency_id" => "BRL",
-                    "unit_price" => (float)$price
+                    "unit_price"  => (float)$price
                 ]
             ],
             "payer" => [
@@ -45,8 +46,9 @@ class MercadoPagoService {
                 "failure" => $baseUrl . "/index.php?url=subscription/failure",
                 "pending" => $baseUrl . "/index.php?url=subscription/pending"
             ],
-            "external_reference" => (string)$userId,
-            "statement_descriptor" => "PORTFOLIO PRO"
+            "notification_url"    => $baseUrl . "/index.php?url=subscription/webhook",
+            "external_reference"  => (string)$userId,
+            "statement_descriptor" => "SMARTRETURNS PRO"
         ];
 
         try {
@@ -76,7 +78,7 @@ class MercadoPagoService {
         $client = new PaymentClient();
 
         $planType    = $paymentData['plan_type'] ?? 'monthly';
-        $description = "Assinatura Plano PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal') . " - Portfolio Manager";
+        $description = "Assinatura SmartReturns PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal');
 
         $request = [
             "transaction_amount" => (float)$paymentData['transaction_amount'],
@@ -90,7 +92,7 @@ class MercadoPagoService {
                 ]
             ],
             "external_reference"  => (string)$userId,
-            "statement_descriptor" => "PORTFOLIO PRO"
+            "statement_descriptor" => "SMARTRETURNS PRO"
         ];
 
         $debugRequest = $request;
