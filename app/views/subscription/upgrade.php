@@ -210,36 +210,6 @@ ob_start();
                                     </div>
                                 </div>
 
-                <?php if (getenv('APP_ENV') === 'development'): ?>
-                                <div class="alert alert-warning mb-3" style="font-size:0.82rem;">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="bi bi-bug-fill me-2 fs-5"></i>
-                                        <strong class="fs-6">Modo Teste (Sandbox)</strong>
-                                    </div>
-
-                                    <div class="alert alert-danger py-2 px-3 mb-2">
-                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                        <strong>Nome do titular:</strong> digite exatamente <kbd class="fs-6">APRO</kbd> no campo "Nome como aparece no cartão" para aprovar o pagamento.<br>
-                                        <span class="text-muted" style="font-size:0.78rem;">Outros nomes provocam rejeição — é assim que o Mercado Pago controla resultados no sandbox.</span>
-                                    </div>
-                                    <div class="alert alert-info py-2 px-3 mb-2" style="font-size:0.78rem;">
-                                        <i class="bi bi-info-circle-fill me-1"></i>
-                                        <strong>Restrição do sandbox:</strong> o e-mail do comprador <strong>não pode ser o mesmo</strong> do dono do access token (<code>pdrvariar@gmail.com</code>).<br>
-                                        Se estiver logado com esse e-mail, crie outro usuário no sistema para testar.
-                                    </div>
-
-                                    <table class="table table-sm table-borderless mb-1" style="font-size:0.78rem;">
-                                        <thead class="table-light"><tr><th>Bandeira</th><th>Número</th><th>CVV</th><th>Validade</th></tr></thead>
-                                        <tbody>
-                                            <tr><td>Mastercard</td><td><code>5031 4332 1540 6351</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
-                                            <tr><td>Visa</td><td><code>4235 6477 2802 5682</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
-                                            <tr><td>Amex</td><td><code>3753 651535 56885</code></td><td><code>1234</code></td><td><code>11/30</code></td></tr>
-                                            <tr><td>Elo Débito</td><td><code>5067 7667 8388 8311</code></td><td><code>123</code></td><td><code>11/30</code></td></tr>
-                                        </tbody>
-                                    </table>
-                                    <div><strong>CPF:</strong> <code>12345678909</code> &nbsp;|&nbsp; <strong>Nome titular:</strong> <code>APRO</code> (aprovado) · <code>SECU</code> (CVV inválido) · <code>OTHE</code> (recusado)</div>
-                                </div>
-                                <?php endif; ?>
 
                                  <div id="payment-error-container" class="alert alert-danger d-none mb-3" role="alert">
                                      <i class="bi bi-exclamation-triangle-fill me-2"></i>
