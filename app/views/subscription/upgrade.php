@@ -299,7 +299,11 @@ ob_start();
                                 window.location.href = '/index.php?url=' + '<?= obfuscateUrl('subscription-success') ?>';
                                 resolve();
                             } else {
-                                showPaymentError('Erro: ' + (result.message || result.status_detail || 'Pagamento não aprovado'));
+                                let errorMsg = 'Erro: ' + (result.message || result.status_detail || 'Pagamento não aprovado');
+                                if (result.debug_info) {
+                                    errorMsg += ' [DEBUG: ' + result.debug_info.message + ' (ID: ' + result.debug_info.id + ')]';
+                                }
+                                showPaymentError(errorMsg);
                                 reject();
                             }
                         })
@@ -359,8 +363,17 @@ ob_start();
     function showPaymentError(message) {
         const errorContainer = document.getElementById('payment-error-container');
         const errorMessage   = document.getElementById('payment-error-message');
+        
+        // Se a mensagem contém [DEBUG:], extraímos para mostrar separadamente
+        let debugPart = '';
+        const debugMatch = message.match(/\[DEBUG: (.*)\]/);
+        if (debugMatch) {
+            debugPart = '<br><small class="text-muted" style="font-size: 0.8em;">Erro Interno: ' + debugMatch[1] + '</small>';
+            message = message.replace(/\[DEBUG: .*\]/, '');
+        }
+
         const friendly = friendlyMpMessage(message);
-        errorMessage.textContent = friendly || message;
+        errorMessage.innerHTML = (friendly || message) + debugPart;
         errorContainer.classList.remove('d-none');
         errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }

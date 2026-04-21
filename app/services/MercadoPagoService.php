@@ -122,6 +122,10 @@ class MercadoPagoService {
                 return null;
             }
 
+            if ($payment->status === 'rejected') {
+                error_log("MP REJECTED: Payment ID {$payment->id} | Reason: {$payment->status_detail}");
+            }
+
             return $payment;
         } catch (Exception $e) {
             $this->logException($e, "ERRO CRÍTICO MP (Payment)");
