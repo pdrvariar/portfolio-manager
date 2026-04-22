@@ -332,6 +332,8 @@
                 </a>
             </div>
             <div class="mt-2 mb-3">
+                <a href="/index.php?url=about" class="text-muted small text-decoration-none mx-2">Sobre</a>
+                <span class="text-muted small">|</span>
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Termos de Uso</a>
                 <span class="text-muted small">|</span>
                 <a href="/index.php?url=terms#isencao" class="text-muted small text-decoration-none mx-2">Isenção de Responsabilidade</a>

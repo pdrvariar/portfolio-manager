@@ -48,6 +48,10 @@ class HomeController {
         require_once __DIR__ . '/../views/home/terms.php';
     }
 
+    public function about() {
+        require_once __DIR__ . '/../views/home/about.php';
+    }
+
     /**
      * Exibe e processa o aceite forçado dos termos de uso
      */
