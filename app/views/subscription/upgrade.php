@@ -19,7 +19,14 @@ $monthlyPlan  = $plans['monthly'] ?? [];
 $yearlyPlan   = $plans['yearly']  ?? [];
 
 // Configurações de parcelamento
-$yearlyInstallConfig = $planModel->getInstallmentConfig('yearly');
+$yearlyInstallConfig  = $planModel->getInstallmentConfig('yearly');
+$monthlyInstallConfig = $planModel->getInstallmentConfig('monthly');
+// Array de configs (para uso no JS inline)
+$installments = [
+    'monthly' => $monthlyInstallConfig,
+    'yearly'  => $yearlyInstallConfig,
+];
+$monthlyInstallRows  = SubscriptionPlan::calculateInstallments($monthlyPrice, $monthlyInstallConfig);
 $yearlyInstallRows   = SubscriptionPlan::calculateInstallments($yearlyPrice, $yearlyInstallConfig);
 $bestInstall         = count($yearlyInstallRows) > 0 ? $yearlyInstallRows[count($yearlyInstallRows) - 1] : null;
 
@@ -68,6 +75,36 @@ ob_start();
     .text-main {
         color: var(--text-main) !important;
     }
+    /* ── Seletor de Parcelas (dropdown compacto) ────── */
+    .installment-select-wrapper { position: relative; }
+    .installment-select-wrapper .inst-icon {
+        position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+        color: #0d6efd; pointer-events: none; font-size: 1rem;
+    }
+    #installment-select {
+        appearance: none; -webkit-appearance: none;
+        padding: .55rem 2.4rem .55rem 2.2rem;
+        border: 2px solid #dee2e6; border-radius: 10px;
+        font-size: .88rem; width: 100%; cursor: pointer;
+        background-color: var(--bs-body-bg, #fff);
+        color: var(--bs-body-color, #212529);
+        transition: border-color .18s, box-shadow .18s;
+        font-weight: 500;
+    }
+    #installment-select:focus {
+        outline: none; border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+    }
+    .inst-chevron {
+        position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+        pointer-events: none; color: #6c757d; font-size: .8rem;
+    }
+    [data-theme="dark"] #installment-select {
+        border-color: #3d3d3d;
+        background-color: var(--bs-body-bg, #1a1a2e);
+    }
+    [data-theme="dark"] #installment-select:focus { border-color: #4d7eff; box-shadow: 0 0 0 3px rgba(77,126,255,.2); }
+    #installment-hint { display: none; }
 </style>
 
 <div class="row justify-content-center">
@@ -246,6 +283,10 @@ ob_start();
                                             <?= $upgradeMode ? 'Anual (com crédito)' : 'Mensal' ?>
                                         </span>
                                     </div>
+                                    <div id="summary-installment-row" class="d-flex justify-content-between mb-2 d-none">
+                                        <span class="text-muted">Parcelamento:</span>
+                                        <span id="summary-installment-text" class="fw-semibold small"></span>
+                                    </div>
                                     <div id="coupon-applied-row" class="d-flex justify-content-between mb-2 d-none">
                                         <span class="text-muted">Desconto cupom:</span>
                                         <span id="summary-coupon-discount" class="fw-bold text-success">— R$ 0,00</span>
@@ -256,10 +297,27 @@ ob_start();
                                             R$ <?= number_format($upgradeMode ? $proratedYearlyPrice : $monthlyPrice, 2, ',', '.') ?>
                                         </span>
                                     </div>
+                                    <div id="summary-total-note" class="text-muted d-none" style="font-size:.75rem; text-align:right;"></div>
                                 </div>
 
                                 <!-- Cupom de desconto -->
                                 <?php if (!$upgradeMode): ?>
+
+                                <!-- ■ Seletor de Parcelas -->
+                                <div id="installment-picker-wrapper" class="mb-4 d-none">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2" for="installment-select">
+                                        <i class="bi bi-credit-card-2-front me-1"></i>Como deseja pagar?
+                                    </label>
+                                    <div class="installment-select-wrapper">
+                                        <i class="bi bi-cash-coin inst-icon"></i>
+                                        <select id="installment-select" onchange="chooseInstallment(parseInt(this.value))">
+                                            <!-- Preenchido pelo JS -->
+                                        </select>
+                                        <i class="bi bi-chevron-down inst-chevron"></i>
+                                    </div>
+                                </div>
+
+                                <!-- ■ Cupom -->
                                 <div class="mb-4">
                                     <label class="form-label small fw-bold text-muted text-uppercase"><i class="bi bi-ticket-perforated me-1"></i>Cupom de Desconto</label>
                                     <div class="input-group input-group-sm">
@@ -283,7 +341,10 @@ ob_start();
                                      <span id="payment-error-message"></span>
                                  </div>
 
-                                <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
+                                 <!-- Hint de parcelamento (aparece quando plano anual selecionado) -->
+                                 <div id="installment-hint" class="alert alert-info py-2 px-3 small mb-3 d-none" role="alert"></div>
+
+                                 <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
                                 <div id="terms_warning" class="text-danger small text-center mb-3">
                                     Habilite o aceite dos termos para pagar.
                                 </div>
@@ -313,6 +374,26 @@ ob_start();
     const MONTHLY_PRICE  = <?= (float)$monthlyPrice ?>;
     const YEARLY_PRICE   = <?= (float)$yearlyPrice ?>;
 
+    // Configuração de parcelamento por plano (carregada do banco via PHP)
+    const INSTALLMENT_CONFIG = {
+        monthly: {
+            maxInstallments: <?= (int)($installments['monthly']['max_installments']    ?? 1) ?>,
+            minInstallments: 1,
+        },
+        yearly: {
+            maxInstallments: <?= (int)($installments['yearly']['max_installments']     ?? 12) ?>,
+            minInstallments: 1,
+        },
+    };
+
+    // Parcelas pré-calculadas (PHP → JS) — usadas no seletor visual
+    const INSTALLMENT_ROWS = {
+        monthly: <?= json_encode($monthlyInstallRows) ?>,
+        yearly:  <?= json_encode($yearlyInstallRows) ?>,
+    };
+
+    let selectedInstallments = 1; // parcela selecionada pelo usuário
+
     let selectedPlan   = IS_UPGRADE ? 'yearly' : 'monthly';
     let selectedPrice  = IS_UPGRADE ? PRORATED_PRICE : MONTHLY_PRICE;
     let basePrice      = selectedPrice;  // before coupon
@@ -321,15 +402,18 @@ ob_start();
     const mp = new MercadoPago('<?= getenv('MERCADOPAGO_PUBLIC_KEY') ?: ($_ENV['MERCADOPAGO_PUBLIC_KEY'] ?? '') ?>');
 
     function selectPlan(plan, price) {
-        selectedPlan  = plan;
-        basePrice     = price;
-        appliedCoupon = null;
-        selectedPrice = price;
+        selectedPlan         = plan;
+        basePrice            = price;
+        appliedCoupon        = null;
+        selectedPrice        = price;
+        selectedInstallments = 1;
 
         document.getElementById('card-monthly') && document.getElementById('card-monthly').classList.toggle('active', plan === 'monthly');
         document.getElementById('card-yearly').classList.toggle('active', plan === 'yearly');
 
+        renderInstallmentPicker(plan, price);
         updateOrderSummary();
+
         // Reset coupon
         const couponInput = document.getElementById('couponInput');
         if (couponInput) couponInput.value = '';
@@ -346,6 +430,27 @@ ob_start();
         const planName = selectedPlan === 'monthly' ? 'Mensal' : (IS_UPGRADE ? 'Anual (com crédito)' : 'Anual');
         document.getElementById('summary-plan-name').textContent = planName;
         document.getElementById('summary-plan-price').textContent = 'R$ ' + selectedPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+        // Linha de parcelamento
+        const rows = INSTALLMENT_ROWS[selectedPlan] || [];
+        const chosen = rows.find(r => r.installments === selectedInstallments);
+        const instRow  = document.getElementById('summary-installment-row');
+        const instText = document.getElementById('summary-installment-text');
+        const noteEl   = document.getElementById('summary-total-note');
+        if (chosen && chosen.installments > 1 && instRow && instText) {
+            instRow.classList.remove('d-none');
+            const badge = chosen.has_interest
+                ? `<span class="badge bg-warning text-dark ms-1" style="font-size:.7rem;">+juros</span>`
+                : `<span class="badge bg-success ms-1" style="font-size:.7rem;">sem juros</span>`;
+            instText.innerHTML = `${chosen.installments}x R$ ${chosen.installment_value.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}${badge}`;
+            if (chosen.has_interest && noteEl) {
+                noteEl.textContent = `Total com juros: R$ ${chosen.total_value.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+                noteEl.classList.remove('d-none');
+            } else { noteEl && noteEl.classList.add('d-none'); }
+        } else {
+            instRow && instRow.classList.add('d-none');
+            noteEl  && noteEl.classList.add('d-none');
+        }
 
         if (appliedCoupon) {
             document.getElementById('coupon-applied-row')?.classList.remove('d-none');
@@ -385,6 +490,8 @@ ob_start();
                 msgEl.innerHTML = `<span class="text-success">${result.message}</span>`;
                 document.getElementById('removeCouponBtn')?.classList.remove('d-none');
                 document.getElementById('applyCouponBtn')?.classList.add('d-none');
+                // Re-calcular parcelas com novo preço após cupom
+                recalcInstallmentRows(selectedPlan, result.final_price);
                 updateOrderSummary();
                 if (cardPaymentBrickController) {
                     cardPaymentBrickController.unmount();
@@ -418,27 +525,45 @@ ob_start();
     document.getElementById('couponInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
 
     const renderCardPaymentBrick = async (bricksBuilder) => {
+        const instCfg = INSTALLMENT_CONFIG[selectedPlan] || { maxInstallments: 1, minInstallments: 1 };
+
+        const initObj = {
+            amount: selectedPrice,
+            payer:  { email: "<?= Auth::getUser()['email'] ?>" },
+        };
+        // Pré-selecionar parcelas no brick se o usuário escolheu mais de 1
+        if (selectedInstallments > 1) {
+            initObj.installments = selectedInstallments;
+        }
+
         const settings = {
-            initialization: {
-                amount: selectedPrice,
-                payer: { email: "<?= Auth::getUser()['email'] ?>" },
-            },
+            initialization: initObj,
             customization: {
                 visual: {
                     style: { theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' },
                     hideFormTitle: true,
                     hidePaymentButton: false,
                 },
-                paymentMethods: { types: { includedByPriority: ['card'] } },
+                paymentMethods: {
+                    types: { includedByPriority: ['credit_card', 'debit_card'] },
+                    maxInstallments: instCfg.maxInstallments,
+                    minInstallments: instCfg.minInstallments,
+                },
             },
             callbacks: {
-                onReady: () => { console.log("Brick Ready"); },
+                onReady: () => {
+                    console.log("Brick Ready | plan=" + selectedPlan + " installments=" + selectedInstallments);
+                },
                 onSubmit: (formData) => {
                     return new Promise((resolve, reject) => {
                         const payload = JSON.parse(json_encode_with_brick_data(formData));
                         payload.plan_type   = selectedPlan;
                         payload.is_upgrade  = IS_UPGRADE;
                         payload.coupon_code = appliedCoupon ? appliedCoupon.code : '';
+                        // Garantir que installments é enviado (brick ou nossa seleção)
+                        if (!payload.installments && selectedInstallments > 1) {
+                            payload.installments = selectedInstallments;
+                        }
                         if (!payload.transaction_amount) payload.transaction_amount = selectedPrice;
 
                         fetch('/index.php?url=' + '<?= obfuscateUrl('checkout') ?>', {
@@ -468,6 +593,49 @@ ob_start();
         };
         cardPaymentBrickController = await bricksBuilder.create('cardPayment', 'paymentBrick_container', settings);
     };
+
+    // ── Seletor de Parcelas ──────────────────────────────────────
+    function renderInstallmentPicker(plan, baseAmt) {
+        const wrapper = document.getElementById('installment-picker-wrapper');
+        const select  = document.getElementById('installment-select');
+        if (!wrapper || !select) return;
+
+        const rows = INSTALLMENT_ROWS[plan] || [];
+        if (rows.length <= 1) {
+            wrapper.classList.add('d-none');
+            return;
+        }
+
+        wrapper.classList.remove('d-none');
+        select.innerHTML = '';
+
+        rows.forEach(row => {
+            const opt = document.createElement('option');
+            opt.value = row.installments;
+
+            const valFmt = row.installment_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const totalFmt = row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const interestTxt = row.has_interest
+                ? `  (total R$ ${totalFmt} c/ juros)`
+                : (row.installments > 1 ? '  sem juros' : '');
+
+            opt.textContent = `${row.installments}x  R$ ${valFmt}${interestTxt}`;
+            opt.selected = (row.installments === selectedInstallments);
+            select.appendChild(opt);
+        });
+    }
+
+    function chooseInstallment(n) {
+        selectedInstallments = n;
+        updateOrderSummary();
+        // Remontar o brick com installments pré-selecionado
+        if (cardPaymentBrickController) {
+            cardPaymentBrickController.unmount();
+            renderCardPaymentBrick(mp.bricks());
+        }
+    }
+
+    function updateInstallmentHint() { /* substituído por renderInstallmentPicker */ }
 
     function json_encode_with_brick_data(formData) {
         const data = {
