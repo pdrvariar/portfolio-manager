@@ -23,8 +23,9 @@ class Subscription {
         try {
             $sql = "INSERT INTO subscriptions
                         (user_id, mp_payment_id, mp_idempotency_key, plan_type,
-                         status, amount_paid, starts_at, expires_at, refund_eligible_until, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                         status, amount_paid, starts_at, expires_at, refund_eligible_until,
+                         notes, coupon_id, discount_amount, coupon_code)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $this->db->prepare($sql);
             $ok   = $stmt->execute([
@@ -38,6 +39,9 @@ class Subscription {
                 $data['expires_at'],
                 $data['refund_eligible_until'] ?? null,
                 $data['notes']                 ?? null,
+                $data['coupon_id']             ?? null,
+                $data['discount_amount']       ?? 0.00,
+                $data['coupon_code']           ?? null,
             ]);
 
             return $ok ? (int) $this->db->lastInsertId() : false;

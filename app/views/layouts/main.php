@@ -224,7 +224,12 @@
                                     <?php endif; ?>
                                 </a></li>
                                 <?php if (Auth::isAdmin()): ?>
-                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin') ?>"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header"><i class="bi bi-shield-lock me-1"></i>Admin</h6></li>
+                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin') ?>"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin/pricing') ?>"><i class="bi bi-tags me-2"></i>Gestão de Preços</a></li>
+                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin/coupons') ?>"><i class="bi bi-ticket-perforated me-2"></i>Cupons</a></li>
+                                    <li><a class="dropdown-item" href="/index.php?url=<?= obfuscateUrl('admin/subscriptions') ?>"><i class="bi bi-credit-card me-2"></i>Assinaturas</a></li>
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/index.php?url=<?= obfuscateUrl('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>

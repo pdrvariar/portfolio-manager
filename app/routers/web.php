@@ -64,6 +64,8 @@ function setupRoutes(Router $router) {
     $router->add('subscription/upgrade-plan', ['controller' => 'subscription', 'action' => 'upgradePlan']);
     // Webhook MP (sem autenticação de sessão)
     $router->add('subscription/webhook', ['controller' => 'subscription', 'action' => 'webhook']);
+    // Validação de cupom (AJAX)
+    $router->add('subscription/validate-coupon', ['controller' => 'subscription', 'action' => 'validateCoupon']);
 
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);
@@ -88,6 +90,16 @@ function setupRoutes(Router $router) {
     $router->add('admin/subscriptions/cancel/{id:\d+}', ['controller' => 'admin', 'action' => 'cancelSubscription']);
     $router->add('admin/subscriptions/refund/{id:\d+}', ['controller' => 'admin', 'action' => 'refundSubscription']);
     $router->add('admin/subscriptions/reactivate/{id:\d+}', ['controller' => 'admin', 'action' => 'reactivateSubscription']);
+    // Admin — Preços
+    $router->add('admin/pricing', ['controller' => 'admin', 'action' => 'pricing']);
+    $router->add('admin/pricing/update', ['controller' => 'admin', 'action' => 'updatePricing']);
+    // Admin — Cupons
+    $router->add('admin/coupons', ['controller' => 'admin', 'action' => 'coupons']);
+    $router->add('admin/coupons/create', ['controller' => 'admin', 'action' => 'createCoupon']);
+    $router->add('admin/coupons/update/{id:\d+}', ['controller' => 'admin', 'action' => 'updateCoupon']);
+    $router->add('admin/coupons/toggle/{id:\d+}', ['controller' => 'admin', 'action' => 'toggleCoupon']);
+    $router->add('admin/coupons/delete/{id:\d+}', ['controller' => 'admin', 'action' => 'deleteCoupon']);
+    $router->add('admin/coupons/check-code', ['controller' => 'admin', 'action' => 'checkCouponCode']);
 
     // --- Dashboard ---
     $router->add('dashboard', ['controller' => 'home', 'action' => 'index']);

@@ -133,6 +133,10 @@ function renderBreadcrumbs($customBreadcrumbs = null, $params = []) {
                 ];
             } elseif (in_array($action, ['assets', 'updateAssetQuotes'])) {
                 $items[] = ['label' => 'Ativos', 'url' => '#'];
+            } elseif (in_array($action, ['pricing', 'updatePricing'])) {
+                $items[] = ['label' => 'Gestão de Preços', 'url' => '#'];
+            } elseif (in_array($action, ['coupons', 'createCoupon', 'updateCoupon', 'toggleCoupon', 'deleteCoupon'])) {
+                $items[] = ['label' => 'Cupons de Desconto', 'url' => '#'];
             }
         }
 

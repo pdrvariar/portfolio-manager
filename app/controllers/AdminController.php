@@ -284,6 +284,202 @@ class AdminController {
         return $stmt->fetchAll();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // GESTÃO DE PREÇOS
+    // ─────────────────────────────────────────────────────────────
+
+    public function pricing() {
+        Auth::checkAdmin();
+        $planModel    = new SubscriptionPlan();
+        $activePrices = $planModel->getActivePrices();
+        $history      = [
+            'monthly' => $planModel->getPriceHistory('monthly'),
+            'yearly'  => $planModel->getPriceHistory('yearly'),
+        ];
+        $installments = [
+            'monthly' => $planModel->getInstallmentConfig('monthly'),
+            'yearly'  => $planModel->getInstallmentConfig('yearly'),
+        ];
+        $title = 'Gestão de Preços';
+        require_once __DIR__ . '/../views/admin/pricing.php';
+    }
+
+    public function updatePricing() {
+        Auth::checkAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+            exit;
+        }
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+            exit;
+        }
+
+        $planModel = new SubscriptionPlan();
+        $adminId   = Auth::getUserId();
+        $action    = $_POST['action'] ?? 'price';
+        $planType  = in_array($_POST['plan_type'] ?? '', ['monthly','yearly']) ? $_POST['plan_type'] : 'monthly';
+
+        if ($action === 'installment') {
+            $ok = $planModel->updateInstallmentConfig($planType, $_POST);
+            Session::setFlash($ok ? 'success' : 'error', $ok ? 'Parcelamento atualizado!' : 'Erro ao atualizar parcelamento.');
+        } else {
+            $price = (float)($_POST['price'] ?? 0);
+            if ($price <= 0) {
+                Session::setFlash('error', 'Preço deve ser maior que zero.');
+                header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+                exit;
+            }
+            $ok = $planModel->updatePrice($planType, $_POST, $adminId);
+            if ($ok) {
+                logActivity("Admin atualizou preço do plano {$planType} para R\$ {$price}", $adminId);
+                Session::setFlash('success', 'Preço atualizado com sucesso!');
+            } else {
+                Session::setFlash('error', 'Erro ao atualizar preço.');
+            }
+        }
+
+        header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+        exit;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GESTÃO DE CUPONS
+    // ─────────────────────────────────────────────────────────────
+
+    public function coupons() {
+        Auth::checkAdmin();
+        $couponModel = new DiscountCoupon();
+        $coupons     = $couponModel->getAll();
+        $stats       = $couponModel->getStats();
+        $title = 'Cupons de Desconto';
+        require_once __DIR__ . '/../views/admin/coupons.php';
+    }
+
+    public function createCoupon() {
+        Auth::checkAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $couponModel = new DiscountCoupon();
+        $code = strtoupper(trim($_POST['code'] ?? ''));
+        if (!$code) {
+            Session::setFlash('error', 'Código do cupom é obrigatório.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        if ($couponModel->codeExists($code)) {
+            Session::setFlash('error', "Cupom '{$code}' já existe.");
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $id = $couponModel->create($_POST, Auth::getUserId());
+        if ($id) {
+            logActivity("Admin criou cupom '{$code}'", Auth::getUserId());
+            Session::setFlash('success', "Cupom {$code} criado com sucesso!");
+        } else {
+            Session::setFlash('error', 'Erro ao criar cupom.');
+        }
+        header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+        exit;
+    }
+
+    public function updateCoupon() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id) {
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $couponModel = new DiscountCoupon();
+        $code = strtoupper(trim($_POST['code'] ?? ''));
+        if ($couponModel->codeExists($code, $id)) {
+            Session::setFlash('error', "Código '{$code}' já está em uso por outro cupom.");
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $ok = $couponModel->update($id, $_POST);
+        Session::setFlash($ok ? 'success' : 'error', $ok ? 'Cupom atualizado com sucesso!' : 'Erro ao atualizar cupom.');
+        if ($ok) logActivity("Admin atualizou cupom ID {$id}", Auth::getUserId());
+        header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+        exit;
+    }
+
+    public function toggleCoupon() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        $couponModel = new DiscountCoupon();
+        $coupon = $couponModel->findById($id);
+        if (!$coupon) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        $newState = !$coupon['is_active'];
+        $ok = $couponModel->toggle($id, $newState);
+        if ($ok) logActivity("Admin " . ($newState ? 'ativou' : 'desativou') . " cupom ID {$id}", Auth::getUserId());
+        header('Content-Type: application/json');
+        echo json_encode(['success' => $ok, 'is_active' => $newState]);
+        exit;
+    }
+
+    public function deleteCoupon() {
+        Auth::checkAdmin();
+        $id = (int)($this->params['id'] ?? 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id) {
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $couponModel = new DiscountCoupon();
+        $coupon = $couponModel->findById($id);
+        if (!$coupon) {
+            Session::setFlash('error', 'Cupom não encontrado.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+            exit;
+        }
+        $ok = $couponModel->delete($id);
+        $msg = ($coupon['used_count'] > 0)
+            ? 'Cupom desativado (possui usos registrados, não pode ser excluído).'
+            : 'Cupom excluído com sucesso.';
+        Session::setFlash($ok ? 'success' : 'error', $ok ? $msg : 'Erro ao excluir cupom.');
+        if ($ok) logActivity("Admin removeu/desativou cupom '{$coupon['code']}'", Auth::getUserId());
+        header('Location: /index.php?url=' . obfuscateUrl('admin/coupons'));
+        exit;
+    }
+
+    public function checkCouponCode() {
+        Auth::checkAdmin();
+        header('Content-Type: application/json');
+        $code      = strtoupper(trim($_GET['code'] ?? ''));
+        $excludeId = (int)($_GET['exclude'] ?? 0);
+        if (!$code) { echo json_encode(['exists' => false]); exit; }
+        $couponModel = new DiscountCoupon();
+        echo json_encode(['exists' => $couponModel->codeExists($code, $excludeId ?: null)]);
+        exit;
+    }
+
     public function updateAssetQuotes() {
         Auth::checkAdmin();
         header('Content-Type: application/json');

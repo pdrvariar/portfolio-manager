@@ -165,6 +165,28 @@ ob_start();
                             </div>
                         </div>
                     </a>
+                    <a href="/index.php?url=<?= obfuscateUrl('admin/pricing') ?>" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light p-2 rounded-3 me-3">
+                                <i class="bi bi-tags text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Gestão de Preços</h6>
+                                <p class="text-muted smaller mb-0">Preços, parcelamentos e promoções</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="/index.php?url=<?= obfuscateUrl('admin/coupons') ?>" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light p-2 rounded-3 me-3">
+                                <i class="bi bi-ticket-perforated text-warning"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold small">Cupons de Desconto</h6>
+                                <p class="text-muted smaller mb-0">Criar e gerenciar campanhas promocionais</p>
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

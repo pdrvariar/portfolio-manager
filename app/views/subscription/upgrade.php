@@ -8,6 +8,20 @@ $upgradeMode         = $upgradeMode         ?? false;
 $proratedCredit      = $proratedCredit      ?? 0;
 $proratedYearlyPrice = $proratedYearlyPrice ?? 179.40;
 $activeSub           = $activeSub           ?? null;
+$plans               = $plans               ?? [];
+
+// Preços dinâmicos do banco
+$planModel    = new SubscriptionPlan();
+$monthlyPrice = (float)(($plans['monthly']['price'] ?? null) ?: $planModel->getPriceFor('monthly'));
+$yearlyPrice  = $upgradeMode ? $proratedYearlyPrice : (float)(($plans['yearly']['price'] ?? null) ?: $planModel->getPriceFor('yearly'));
+
+$monthlyPlan  = $plans['monthly'] ?? [];
+$yearlyPlan   = $plans['yearly']  ?? [];
+
+// Configurações de parcelamento
+$yearlyInstallConfig = $planModel->getInstallmentConfig('yearly');
+$yearlyInstallRows   = SubscriptionPlan::calculateInstallments($yearlyPrice, $yearlyInstallConfig);
+$bestInstall         = count($yearlyInstallRows) > 0 ? $yearlyInstallRows[count($yearlyInstallRows) - 1] : null;
 
 $currentExpiration = !empty($userData['subscription_expires_at'])
     ? date('d/m/Y', strtotime($userData['subscription_expires_at']))
@@ -16,7 +30,7 @@ $currentExpiration = !empty($userData['subscription_expires_at'])
 $title = $upgradeMode ? 'Upgrade para PRO Anual - Smart Returns' : 'Planos e Preços - Smart Returns | Plano PRO';
 $meta_description = $upgradeMode
     ? 'Faça upgrade para o plano Anual PRO da Smart Returns e economize com o crédito dos seus dias restantes.'
-    : 'Desbloqueie recursos premium da Smart Returns: 1000 simulações/mês, Monte Carlo, cálculo de impostos, histórico completo e muito mais. Plano PRO a partir de R$ 29,90/mês.';
+    : 'Desbloqueie recursos premium da Smart Returns: 1000 simulações/mês, Monte Carlo, cálculo de impostos, histórico completo e muito mais. Plano PRO a partir de R$ ' . number_format($monthlyPrice, 2, ',', '.') . '/mês.';
 $meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
@@ -86,11 +100,19 @@ ob_start();
             <!-- Plano Mensal (oculto no modo upgrade) -->
             <?php if (!$upgradeMode): ?>
             <div class="col-md-5">
-                <div class="card h-100 shadow-sm plan-card active" id="card-monthly" onclick="selectPlan('monthly', 29.90)">
+                <div class="card h-100 shadow-sm plan-card active" id="card-monthly" onclick="selectPlan('monthly', <?= (float)$monthlyPrice ?>)">
+                    <?php if (!empty($monthlyPlan['label']) && $monthlyPlan['label'] !== 'Padrão'): ?>
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge-save" style="background:#0d6efd; color:#fff;"><?= htmlspecialchars($monthlyPlan['label']) ?></span>
+                    </div>
+                    <?php endif; ?>
                     <div class="card-body p-4 text-center">
                         <h4 class="fw-bold">Mensal</h4>
                         <div class="my-4">
-                            <span class="display-5 fw-bold">R$ 29,90</span>
+                            <?php if (!empty($monthlyPlan['original_price'])): ?>
+                                <div class="text-strike">R$ <?= number_format($monthlyPlan['original_price'], 2, ',', '.') ?></div>
+                            <?php endif; ?>
+                            <span class="display-5 fw-bold">R$ <?= number_format($monthlyPrice, 2, ',', '.') ?></span>
                             <span class="text-muted">/mês</span>
                         </div>
                         <p class="text-muted small">Ideal para quem quer testar por pouco tempo.</p>
@@ -106,12 +128,17 @@ ob_start();
             <?php endif; ?>
 
             <!-- Plano Anual -->
+            <?php
+                $yearlyOriginal = !empty($yearlyPlan['original_price']) ? (float)$yearlyPlan['original_price'] : ($monthlyPrice * 24);
+                $yearlyMonthly  = round($yearlyPrice / 12, 2);
+                $yearlyLabel    = !empty($yearlyPlan['label']) ? $yearlyPlan['label'] : '50% DE DESCONTO';
+            ?>
             <div class="col-md-5">
                 <div class="card h-100 shadow-sm plan-card position-relative <?= $upgradeMode ? 'active' : '' ?>"
                      id="card-yearly" onclick="selectPlan('yearly', <?= $proratedYearlyPrice ?>)">
                     <div class="position-absolute top-0 start-50 translate-middle">
                         <span class="badge-save">
-                            <?= $upgradeMode ? 'CRÉDITO APLICADO' : '50% DE DESCONTO' ?>
+                            <?= $upgradeMode ? 'CRÉDITO APLICADO' : htmlspecialchars(strtoupper($yearlyLabel)) ?>
                         </span>
                     </div>
                     <div class="card-body p-4 text-center">
@@ -120,26 +147,39 @@ ob_start();
                         </div>
                         <div class="my-4">
                             <?php if ($upgradeMode && $proratedCredit > 0): ?>
-                                <div class="text-strike">R$ 179,40</div>
+                                <div class="text-strike">R$ <?= number_format($planModel->getPriceFor('yearly'), 2, ',', '.') ?></div>
                                 <span class="display-5 fw-bold text-primary">R$ <?= number_format($proratedYearlyPrice, 2, ',', '.') ?></span>
                                 <span class="text-muted">/upgrade</span>
                                 <div class="small text-success fw-bold">
                                     Crédito de R$ <?= number_format($proratedCredit, 2, ',', '.') ?> aplicado
                                 </div>
                             <?php else: ?>
-                                <div class="text-strike">R$ 358,80</div>
-                                <span class="display-5 fw-bold text-primary">R$ 179,40</span>
+                                <?php if ($yearlyOriginal > $yearlyPrice): ?>
+                                    <div class="text-strike">R$ <?= number_format($yearlyOriginal, 2, ',', '.') ?></div>
+                                <?php endif; ?>
+                                <span class="display-5 fw-bold text-primary">R$ <?= number_format($yearlyPrice, 2, ',', '.') ?></span>
                                 <span class="text-muted">/ano</span>
-                                <div class="small text-success fw-bold">R$ 14,95 /mês</div>
+                                <div class="small text-success fw-bold" id="yearly-monthly-equiv">R$ <?= number_format($yearlyMonthly, 2, ',', '.') ?> /mês</div>
                             <?php endif; ?>
                         </div>
                         <p class="text-muted small"><?= $upgradeMode ? 'Aproveite o crédito dos seus dias restantes.' : 'O melhor custo-benefício para investidores sérios.' ?></p>
+                        <?php if ($bestInstall && $bestInstall['installments'] > 1): ?>
+                            <div class="small text-primary fw-semibold mb-2">
+                                ou <?= $bestInstall['installments'] ?>x de R$ <?= number_format($bestInstall['installment_value'], 2, ',', '.') ?>
+                                <?= $bestInstall['has_interest'] ? '(com juros)' : 'sem juros' ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($yearlyPlan['effective_until'])): ?>
+                            <div class="alert alert-warning p-1 small mb-2">
+                                <i class="bi bi-clock me-1"></i>Promoção até <?= date('d/m/Y', strtotime($yearlyPlan['effective_until'])) ?>
+                            </div>
+                        <?php endif; ?>
                         <hr>
                         <ul class="list-unstyled text-start mb-0">
                             <?php if ($upgradeMode): ?>
                                 <li class="mb-2"><i class="bi bi-arrow-up-circle text-primary me-2"></i> <strong>Upgrade imediato para Anual</strong></li>
                             <?php else: ?>
-                                <li class="mb-2"><i class="bi bi-star-fill text-warning me-2"></i> <strong>Economize R$ 179,40 por ano</strong></li>
+                                <li class="mb-2"><i class="bi bi-star-fill text-warning me-2"></i> <strong>Maior economia do ano</strong></li>
                             <?php endif; ?>
                             <li class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i> Todos os recursos PRO</li>
                             <li><i class="bi bi-calendar-event text-primary me-2"></i> Válido até: <strong class="text-main"><?= date('d/m/Y', strtotime('+1 year')) ?></strong></li>
@@ -206,13 +246,36 @@ ob_start();
                                             <?= $upgradeMode ? 'Anual (com crédito)' : 'Mensal' ?>
                                         </span>
                                     </div>
+                                    <div id="coupon-applied-row" class="d-flex justify-content-between mb-2 d-none">
+                                        <span class="text-muted">Desconto cupom:</span>
+                                        <span id="summary-coupon-discount" class="fw-bold text-success">— R$ 0,00</span>
+                                    </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted">Total a pagar:</span>
                                         <span id="summary-plan-price" class="fs-4 fw-bold">
-                                            R$ <?= number_format($upgradeMode ? $proratedYearlyPrice : 29.90, 2, ',', '.') ?>
+                                            R$ <?= number_format($upgradeMode ? $proratedYearlyPrice : $monthlyPrice, 2, ',', '.') ?>
                                         </span>
                                     </div>
                                 </div>
+
+                                <!-- Cupom de desconto -->
+                                <?php if (!$upgradeMode): ?>
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-muted text-uppercase"><i class="bi bi-ticket-perforated me-1"></i>Cupom de Desconto</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="couponInput" class="form-control text-uppercase"
+                                               placeholder="Ex: BLACKFRIDAY" maxlength="50"
+                                               oninput="this.value=this.value.toUpperCase()">
+                                        <button class="btn btn-outline-warning fw-bold" type="button" id="applyCouponBtn" onclick="applyCoupon()">
+                                            Aplicar
+                                        </button>
+                                        <button class="btn btn-outline-danger d-none" type="button" id="removeCouponBtn" onclick="removeCoupon()">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div id="couponMessage" class="mt-1 small"></div>
+                                </div>
+                                <?php endif; ?>
 
 
                                  <div id="payment-error-container" class="alert alert-danger d-none mb-3" role="alert">
@@ -245,29 +308,114 @@ ob_start();
 
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
-    const IS_UPGRADE    = <?= $upgradeMode ? 'true' : 'false' ?>;
+    const IS_UPGRADE     = <?= $upgradeMode ? 'true' : 'false' ?>;
     const PRORATED_PRICE = <?= (float)$proratedYearlyPrice ?>;
+    const MONTHLY_PRICE  = <?= (float)$monthlyPrice ?>;
+    const YEARLY_PRICE   = <?= (float)$yearlyPrice ?>;
 
-    let selectedPlan  = IS_UPGRADE ? 'yearly' : 'monthly';
-    let selectedPrice = IS_UPGRADE ? PRORATED_PRICE : 29.90;
+    let selectedPlan   = IS_UPGRADE ? 'yearly' : 'monthly';
+    let selectedPrice  = IS_UPGRADE ? PRORATED_PRICE : MONTHLY_PRICE;
+    let basePrice      = selectedPrice;  // before coupon
+    let appliedCoupon  = null;           // {code, discount, final_price}
     let cardPaymentBrickController = null;
     const mp = new MercadoPago('<?= getenv('MERCADOPAGO_PUBLIC_KEY') ?: ($_ENV['MERCADOPAGO_PUBLIC_KEY'] ?? '') ?>');
 
     function selectPlan(plan, price) {
         selectedPlan  = plan;
+        basePrice     = price;
+        appliedCoupon = null;
         selectedPrice = price;
 
         document.getElementById('card-monthly') && document.getElementById('card-monthly').classList.toggle('active', plan === 'monthly');
         document.getElementById('card-yearly').classList.toggle('active', plan === 'yearly');
 
-        document.getElementById('summary-plan-name').textContent = plan === 'monthly' ? 'Mensal' : (IS_UPGRADE ? 'Anual (com crédito)' : 'Anual');
-        document.getElementById('summary-plan-price').textContent = 'R$ ' + price.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        updateOrderSummary();
+        // Reset coupon
+        const couponInput = document.getElementById('couponInput');
+        if (couponInput) couponInput.value = '';
+        document.getElementById('couponMessage') && (document.getElementById('couponMessage').innerHTML = '');
+        hideCouponApplied();
 
         if (cardPaymentBrickController) {
             cardPaymentBrickController.unmount();
             renderCardPaymentBrick(mp.bricks());
         }
     }
+
+    function updateOrderSummary() {
+        const planName = selectedPlan === 'monthly' ? 'Mensal' : (IS_UPGRADE ? 'Anual (com crédito)' : 'Anual');
+        document.getElementById('summary-plan-name').textContent = planName;
+        document.getElementById('summary-plan-price').textContent = 'R$ ' + selectedPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+        if (appliedCoupon) {
+            document.getElementById('coupon-applied-row')?.classList.remove('d-none');
+            document.getElementById('summary-coupon-discount').textContent = '- R$ ' + appliedCoupon.discount.toLocaleString('pt-BR', {minimumFractionDigits:2});
+        } else {
+            hideCouponApplied();
+        }
+    }
+
+    function hideCouponApplied() {
+        document.getElementById('coupon-applied-row')?.classList.add('d-none');
+        document.getElementById('removeCouponBtn')?.classList.add('d-none');
+        document.getElementById('applyCouponBtn')?.classList.remove('d-none');
+    }
+
+    // ── Coupon ─────────────────────────────────────────────────
+    function applyCoupon() {
+        const code = document.getElementById('couponInput')?.value?.trim();
+        const msgEl = document.getElementById('couponMessage');
+        if (!code) { msgEl.innerHTML = '<span class="text-danger">Informe o código do cupom.</span>'; return; }
+
+        document.getElementById('applyCouponBtn').disabled = true;
+        document.getElementById('applyCouponBtn').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch('/index.php?url=<?= obfuscateUrl('subscription/validate-coupon') ?>', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ code, plan_type: selectedPlan, base_price: basePrice })
+        })
+        .then(r => r.json())
+        .then(result => {
+            document.getElementById('applyCouponBtn').disabled = false;
+            document.getElementById('applyCouponBtn').innerHTML = 'Aplicar';
+            if (result.valid) {
+                appliedCoupon  = { code, discount: result.discount, final_price: result.final_price };
+                selectedPrice  = result.final_price;
+                msgEl.innerHTML = `<span class="text-success">${result.message}</span>`;
+                document.getElementById('removeCouponBtn')?.classList.remove('d-none');
+                document.getElementById('applyCouponBtn')?.classList.add('d-none');
+                updateOrderSummary();
+                if (cardPaymentBrickController) {
+                    cardPaymentBrickController.unmount();
+                    renderCardPaymentBrick(mp.bricks());
+                }
+            } else {
+                msgEl.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${result.message}</span>`;
+                appliedCoupon = null;
+            }
+        })
+        .catch(() => {
+            document.getElementById('applyCouponBtn').disabled = false;
+            document.getElementById('applyCouponBtn').innerHTML = 'Aplicar';
+            msgEl.innerHTML = '<span class="text-danger">Erro ao verificar cupom.</span>';
+        });
+    }
+
+    function removeCoupon() {
+        appliedCoupon = null;
+        selectedPrice = basePrice;
+        document.getElementById('couponInput').value = '';
+        document.getElementById('couponMessage').innerHTML = '';
+        hideCouponApplied();
+        updateOrderSummary();
+        if (cardPaymentBrickController) {
+            cardPaymentBrickController.unmount();
+            renderCardPaymentBrick(mp.bricks());
+        }
+    }
+
+    document.getElementById('couponInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
 
     const renderCardPaymentBrick = async (bricksBuilder) => {
         const settings = {
@@ -288,8 +436,9 @@ ob_start();
                 onSubmit: (formData) => {
                     return new Promise((resolve, reject) => {
                         const payload = JSON.parse(json_encode_with_brick_data(formData));
-                        payload.plan_type  = selectedPlan;
-                        payload.is_upgrade = IS_UPGRADE;
+                        payload.plan_type   = selectedPlan;
+                        payload.is_upgrade  = IS_UPGRADE;
+                        payload.coupon_code = appliedCoupon ? appliedCoupon.code : '';
                         if (!payload.transaction_amount) payload.transaction_amount = selectedPrice;
 
                         fetch('/index.php?url=' + '<?= obfuscateUrl('checkout') ?>', {
@@ -398,8 +547,7 @@ ob_start();
 
     // Inicializar com o plano padrão selecionado
     selectPlan(selectedPlan, selectedPrice);
-    renderCardPaymentBrick(mp.bricks());
-</script>
+    renderCardPaymentBrick(mp.bricks());</script>
 
 <?php
 $content = ob_get_clean();

@@ -3,11 +3,23 @@
 class SubscriptionController {
     private $params;
 
-    // Preços definidos centralmente (single source of truth)
-    const PRICES = ['monthly' => 29.90, 'yearly' => 179.40];
+    // Fallback hardcoded (usado apenas se DB não estiver disponível)
+    const PRICES_FALLBACK = ['monthly' => 29.90, 'yearly' => 179.40];
 
     public function __construct($params) {
         $this->params = $params;
+    }
+
+    /**
+     * Retorna o preço atual do plano a partir do banco de dados.
+     */
+    private function getPlanPrice(string $planType): float {
+        try {
+            $planModel = new SubscriptionPlan();
+            return $planModel->getPriceFor($planType);
+        } catch (Exception $e) {
+            return self::PRICES_FALLBACK[$planType] ?? 29.90;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -31,9 +43,14 @@ class SubscriptionController {
         }
 
         // PRO mensal → modo upgrade para anual
+        $planModel          = new SubscriptionPlan();
+        $monthlyPrice       = $planModel->getPriceFor('monthly');
+        $yearlyPrice        = $planModel->getPriceFor('yearly');
+        $plans              = $planModel->getActivePrices();
+
         $upgradeMode        = Auth::isPro() && !Auth::isAdmin() && $activeSub && $activeSub['plan_type'] === 'monthly';
         $proratedCredit     = $upgradeMode ? $subModel->calculateProratedCredit($activeSub) : 0;
-        $proratedYearlyPrice = $upgradeMode ? round(self::PRICES['yearly'] - $proratedCredit, 2) : self::PRICES['yearly'];
+        $proratedYearlyPrice = $upgradeMode ? round($yearlyPrice - $proratedCredit, 2) : $yearlyPrice;
 
         require_once __DIR__ . '/../views/subscription/upgrade.php';
     }
@@ -77,19 +94,35 @@ class SubscriptionController {
         $planType  = in_array($paymentData['plan_type'] ?? '', ['monthly', 'yearly'])
                      ? $paymentData['plan_type'] : 'monthly';
         $isUpgrade = (bool)($paymentData['is_upgrade'] ?? false);
+        $couponCode = trim($paymentData['coupon_code'] ?? '');
 
         // ── Calcular valor esperado ──────────────────────────────
         $subModel        = new Subscription();
-        $expectedAmount  = self::PRICES[$planType];
+        $planModel       = new SubscriptionPlan();
+        $expectedAmount  = $planModel->getPriceFor($planType);
         $activeSub       = null;
 
         if ($isUpgrade && $planType === 'yearly') {
             $activeSub      = $subModel->findActiveByUserId($user['id']);
             if ($activeSub && $activeSub['plan_type'] === 'monthly') {
                 $credit         = $subModel->calculateProratedCredit($activeSub);
-                $expectedAmount = round(self::PRICES['yearly'] - $credit, 2);
+                $expectedAmount = round($planModel->getPriceFor('yearly') - $credit, 2);
             } else {
                 $isUpgrade = false; // sem assinatura mensal ativa, tratar como nova
+            }
+        }
+
+        // ── Aplicar cupom de desconto ────────────────────────────
+        $couponDiscount = 0;
+        $couponId       = null;
+        $basePrice      = $expectedAmount;
+        if ($couponCode) {
+            $couponModel    = new DiscountCoupon();
+            $couponResult   = $couponModel->validate($couponCode, $planType, $expectedAmount, $user['id']);
+            if ($couponResult['valid']) {
+                $couponDiscount = $couponResult['discount'];
+                $expectedAmount = $couponResult['final_price'];
+                $couponId       = $couponResult['coupon']['id'];
             }
         }
 
@@ -127,7 +160,7 @@ class SubscriptionController {
                 }
 
                 // Criar registro de assinatura
-                $subModel->create([
+                $newSubId = $subModel->create([
                     'user_id'              => $user['id'],
                     'mp_payment_id'        => (string)$payment->id,
                     'mp_idempotency_key'   => $idempotencyKey,
@@ -138,7 +171,15 @@ class SubscriptionController {
                     'expires_at'           => $expiration,
                     'refund_eligible_until'=> date('Y-m-d H:i:s', strtotime('+7 days')),
                     'notes'                => $isUpgrade ? 'Upgrade de mensal para anual' : null,
+                    'coupon_id'            => $couponId,
+                    'discount_amount'      => $couponDiscount,
+                    'coupon_code'          => $couponCode ?: null,
                 ]);
+
+                // Registrar uso do cupom
+                if ($couponId && $newSubId) {
+                    (new DiscountCoupon())->apply($couponId, $user['id'], $basePrice, $couponDiscount, $expectedAmount, $newSubId);
+                }
 
                 // Atualizar plano do usuário
                 if ($userModel->updatePlan($user['id'], 'pro', $expiration, $planType, (string)$payment->id, 'active')) {
@@ -475,13 +516,14 @@ class SubscriptionController {
                             $planType   = 'monthly';
                             $expiration = date('Y-m-d H:i:s', strtotime('+1 month'));
                             $now        = date('Y-m-d H:i:s');
+                            $planModel  = new SubscriptionPlan();
 
                             $subModel->create([
                                 'user_id'              => $userId,
                                 'mp_payment_id'        => (string)$paymentId,
                                 'plan_type'            => $planType,
                                 'status'               => 'active',
-                                'amount_paid'          => self::PRICES[$planType],
+                                'amount_paid'          => $planModel->getPriceFor($planType),
                                 'starts_at'            => $now,
                                 'expires_at'           => $expiration,
                                 'refund_eligible_until'=> date('Y-m-d H:i:s', strtotime('+7 days')),
@@ -499,6 +541,38 @@ class SubscriptionController {
         }
 
         require_once __DIR__ . '/../views/subscription/success.php';
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // VALIDAÇÃO DE CUPOM (AJAX)
+    // ─────────────────────────────────────────────────────────────
+
+    public function validateCoupon() {
+        Auth::checkAuthentication();
+        header('Content-Type: application/json');
+
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true) ?? $_POST;
+
+        $code      = trim($data['code'] ?? '');
+        $planType  = in_array($data['plan_type'] ?? '', ['monthly','yearly']) ? $data['plan_type'] : 'monthly';
+        $basePrice = (float)($data['base_price'] ?? 0);
+
+        if (!$code) {
+            echo json_encode(['valid' => false, 'message' => 'Informe o código do cupom.']);
+            exit;
+        }
+
+        if ($basePrice <= 0) {
+            $planModel = new SubscriptionPlan();
+            $basePrice = $planModel->getPriceFor($planType);
+        }
+
+        $couponModel = new DiscountCoupon();
+        $result      = $couponModel->validate($code, $planType, $basePrice, Auth::getUserId());
+
+        echo json_encode($result);
+        exit;
     }
 
     public function failure() {
