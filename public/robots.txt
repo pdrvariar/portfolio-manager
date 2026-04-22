@@ -3,6 +3,7 @@ Allow: /
 Allow: /index.php?url=login
 Allow: /index.php?url=register
 Allow: /index.php?url=terms
+Allow: /index.php?url=about
 Allow: /index.php?url=forgot-password
 Allow: /css/
 Allow: /js/

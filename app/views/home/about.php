@@ -1,9 +1,98 @@
 <?php
 $title = 'Sobre o Smart Returns — Quem está por trás da plataforma';
 $meta_description = 'Conheça a origem e os fundamentos do Smart Returns. Uma plataforma criada por um especialista em Ciências da Computação e Mercado de Capitais, com formação acadêmica sólida e experiência prática em Value Investing.';
-$meta_keywords = 'sobre smart returns, quem criou smart returns, backtest portfólio brasil, value investing plataforma, simulação investimentos, MBA value investing, mercado de capitais';
+$meta_keywords = 'sobre smart returns, quem criou smart returns, backtest portfólio brasil, value investing plataforma, simulação investimentos, MBA value investing, mercado de capitais, ciencias da computação UFES, sistema financeiro, mercado de capitais pós-graduação';
 $canonical_url = 'https://smartreturns.com.br/index.php?url=about';
-$og_type = 'profile';
+$og_type = 'website';
+
+// JSON-LD: AboutPage + Person (Schema.org) para rich results no Google
+$additional_css = '
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "AboutPage",
+            "@id": "https://smartreturns.com.br/index.php?url=about",
+            "name": "Sobre o Smart Returns — Quem está por trás da plataforma",
+            "description": "Conheça a origem e os fundamentos do Smart Returns. Uma plataforma criada por um especialista em Ciências da Computação e Mercado de Capitais, com formação acadêmica sólida e experiência prática em Value Investing.",
+            "url": "https://smartreturns.com.br/index.php?url=about",
+            "inLanguage": "pt-BR",
+            "isPartOf": {
+                "@type": "WebSite",
+                "@id": "https://smartreturns.com.br/",
+                "name": "Smart Returns",
+                "url": "https://smartreturns.com.br/"
+            },
+            "breadcrumb": {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Início",
+                        "item": "https://smartreturns.com.br/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Sobre",
+                        "item": "https://smartreturns.com.br/index.php?url=about"
+                    }
+                ]
+            },
+            "about": {
+                "@type": "Person",
+                "jobTitle": "Fundador e Desenvolvedor Principal",
+                "description": "Especialista em Ciências da Computação e Mercado de Capitais com mais de 20 anos de experiência em tecnologia e finanças. MBA em Value Investing (2024).",
+                "hasCredential": [
+                    {
+                        "@type": "EducationalOccupationalCredential",
+                        "credentialCategory": "degree",
+                        "name": "Bacharel em Ciências da Computação",
+                        "educationalLevel": "Graduação",
+                        "dateCreated": "2001",
+                        "recognizedBy": {
+                            "@type": "CollegeOrUniversity",
+                            "name": "Universidade Federal do Espírito Santo",
+                            "alternateName": "UFES",
+                            "address": {
+                                "@type": "PostalAddress",
+                                "addressLocality": "Vitória",
+                                "addressRegion": "ES",
+                                "addressCountry": "BR"
+                            }
+                        }
+                    },
+                    {
+                        "@type": "EducationalOccupationalCredential",
+                        "credentialCategory": "postdoctorate",
+                        "name": "Pós-Graduação Lato Sensu em Sistema Financeiro e Mercado de Capitais",
+                        "educationalLevel": "Especialização"
+                    },
+                    {
+                        "@type": "EducationalOccupationalCredential",
+                        "credentialCategory": "postdoctorate",
+                        "name": "MBA Value Investing",
+                        "educationalLevel": "MBA",
+                        "dateCreated": "2024"
+                    }
+                ]
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Smart Returns",
+                "url": "https://smartreturns.com.br",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://smartreturns.com.br/assets/favicon.png"
+                }
+            }
+        }
+    ]
+}
+</script>';
+
 ob_start();
 ?>
 
@@ -147,7 +236,7 @@ ob_start();
 
 <!-- Por que isso importa para você -->
 <section class="mb-5">
-    <div class="card border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, rgba(13,110,253,0.04) 0%, rgba(25,135,84,0.04) 100%);"
+    <div class="card border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, rgba(13,110,253,0.04) 0%, rgba(25,135,84,0.04) 100%);">
         <div class="card-body p-4 p-lg-5">
             <div class="row align-items-center g-4">
                 <div class="col-lg-6">

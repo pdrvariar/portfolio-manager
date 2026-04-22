@@ -43,5 +43,14 @@
         <priority>0.4</priority>
     </url>
 
+    <!-- Sobre a Plataforma -->
+    <url>
+        <loc>https://smartreturns.com.br/index.php?url=about</loc>
+        <lastmod>2026-04-22</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.6</priority>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="https://smartreturns.com.br/index.php?url=about"/>
+    </url>
+
 </urlset>
 
