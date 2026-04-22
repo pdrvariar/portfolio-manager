@@ -1,9 +1,9 @@
-<?php
+﻿<?php
 /**
- * @var array  $subscriptions Lista de assinaturas com dados do usuário
- * @var array  $stats         Estatísticas de receita e status
+ * @var array  $subscriptions Lista de assinaturas com dados do usuÃ¡rio
+ * @var array  $stats         EstatÃ­sticas de receita e status
  */
-$title = 'Gestão de Assinaturas';
+$title = 'GestÃ£o de Assinaturas';`n$meta_robots = 'noindex, nofollow';
 ob_start();
 
 $statusBadge = function(string $status): string {
@@ -22,13 +22,13 @@ $statusBadge = function(string $status): string {
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="fw-bold mb-1">Gestão de Assinaturas</h2>
-        <p class="text-muted small mb-0">Visão financeira e controle de ciclo de vida.</p>
+        <h2 class="fw-bold mb-1">GestÃ£o de Assinaturas</h2>
+        <p class="text-muted small mb-0">VisÃ£o financeira e controle de ciclo de vida.</p>
     </div>
     <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 fw-bold">ADMIN</span>
 </div>
 
-<!-- ── Métricas ──────────────────────────────────────────────── -->
+<!-- â”€â”€ MÃ©tricas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="row g-3 mb-5">
     <div class="col-6 col-md-2">
         <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
@@ -68,11 +68,11 @@ $statusBadge = function(string $status): string {
     </div>
 </div>
 
-<!-- ── Tabela de Assinaturas ─────────────────────────────────── -->
+<!-- â”€â”€ Tabela de Assinaturas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2 text-primary"></i>Todas as Assinaturas</h5>
-        <input type="text" id="subSearch" class="form-control form-control-sm w-auto" placeholder="🔍 Buscar usuário...">
+        <input type="text" id="subSearch" class="form-control form-control-sm w-auto" placeholder="ðŸ” Buscar usuÃ¡rio...">
     </div>
     <div class="card-body p-0">
         <?php if (empty($subscriptions)): ?>
@@ -85,14 +85,14 @@ $statusBadge = function(string $status): string {
             <table class="table table-hover align-middle mb-0" id="subTable">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4 small">Usuário</th>
+                        <th class="ps-4 small">UsuÃ¡rio</th>
                         <th class="small">Plano</th>
                         <th class="small">Status</th>
                         <th class="small">Valor</th>
-                        <th class="small">Início</th>
-                        <th class="small">Expiração</th>
+                        <th class="small">InÃ­cio</th>
+                        <th class="small">ExpiraÃ§Ã£o</th>
                         <th class="small">Payment ID</th>
-                        <th class="small text-end pe-4">Ações</th>
+                        <th class="small text-end pe-4">AÃ§Ãµes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -119,7 +119,7 @@ $statusBadge = function(string $status): string {
                         <?php endif; ?>
                     </td>
                     <td class="small text-muted">
-                        <code><?= $sub['mp_payment_id'] ? substr($sub['mp_payment_id'], 0, 10) . '…' : '—' ?></code>
+                        <code><?= $sub['mp_payment_id'] ? substr($sub['mp_payment_id'], 0, 10) . 'â€¦' : 'â€”' ?></code>
                     </td>
                     <td class="text-end pe-4">
                         <div class="d-flex gap-1 justify-content-end">
@@ -157,12 +157,12 @@ $statusBadge = function(string $status): string {
     </div>
 </div>
 
-<!-- Modal de confirmação de ação admin -->
+<!-- Modal de confirmaÃ§Ã£o de aÃ§Ã£o admin -->
 <div class="modal fade" id="modalAdminAction" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 p-4 pb-0">
-                <h6 class="fw-bold mb-0" id="modalActionTitle">Confirmar Ação</h6>
+                <h6 class="fw-bold mb-0" id="modalActionTitle">Confirmar AÃ§Ã£o</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="adminActionForm" method="POST">
@@ -188,7 +188,7 @@ document.getElementById('subSearch').addEventListener('input', function() {
     });
 });
 
-// Ação admin (cancel/refund/reactivate)
+// AÃ§Ã£o admin (cancel/refund/reactivate)
 function adminAction(type, id, userName) {
     const form   = document.getElementById('adminActionForm');
     const title  = document.getElementById('modalActionTitle');
@@ -203,7 +203,7 @@ function adminAction(type, id, userName) {
     };
     const c = config[type];
     form.action = '/index.php?url=<?= rawurlencode(obfuscateUrl('admin/subscriptions')) ?>/' + type + '/' + id;
-    title.textContent = c.label + ' — ' + userName;
+    title.textContent = c.label + ' â€” ' + userName;
     msg.innerHTML     = c.msg;
     btn.className     = 'btn rounded-pill btn-sm px-3 fw-bold ' + c.color;
     btn.textContent   = c.label;
@@ -216,4 +216,5 @@ function adminAction(type, id, userName) {
 $content = ob_get_clean();
 include_once __DIR__ . '/../layouts/main.php';
 ?>
+
 

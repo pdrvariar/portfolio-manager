@@ -1,5 +1,7 @@
 <?php
-$title = 'Termos de Uso e Responsabilidade';
+$title = 'Termos de Uso e Isenção de Responsabilidade - Smart Returns';
+$meta_description = 'Leia os Termos de Uso da Smart Returns: isenção de responsabilidade, política de reembolso em 7 dias e natureza educacional da plataforma de simulação de investimentos.';
+$canonical_url = 'https://smartreturns.com.br/index.php?url=terms';
 ob_start();
 ?>
 <div class="container py-5">
@@ -32,7 +34,7 @@ ob_start();
                         </ul>
                     </section>
 
-                    <section class="mb-5">
+                    <section class="mb-5" id="isencao">
                         <h4 class="fw-bold text-primary">3. Isenção de Responsabilidade</h4>
                         <p>
                             Os desenvolvedores e proprietários deste site <strong>não se responsabilizam</strong> por:
@@ -44,7 +46,7 @@ ob_start();
                         </ul>
                     </section>
 
-                    <section class="mb-5">
+                    <section class="mb-5" id="reembolso">
                         <h4 class="fw-bold text-primary">4. Garantia e Direito de Arrependimento (Reembolso)</h4>
                         <p>
                             Em conformidade com o <strong>Artigo 49 do Código de Defesa do Consumidor (Brasil)</strong>, o usuário possui o direito de desistir da assinatura (Plano PRO) no prazo de <strong>7 (sete) dias</strong> a contar da data da aprovação do pagamento.

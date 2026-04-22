@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 /**
  * @var array $assets Lista de todos os ativos do sistema
  */
-$title = 'Gerenciar Ativos';
+$title = 'Gerenciar Ativos';`n$meta_robots = 'noindex, nofollow';
 $csrfToken = Session::getCsrfToken();
 ob_start();
 ?>
@@ -20,7 +20,7 @@ ob_start();
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">ID</th>
-                        <th>Código</th>
+                        <th>CÃ³digo</th>
                         <th>Nome</th>
                         <th>Moeda</th>
                         <th>Tipo</th>
@@ -28,7 +28,7 @@ ob_start();
                         <th>Caixa?</th>
                         <th>Fonte</th>
                         <th>Registros</th>
-                        <th class="text-end pe-3">Ações</th>
+                        <th class="text-end pe-3">AÃ§Ãµes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,7 +65,7 @@ ob_start();
                             <?php if ($asset['is_cash']): ?>
                                 <span class="badge bg-success">Sim</span>
                             <?php else: ?>
-                                <span class="badge bg-light text-muted">Não</span>
+                                <span class="badge bg-light text-muted">NÃ£o</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -89,7 +89,7 @@ ob_start();
                                         title="Editar Ativo">
                                     <i class="bi bi-pencil text-primary"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-white border px-2 js-update-quotes" data-id="<?php echo $asset['id']; ?>" title="Atualizar Cotações">
+                                <button type="button" class="btn btn-sm btn-white border px-2 js-update-quotes" data-id="<?php echo $asset['id']; ?>" title="Atualizar CotaÃ§Ãµes">
                                     <i class="bi bi-arrow-clockwise text-success"></i>
                                 </button>
                                 <a href="/index.php?url=<?php echo obfuscateUrl('assets/delete/' . $asset['id']); ?>" class="btn btn-sm btn-white border px-2" onclick="return confirm('Remover este ativo?')" title="Excluir">
@@ -105,7 +105,7 @@ ob_start();
     </div>
 </div>
 
-<!-- Modal para Edição de Ativo -->
+<!-- Modal para EdiÃ§Ã£o de Ativo -->
 <div class="modal fade" id="editAssetModal" tabindex="-1" aria-labelledby="editAssetModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -119,9 +119,9 @@ ob_start();
                     <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
                     
                     <div class="mb-3">
-                        <label class="form-label">Código do Ativo</label>
+                        <label class="form-label">CÃ³digo do Ativo</label>
                         <input type="text" id="edit-code" class="form-control" readonly disabled>
-                        <small class="text-muted">O código não pode ser alterado por segurança.</small>
+                        <small class="text-muted">O cÃ³digo nÃ£o pode ser alterado por seguranÃ§a.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nome</label>
@@ -138,9 +138,9 @@ ob_start();
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tipo</label>
                             <select name="asset_type" id="edit-type" class="form-select">
-                                <option value="COTACAO">Cotação (Ações/ETF)</option>
+                                <option value="COTACAO">CotaÃ§Ã£o (AÃ§Ãµes/ETF)</option>
                                 <option value="TAXA_MENSAL">Taxa Mensal (SELIC)</option>
-                                <option value="INFLACAO">Inflação (IPCA)</option>
+                                <option value="INFLACAO">InflaÃ§Ã£o (IPCA)</option>
                             </select>
                         </div>
                     </div>
@@ -150,9 +150,9 @@ ob_start();
                             <option value="RENDA_FIXA">Renda Fixa</option>
                             <option value="ETF_BR">ETF Brasil</option>
                             <option value="CRIPTOMOEDA">Criptomoeda</option>
-                            <option value="FUNDO_IMOBILIARIO">Fundo Imobiliário (FII)</option>
+                            <option value="FUNDO_IMOBILIARIO">Fundo ImobiliÃ¡rio (FII)</option>
                             <option value="ETF_US">ETF EUA</option>
-                            <option value="NAO_APLICAVEL">Não Aplicável</option>
+                            <option value="NAO_APLICAVEL">NÃ£o AplicÃ¡vel</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -164,7 +164,7 @@ ob_start();
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Yahoo Ticker (se aplicável)</label>
+                        <label class="form-label">Yahoo Ticker (se aplicÃ¡vel)</label>
                         <input type="text" name="yahoo_ticker" id="edit-ticker" class="form-control">
                     </div>
                     <div class="mb-3 form-check">
@@ -174,7 +174,7 @@ ob_start();
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <button type="submit" class="btn btn-primary">Salvar AlteraÃ§Ãµes</button>
                 </div>
             </form>
         </div>
@@ -190,7 +190,7 @@ $additional_js = '
     const updateQuotesUrl = \'/index.php?url=' . obfuscateUrl('admin/assets/update-quotes') . '\';
     const updateAssetUrl = \'/index.php?url=' . obfuscateUrl('api/assets/update') . '\';
     
-    // Modal de Edição
+    // Modal de EdiÃ§Ã£o
     const editModal = new bootstrap.Modal(document.getElementById(\'editAssetModal\'));
     const editForm = document.getElementById(\'editAssetForm\');
 
@@ -233,7 +233,7 @@ $additional_js = '
             }
         }).catch(err => {
             console.error(\'Erro:\', err);
-            alert(\'Falha na comunicação com o servidor\');
+            alert(\'Falha na comunicaÃ§Ã£o com o servidor\');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         });
@@ -242,7 +242,7 @@ $additional_js = '
     document.querySelectorAll(\'.js-update-quotes\').forEach(btn => {
         btn.addEventListener(\'click\', function(){
             const id = this.getAttribute(\'data-id\');
-            if (!confirm(\'Atualizar cotações deste ativo?\')) return;
+            if (!confirm(\'Atualizar cotaÃ§Ãµes deste ativo?\')) return;
             fetch(updateQuotesUrl, {
                 method: \'POST\',
                 headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
@@ -251,21 +251,21 @@ $additional_js = '
                 if (res && res.requires_full_refresh) {
                     const providerStart = res.provider_start || res.yahoo_start;
                     const providerEnd = res.provider_end || res.yahoo_end;
-                    if (confirm(`Divergência detectada. Dados disponíveis de ${providerStart} até ${providerEnd}. Deseja atualizar tudo?`)) {
+                    if (confirm(`DivergÃªncia detectada. Dados disponÃ­veis de ${providerStart} atÃ© ${providerEnd}. Deseja atualizar tudo?`)) {
                         fetch(updateQuotesUrl, {
                             method: \'POST\',
                             headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
                             body: `id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrf)}&confirm_full=1`
                         }).then(r2 => r2.json()).then(res2 => {
-                            alert(res2.message || \'Operação concluída.\');
+                            alert(res2.message || \'OperaÃ§Ã£o concluÃ­da.\');
                             window.location.reload();
-                        }).catch(() => alert(\'Falha ao confirmar atualização completa.\'));
+                        }).catch(() => alert(\'Falha ao confirmar atualizaÃ§Ã£o completa.\'));
                     }
                 } else {
-                    alert((res && res.message) ? res.message : \'Operação concluída.\');
+                    alert((res && res.message) ? res.message : \'OperaÃ§Ã£o concluÃ­da.\');
                     window.location.reload();
                 }
-            }).catch(() => alert(\'Falha ao atualizar cotações.\'));
+            }).catch(() => alert(\'Falha ao atualizar cotaÃ§Ãµes.\'));
         });
     });
 })();
@@ -273,3 +273,4 @@ $additional_js = '
 ';
 include_once __DIR__ . '/../layouts/main.php';
 ?>
+

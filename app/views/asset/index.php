@@ -1,15 +1,15 @@
-<?php
+﻿<?php
 /**
  * @var array $assets Lista de ativos (id, code, name, currency, asset_type, etc.)
  */
-$title = 'Biblioteca de Ativos';
+$title = 'Biblioteca de Ativos';`n$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-0">Biblioteca de Ativos</h2>
-        <p class="text-muted small mb-0">Gerencie a base de dados histórica para suas simulações.</p>
+        <p class="text-muted small mb-0">Gerencie a base de dados histÃ³rica para suas simulaÃ§Ãµes.</p>
     </div>
     <?php if (Auth::isAdmin()): ?>
         <a href="index.php?url=<?php echo obfuscateUrl('assets/import'); ?>" class="btn btn-primary shadow-sm rounded-pill px-4">
@@ -28,9 +28,9 @@ ob_start();
                         <th style="width: 15%">Moeda</th>
                         <th style="width: 15%">Classe</th>
                         <?php if (Auth::isAdmin()): ?>
-                            <th style="width: 25%">Histórico</th>
+                            <th style="width: 25%">HistÃ³rico</th>
                         <?php endif; ?>
-                        <th class="text-end pe-3" style="width: 20%">Ações</th>
+                        <th class="text-end pe-3" style="width: 20%">AÃ§Ãµes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,7 +50,7 @@ ob_start();
                                 </div>
                                 <div class="text-muted smaller">
                                     <?php echo !empty($asset['min_date']) ? date('m/y', strtotime($asset['min_date'])) : '--'; ?> 
-                                    → 
+                                    â†’ 
                                     <?php echo !empty($asset['max_date']) ? date('m/y', strtotime($asset['max_date'])) : '--'; ?>
                                 </div>
                             </td>
@@ -106,10 +106,10 @@ ob_start();
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold text-muted">Classe</label>
                             <select name="asset_type" id="editAssetType" class="form-select">
-                                <option value="COTACAO">Cotação</option>
+                                <option value="COTACAO">CotaÃ§Ã£o</option>
                                 <option value="TAXA_MENSAL">Taxa Mensal</option>
-                                <option value="INFLACAO">Inflação</option>
-                                <option value="CAMBIO">Câmbio</option>
+                                <option value="INFLACAO">InflaÃ§Ã£o</option>
+                                <option value="CAMBIO">CÃ¢mbio</option>
                             </select>
                         </div>
                     </div>
@@ -127,7 +127,7 @@ ob_start();
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="saveAsset()">
-                        <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+                        <i class="bi bi-check-lg me-1"></i>Salvar AlteraÃ§Ãµes
                     </button>
                 </div>
             </form>
@@ -187,9 +187,9 @@ $additional_js = <<<JS
             },
             error: function(xhr) {
                 if(xhr.status === 403) {
-                    alert('Erro de Segurança: Sessão expirada ou Token inválido.');
+                    alert('Erro de SeguranÃ§a: SessÃ£o expirada ou Token invÃ¡lido.');
                 } else {
-                    alert('Erro técnico ao salvar.');
+                    alert('Erro tÃ©cnico ao salvar.');
                 }
             }
         });

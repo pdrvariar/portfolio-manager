@@ -1,5 +1,8 @@
 <?php
-$title = 'Recuperar Senha - Portfolio Backtest';
+$title = 'Recuperar Senha - Smart Returns';
+$meta_description = 'Recupere o acesso à sua conta Smart Returns. Insira seu e-mail e receba um link de redefinição de senha.';
+$meta_robots = 'noindex, follow';
+$canonical_url = 'https://smartreturns.com.br/index.php?url=forgot-password';
 ob_start();
 ?>
 <div class="row justify-content-center align-items-center min-vh-100">
@@ -45,7 +48,7 @@ ob_start();
         </div>
         
         <div class="text-center mt-4">
-            <p class="text-muted small">Portfolio Backtest &copy; <?= date('Y'); ?></p>
+            <p class="text-muted small">Smart Returns &copy; <?= date('Y'); ?></p>
         </div>
     </div>
 </div>

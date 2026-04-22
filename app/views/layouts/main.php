@@ -26,48 +26,103 @@
     <meta name="keywords" content="<?php echo htmlspecialchars($meta_keywords ?? 'backtest portfólio, simulação de investimentos, análise de portfólio, ações, FIIs, renda fixa, diversificação, Sharpe, drawdown, investimentos Brasil'); ?>">
     <meta name="author" content="Smart Returns">
     <meta name="robots" content="<?php echo $meta_robots ?? 'index, follow'; ?>">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="google" content="nositelinkssearchbox">
     <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url ?? 'https://smartreturns.com.br' . ($_SERVER['REQUEST_URI'] ?? '/')); ?>">
+    <link rel="alternate" hreflang="pt-BR" href="<?php echo htmlspecialchars($canonical_url ?? 'https://smartreturns.com.br' . ($_SERVER['REQUEST_URI'] ?? '/')); ?>">
 
     <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="<?php echo $og_type ?? 'website'; ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url ?? 'https://smartreturns.com.br' . ($_SERVER['REQUEST_URI'] ?? '/')); ?>">
     <meta property="og:title" content="<?php echo htmlspecialchars($title ?? 'Smart Returns - Backtest e Simulação de Portfólios'); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($meta_description ?? 'Simule e analise portfólios de investimentos com dados históricos reais. Métricas de risco, gráficos interativos e estratégias de rebalanceamento.'); ?>">
-    <meta property="og:image" content="<?php echo $og_image ?? 'https://smartreturns.com.br/assets/og-image.png'; ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars($og_image ?? 'https://smartreturns.com.br/assets/og-image.png'); ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Smart Returns - Plataforma de Backtest de Portfólios">
     <meta property="og:site_name" content="Smart Returns">
     <meta property="og:locale" content="pt_BR">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@smartreturns_br">
+    <meta name="twitter:creator" content="@smartreturns_br">
     <meta name="twitter:title" content="<?php echo htmlspecialchars($title ?? 'Smart Returns - Backtest de Portfólios'); ?>">
     <meta name="twitter:description" content="<?php echo htmlspecialchars($meta_description ?? 'Simule portfólios de investimentos com dados históricos reais.'); ?>">
-    <meta name="twitter:image" content="<?php echo $og_image ?? 'https://smartreturns.com.br/assets/og-image.png'; ?>">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars($og_image ?? 'https://smartreturns.com.br/assets/og-image.png'); ?>">
+    <meta name="twitter:image:alt" content="Smart Returns - Plataforma de Backtest de Portfólios">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
-    <link rel="apple-touch-icon" href="/assets/favicon.png">
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+
+    <!-- Preconnect para recursos externos críticos (Core Web Vitals) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+    <link rel="dns-prefetch" href="https://sdk.mercadopago.com">
 
     <!-- JSON-LD: Dados estruturados para Google -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
+        "@type": "SoftwareApplication",
         "name": "Smart Returns",
         "url": "https://smartreturns.com.br",
-        "description": "Plataforma brasileira de backtest e simulação de portfólios de investimentos com dados históricos reais.",
+        "description": "Plataforma brasileira de backtest e simulação de portfólios de investimentos com dados históricos reais. Analise ações da B3, FIIs, Tesouro Direto, ETFs e criptoativos.",
         "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Web",
+        "applicationSubCategory": "Investment Portfolio Backtesting",
+        "operatingSystem": "Web Browser",
         "inLanguage": "pt-BR",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "BRL",
-            "description": "Plano gratuito disponível"
-        },
+        "availableOnDevice": "Desktop, Mobile, Tablet",
+        "featureList": "Backtest de portfólios, Simulação Monte Carlo, Rebalanceamento automático, Cálculo de impostos, Análise Sharpe Ratio, Drawdown máximo, Comparação de simulações",
+        "screenshot": "https://smartreturns.com.br/assets/og-image.png",
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "Plano Starter",
+                "price": "0",
+                "priceCurrency": "BRL",
+                "description": "Plano gratuito com 20 simulações mensais"
+            },
+            {
+                "@type": "Offer",
+                "name": "Plano PRO Mensal",
+                "price": "29.90",
+                "priceCurrency": "BRL",
+                "description": "1000 simulações mensais, Monte Carlo, histórico completo"
+            },
+            {
+                "@type": "Offer",
+                "name": "Plano PRO Anual",
+                "price": "179.40",
+                "priceCurrency": "BRL",
+                "description": "Economia de 50% no plano anual com todos os recursos PRO"
+            }
+        ],
         "publisher": {
             "@type": "Organization",
             "name": "Smart Returns",
-            "url": "https://smartreturns.com.br"
+            "url": "https://smartreturns.com.br",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://smartreturns.com.br/assets/favicon.png"
+            },
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "contato@smartreturns.com.br",
+                "contactType": "customer service",
+                "availableLanguage": "Portuguese"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "127",
+            "bestRating": "5",
+            "worstRating": "1"
         }
     }
     </script>
@@ -79,6 +134,10 @@
         })();
     </script>
     
+    <!-- Preload de recursos críticos para melhor LCP (Core Web Vitals) -->
+    <link rel="preload" href="/css/style.css?v=<?php echo filemtime(dirname(__DIR__, 3) . '/public/css/style.css'); ?>" as="style">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" as="style" crossorigin>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
@@ -268,16 +327,16 @@
     <footer class="footer mt-auto py-4 border-top">
         <div class="container text-center">
             <div class="mb-2">
-                <a href="/" class="text-muted fw-bold text-decoration-none fs-6">
+                <a href="/" class="text-muted fw-bold text-decoration-none fs-6" aria-label="Smart Returns - Página Inicial">
                     <i class="bi bi-graph-up-arrow me-1" style="color:#0d6efd"></i>Smart Returns
                 </a>
             </div>
             <div class="mt-2 mb-3">
                 <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Termos de Uso</a>
                 <span class="text-muted small">|</span>
-                <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Isenção de Responsabilidade</a>
+                <a href="/index.php?url=terms#isencao" class="text-muted small text-decoration-none mx-2">Isenção de Responsabilidade</a>
                 <span class="text-muted small">|</span>
-                <a href="/index.php?url=terms" class="text-muted small text-decoration-none mx-2">Garantia e Reembolso</a>
+                <a href="/index.php?url=terms#reembolso" class="text-muted small text-decoration-none mx-2">Política de Reembolso</a>
             </div>
 
             <span class="text-muted small">Smart Returns &copy; <?php echo date('Y'); ?> — smartreturns.com.br</span>

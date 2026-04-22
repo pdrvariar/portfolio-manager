@@ -2,7 +2,8 @@
 /**
  * @var string $token Token de recuperação de senha
  */
-$title = 'Nova Senha - Portfolio Backtest';
+$title = 'Redefinir Senha - Smart Returns';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="row justify-content-center align-items-center min-vh-100">

@@ -26,10 +26,18 @@ ini_set('display_errors', $isDev ? 1 : 0);
 require_once __DIR__ . '/../app/core/Session.php';
 Session::start(); 
 
-// Headers para evitar cache de dados sensíveis (SaaS Financeiro)
-header("Cache-Control: no-cache, no-store, must-revalidate");
-header("Pragma: no-cache");
-header("Expires: 0");
+// Headers de cache: público para páginas de landing, sem cache para áreas autenticadas
+$publicRoutes = ['', 'login', 'register', 'terms', 'forgot-password'];
+$requestedUrl = $_GET['url'] ?? '';
+if (in_array($requestedUrl, $publicRoutes, true)) {
+    // Páginas públicas: permite cache por até 5 minutos (ajuda Core Web Vitals)
+    header("Cache-Control: public, max-age=300, stale-while-revalidate=60");
+} else {
+    // Áreas autenticadas: sem cache para proteger dados do usuário
+    header("Cache-Control: no-cache, no-store, must-revalidate");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+}
 
 // 5. Carregamento do Núcleo (Core)
 $baseDir = dirname(__DIR__) . '/app';

@@ -1,8 +1,9 @@
 <?php
 $title = 'Smart Returns - Backtest e Simulação de Portfólios de Investimentos';
 $meta_description = 'Simule e faça backtest de portfólios de investimentos com dados históricos reais. Analise ações brasileiras, FIIs, renda fixa, Tesouro Direto e criptoativos. Métricas de risco, Sharpe, drawdown e muito mais.';
-$meta_keywords = 'backtest portfólio, simulação investimentos, análise portfólio ações, FIIs backtest, renda fixa simulação, rebalanceamento portfólio, Sharpe ratio Brasil, investimentos longo prazo';
+$meta_keywords = 'backtest portfólio, simulação investimentos, análise portfólio ações, FIIs backtest, renda fixa simulação, rebalanceamento portfólio, Sharpe ratio Brasil, investimentos longo prazo, CAGR, drawdown, Monte Carlo investimentos';
 $canonical_url = 'https://smartreturns.com.br/';
+$og_type = 'website';
 ob_start();
 ?>
 
@@ -153,6 +154,86 @@ ob_start();
     </a>
 </section>
 
+<!-- FAQ Section - importante para SEO de cauda longa -->
+<section class="mb-5" id="faq" aria-label="Perguntas Frequentes">
+    <h2 class="text-center fw-bold mb-2">Perguntas Frequentes</h2>
+    <p class="text-center text-muted mb-4" style="max-width:640px;margin:0 auto;">Tire suas dúvidas sobre backtest e simulação de investimentos.</p>
+    <div class="accordion" id="faqAccordion">
+        <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq1">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="false" aria-controls="faqCollapse1">
+                    O que é backtest de portfólio?
+                </button>
+            </h3>
+            <div id="faqCollapse1" class="accordion-collapse collapse" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Backtest é a simulação do desempenho de uma carteira de investimentos usando dados históricos reais do mercado. Na Smart Returns, você define os ativos, as alocações e o período desejado, e o sistema calcula como seu portfólio teria performado, incluindo métricas como rentabilidade total, CAGR, Sharpe Ratio, drawdown máximo e volatilidade.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq2">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
+                    Quais ativos posso simular na plataforma?
+                </button>
+            </h3>
+            <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    A Smart Returns suporta ações da B3, Fundos de Investimento Imobiliário (FIIs), Tesouro Direto (Selic, IPCA+, Prefixado), ETFs brasileiros, renda fixa (CDI, LCI, LCA, CDB) e criptoativos como Bitcoin e Ethereum. É possível combinar qualquer mix de classes de ativos em um só portfólio.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq3">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
+                    O que é o Sharpe Ratio e por que ele importa?
+                </button>
+            </h3>
+            <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    O Sharpe Ratio mede o retorno de um portfólio em relação ao risco assumido. Um Sharpe alto indica que o portfólio gerou bons retornos com baixa volatilidade — ou seja, o investidor foi bem recompensado por cada unidade de risco. A Smart Returns calcula o Sharpe automaticamente em cada simulação, usando o CDI como taxa livre de risco de referência.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq4">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
+                    O plano gratuito é realmente gratuito? Quais são as limitações?
+                </button>
+            </h3>
+            <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Sim, o plano Starter (gratuito) não exige cartão de crédito. Ele permite criar portfólios com até 5 ativos, realizar 20 simulações por mês e acessar o histórico dos últimos 5 anos. Para recursos avançados como Monte Carlo, histórico completo, cálculo de impostos e 1000 simulações mensais, existe o Plano PRO a partir de R$ 29,90/mês.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq5">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
+                    O que é rebalanceamento de portfólio e como simular?
+                </button>
+            </h3>
+            <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faq5" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Rebalanceamento é o processo de ajustar as alocações do portfólio periodicamente para manter as proporções originais. A Smart Returns permite simular rebalanceamento total (redistribuir tudo), parcial (só os ativos fora do limite), por bandas (rebalancear apenas quando a deriva ultrapassar um percentual), ou direcionar aportes mensais automaticamente para o ativo mais desalocado — sem vender, evitando imposto de renda.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
+            <h3 class="accordion-header" id="faq6">
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse6" aria-expanded="false" aria-controls="faqCollapse6">
+                    A plataforma fornece recomendações de investimento?
+                </button>
+            </h3>
+            <div id="faqCollapse6" class="accordion-collapse collapse" aria-labelledby="faq6" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                    Não. A Smart Returns é uma ferramenta educacional e de simulação. Ela <strong>não fornece recomendações de investimento</strong>, consultoria financeira ou assessoria tributária. Todos os dados e resultados são de caráter informativo, baseados em desempenho histórico, e não garantem retornos futuros. O investidor é o único responsável pelas suas decisões financeiras.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <?php
 $content = ob_get_clean();
 
@@ -165,7 +246,107 @@ $additional_css = '
     background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.08) 100%);
     border: 1px solid rgba(255,255,255,.08);
 }
+.accordion-button:not(.collapsed) {
+    color: #0d6efd;
+    background-color: rgba(13,110,253,.05);
+}
+.accordion-button:focus {
+    box-shadow: none;
+}
 </style>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Como fazer backtest de portfólio de investimentos",
+    "description": "Aprenda a simular e analisar portfólios de investimentos usando dados históricos reais com a Smart Returns.",
+    "totalTime": "PT5M",
+    "tool": [{"@type": "HowToTool", "name": "Smart Returns — Plataforma de Backtest"}],
+    "step": [
+        {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Crie seu portfólio",
+            "text": "Escolha os ativos (ações, FIIs, renda fixa, ETFs) e defina as alocações percentuais que deseja simular.",
+            "url": "https://smartreturns.com.br/index.php?url=register"
+        },
+        {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Configure a simulação",
+            "text": "Defina o período histórico, valor inicial investido, aportes mensais e a estratégia de rebalanceamento desejada."
+        },
+        {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Execute o backtest",
+            "text": "O sistema processa os dados históricos reais e calcula a performance completa da sua carteira com métricas de risco."
+        },
+        {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Analise os resultados",
+            "text": "Visualize gráficos interativos de evolução patrimonial, Sharpe Ratio, drawdown máximo, CAGR e compare com o CDI e o IBOVESPA."
+        }
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "O que é backtest de portfólio?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Backtest é a simulação do desempenho de uma carteira de investimentos usando dados históricos reais do mercado. Na Smart Returns, você define os ativos, as alocações e o período desejado, e o sistema calcula como seu portfólio teria performado, incluindo métricas como rentabilidade total, CAGR, Sharpe Ratio, drawdown máximo e volatilidade."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Quais ativos posso simular na plataforma?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A Smart Returns suporta ações da B3, Fundos de Investimento Imobiliário (FIIs), Tesouro Direto (Selic, IPCA+, Prefixado), ETFs brasileiros, renda fixa (CDI, LCI, LCA, CDB) e criptoativos como Bitcoin e Ethereum."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "O que é o Sharpe Ratio e por que ele importa?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "O Sharpe Ratio mede o retorno de um portfólio em relação ao risco assumido. Um Sharpe alto indica que o portfólio gerou bons retornos com baixa volatilidade. A Smart Returns calcula o Sharpe automaticamente em cada simulação, usando o CDI como taxa livre de risco de referência."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "O plano gratuito é realmente gratuito? Quais são as limitações?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sim, o plano Starter (gratuito) não exige cartão de crédito. Ele permite criar portfólios com até 5 ativos e realizar 20 simulações por mês. Para recursos avançados como Monte Carlo e histórico completo, existe o Plano PRO a partir de R$ 29,90/mês."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "O que é rebalanceamento de portfólio e como simular?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Rebalanceamento é o ajuste periódico das alocações para manter as proporções originais. A Smart Returns permite simular rebalanceamento total, parcial, por bandas ou aporte direcionado ao ativo mais desalocado — sem vender, evitando imposto de renda."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "A plataforma fornece recomendações de investimento?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Não. A Smart Returns é uma ferramenta educacional e de simulação. Ela não fornece recomendações de investimento, consultoria financeira ou assessoria tributária. Todos os dados são de caráter informativo e não garantem retornos futuros."
+            }
+        }
+    ]
+}
+</script>
 ';
 
 include_once __DIR__ . '/../layouts/main.php';

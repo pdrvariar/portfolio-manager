@@ -1,9 +1,9 @@
-<?php
+﻿<?php
 /**
  * @var array $asset Dados do ativo (id, code, name, currency, asset_type)
- * @var array $historicalData Lista de registros históricos (reference_date, price)
+ * @var array $historicalData Lista de registros histÃ³ricos (reference_date, price)
  */
-$title = $asset['name'] . ' - Detalhes';
+$title = $asset['name'] . ' - Detalhes';`n$meta_robots = 'noindex, nofollow';
 
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
@@ -18,7 +18,7 @@ ob_start();
         <div>
             <h1><?php echo htmlspecialchars($asset['name']); ?></h1>
             <p class="text-muted mb-0">
-                Código: <strong><?php echo htmlspecialchars($asset['code']); ?></strong> | 
+                CÃ³digo: <strong><?php echo htmlspecialchars($asset['code']); ?></strong> | 
                 Moeda: <span class="badge bg-info"><?php echo $asset['currency']; ?></span> | 
                 Tipo: <span class="badge bg-secondary"><?php echo $asset['asset_type']; ?></span>
             </p>
@@ -34,12 +34,12 @@ ob_start();
         <div class="col-md-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-clock-history me-2"></i>Dados Históricos</h5>
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-clock-history me-2"></i>Dados HistÃ³ricos</h5>
                 </div>
                 <div class="card-body">
                     <?php if (empty($historicalData)): ?>
                         <div class="text-center py-4">
-                            <p class="text-muted">Nenhum dado histórico disponível</p>
+                            <p class="text-muted">Nenhum dado histÃ³rico disponÃ­vel</p>
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
@@ -48,7 +48,7 @@ ob_start();
                                     <tr>
                                         <th class="ps-3 text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Data</th>
                                         <th class="text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Valor</th>
-                                        <th class="text-end pe-3 text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">Variação</th>
+                                        <th class="text-end pe-3 text-muted uppercase small fw-bold" style="color: var(--text-muted) !important;">VariaÃ§Ã£o</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -97,7 +97,7 @@ ob_start();
                         <div class="mt-3">
                             <p class="text-muted">
                                 <small>
-                                    Período: <?php echo formatMonthYear($historicalData[0]['reference_date']); ?> até <?php echo formatMonthYear(end($historicalData)['reference_date']); ?> | 
+                                    PerÃ­odo: <?php echo formatMonthYear($historicalData[0]['reference_date']); ?> atÃ© <?php echo formatMonthYear(end($historicalData)['reference_date']); ?> | 
                                     Total: <?php echo count($historicalData); ?> registros
                                 </small>
                             </p>
@@ -110,7 +110,7 @@ ob_start();
         <div class="col-md-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-graph-up me-2"></i>Estatísticas</h5>
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-graph-up me-2"></i>EstatÃ­sticas</h5>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($historicalData)): 
@@ -166,7 +166,7 @@ ob_start();
                     <div class="row g-2">
                         <div class="col-6">
                             <div class="p-2 border rounded text-center bg-light-subtle">
-                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">Mínimo</label>
+                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">MÃ­nimo</label>
                                 <span class="fw-bold text-main">
                                     <?php if ($isRate): ?>
                                         <?php echo number_format($minPrice, 2, ',', '.'); ?>%
@@ -180,7 +180,7 @@ ob_start();
                         </div>
                         <div class="col-6">
                             <div class="p-2 border rounded text-center bg-light-subtle">
-                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">Máximo</label>
+                                <label class="form-label text-muted small mb-0 d-block uppercase fw-bold">MÃ¡ximo</label>
                                 <span class="fw-bold text-main">
                                     <?php if ($isRate): ?>
                                         <?php echo number_format($maxPrice, 2, ',', '.'); ?>%
@@ -194,14 +194,14 @@ ob_start();
                         </div>
                     </div>
                     <?php else: ?>
-                        <p class="text-muted">Nenhuma estatística disponível</p>
+                        <p class="text-muted">Nenhuma estatÃ­stica disponÃ­vel</p>
                     <?php endif; ?>
                 </div>
             </div>
             
             <div class="card shadow-sm border-0 mt-4">
                 <div class="card-header py-3">
-                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-gear me-2"></i>Gestão do Ativo</h5>
+                    <h5 class="mb-0 fw-bold text-main"><i class="bi bi-gear me-2"></i>GestÃ£o do Ativo</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -214,14 +214,14 @@ ob_start();
 
                             <a href="/index.php?url=assets/delete/<?php echo $asset['id']; ?>" 
                             class="btn btn-outline-danger btn-sm"
-                            onclick="return confirm('ATENÇÃO: Isso excluirá permanentemente todos os registros históricos deste ativo. Confirmar?')">
-                                <i class="bi bi-trash me-2"></i>Excluir Ativo e Histórico
+                            onclick="return confirm('ATENÃ‡ÃƒO: Isso excluirÃ¡ permanentemente todos os registros histÃ³ricos deste ativo. Confirmar?')">
+                                <i class="bi bi-trash me-2"></i>Excluir Ativo e HistÃ³rico
                             </a>
                         <?php else: ?>
                             <div class="text-center p-2">
                                 <p class="text-muted small mb-0">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    Os dados deste ativo são atualizados mensalmente pela administração.
+                                    Os dados deste ativo sÃ£o atualizados mensalmente pela administraÃ§Ã£o.
                                 </p>
                             </div>
                         <?php endif; ?>

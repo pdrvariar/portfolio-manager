@@ -1,7 +1,14 @@
 User-agent: *
 Allow: /
+Allow: /index.php?url=login
+Allow: /index.php?url=register
+Allow: /index.php?url=terms
+Allow: /index.php?url=forgot-password
+Allow: /css/
+Allow: /js/
+Allow: /assets/
 
-# Bloqueia páginas que não devem ser indexadas
+# Bloqueia áreas autenticadas (dashboard, portfólios, gerenciamento)
 Disallow: /index.php?url=dashboard
 Disallow: /index.php?url=portfolio
 Disallow: /index.php?url=assets
@@ -9,7 +16,21 @@ Disallow: /index.php?url=profile
 Disallow: /index.php?url=admin
 Disallow: /index.php?url=checkout
 Disallow: /index.php?url=logout
+Disallow: /index.php?url=subscription
+Disallow: /index.php?url=upgrade
+Disallow: /index.php?url=google-auth
+Disallow: /index.php?url=google
+Disallow: /index.php?url=reset-password
+Disallow: /index.php?url=verify
+Disallow: /index.php?url=terms/accept
 Disallow: /api/
+
+# Bloqueia arquivos de sistema e diretórios sensíveis
+Disallow: /vendor/
+Disallow: /logs/
+Disallow: /*.sql$
+Disallow: /*.env$
+Disallow: /*.log$
 
 # Sitemap
 Sitemap: https://smartreturns.com.br/sitemap.xml

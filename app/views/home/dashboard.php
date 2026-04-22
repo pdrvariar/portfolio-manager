@@ -5,7 +5,8 @@
  * @var array $stats Estatísticas de simulação do usuário
  * @var array $latestSimulations Lista das últimas simulações realizadas
  */
-$title = 'Dashboard';
+$title = 'Dashboard | Smart Returns';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 

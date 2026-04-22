@@ -1,5 +1,8 @@
 <?php
-$title = 'Entrar - Portfolio Backtest';
+$title = 'Entrar na Sua Conta - Smart Returns';
+$meta_description = 'Acesse sua conta na Smart Returns e continue simulando e analisando seus portfólios de investimentos com dados históricos reais.';
+$meta_robots = 'noindex, follow';
+$canonical_url = 'https://smartreturns.com.br/index.php?url=login';
 ob_start();
 ?>
 <div class="row justify-content-center min-vh-100 align-items-center">

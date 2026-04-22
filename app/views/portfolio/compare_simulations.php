@@ -1,14 +1,14 @@
-<?php
+﻿<?php
 /**
- * @var array $simulations  Array of simulation rows (2–5 items)
+ * @var array $simulations  Array of simulation rows (2â€“5 items)
  */
 
-$title = 'Comparativo de Simulações';
+$title = 'Comparativo de SimulaÃ§Ãµes';`n$meta_robots = 'noindex, nofollow';
 
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home',  'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
-    ['label' => 'Portfólios',                             'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
-    ['label' => 'Histórico de Simulações',                'url' => '/index.php?url=' . obfuscateUrl('portfolio/simulations')],
+    ['label' => 'PortfÃ³lios',                             'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => 'HistÃ³rico de SimulaÃ§Ãµes',                'url' => '/index.php?url=' . obfuscateUrl('portfolio/simulations')],
     ['label' => 'Comparativo',                            'url' => '#'],
 ];
 
@@ -16,13 +16,13 @@ ob_start();
 
 $n = count($simulations);
 
-// ── Helper: detecta moeda da simulação ─────────────────────────────────────
+// â”€â”€ Helper: detecta moeda da simulaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function simCurrency(array $sim): string {
     $pc = $sim['portfolio_config'] ? json_decode($sim['portfolio_config'], true) : null;
     return $pc['output_currency'] ?? $sim['output_currency'] ?? 'BRL';
 }
 
-// ── Monta mapa de métricas por simulação ──────────────────────────────────
+// â”€â”€ Monta mapa de mÃ©tricas por simulaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $mapa = [];
 foreach ($simulations as $sim) {
     $cur = simCurrency($sim);
@@ -32,18 +32,18 @@ foreach ($simulations as $sim) {
         'sim_date'        => $sim['simulation_date'],
         'created_at'      => $sim['created_at'],
         'currency'        => $cur,
-        // ── Patrimônio
+        // â”€â”€ PatrimÃ´nio
         'total_invested'  => (float)($sim['total_invested']  ?? 0),
         'total_deposits'  => (float)($sim['total_deposits']  ?? 0),
         'total_value'     => (float)($sim['total_value']     ?? 0),
         'interest_earned' => (float)($sim['interest_earned'] ?? 0),
         'total_tax_paid'  => (float)($sim['total_tax_paid']  ?? 0),
-        // ── Retorno
+        // â”€â”€ Retorno
         'roi'                    => (float)($sim['roi']                    ?? 0),
         'annual_return'          => (float)($sim['annual_return']          ?? 0),
         'strategy_annual_return' => (float)($sim['strategy_annual_return'] ?? 0),
         'strategy_return'        => (float)($sim['strategy_return']        ?? 0),
-        // ── Risco
+        // â”€â”€ Risco
         'volatility'      => (float)($sim['volatility']      ?? 0),
         'sharpe_ratio'    => (float)($sim['sharpe_ratio']    ?? 0),
         'max_drawdown'    => abs((float)($sim['max_drawdown'] ?? 0)),
@@ -52,8 +52,8 @@ foreach ($simulations as $sim) {
     ];
 }
 
-// ── Função para determinar o índice do "vencedor" de uma métrica ──────────
-//    $dir = 'max' → maior vence  |  'min' → menor vence
+// â”€â”€ FunÃ§Ã£o para determinar o Ã­ndice do "vencedor" de uma mÃ©trica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//    $dir = 'max' â†’ maior vence  |  'min' â†’ menor vence
 function winnerIndex(array $mapa, string $key, string $dir): int {
     $best = null; $bestIdx = 0;
     foreach ($mapa as $i => $m) {
@@ -68,7 +68,7 @@ function winnerIndex(array $mapa, string $key, string $dir): int {
     return $bestIdx;
 }
 
-// ── Calcula estrelas por simulação ────────────────────────────────────────
+// â”€â”€ Calcula estrelas por simulaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $scoredMetrics = [
     'total_value'            => 'max',
     'interest_earned'        => 'max',
@@ -91,18 +91,18 @@ foreach ($scoredMetrics as $key => $dir) {
 
 $overallWinner = array_search(max($stars), $stars);
 
-// ── Definição das seções e linhas da tabela ───────────────────────────────
+// â”€â”€ DefiniÃ§Ã£o das seÃ§Ãµes e linhas da tabela â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $sections = [
     [
         'icon'  => 'bi-wallet2',
-        'label' => 'Patrimônio',
+        'label' => 'PatrimÃ´nio',
         'color' => 'primary',
         'rows'  => [
             ['key'=>'total_invested',  'label'=>'Capital Inicial',      'type'=>'currency', 'dir'=>null,  'icon'=>'bi-bank',          'desc'=>'Valor aportado inicialmente'],
-            ['key'=>'total_deposits',  'label'=>'Total de Aportes',     'type'=>'currency', 'dir'=>null,  'icon'=>'bi-plus-circle',   'desc'=>'Soma de todos os aportes periódicos'],
-            ['key'=>'total_value',     'label'=>'Patrimônio Final',     'type'=>'currency', 'dir'=>'max', 'icon'=>'bi-graph-up-arrow','desc'=>'Valor total ao final do período'],
+            ['key'=>'total_deposits',  'label'=>'Total de Aportes',     'type'=>'currency', 'dir'=>null,  'icon'=>'bi-plus-circle',   'desc'=>'Soma de todos os aportes periÃ³dicos'],
+            ['key'=>'total_value',     'label'=>'PatrimÃ´nio Final',     'type'=>'currency', 'dir'=>'max', 'icon'=>'bi-graph-up-arrow','desc'=>'Valor total ao final do perÃ­odo'],
             ['key'=>'interest_earned', 'label'=>'Ganho Bruto',          'type'=>'currency_signed', 'dir'=>'max', 'icon'=>'bi-cash-stack',    'desc'=>'Rendimento total antes do imposto'],
-            ['key'=>'total_tax_paid',  'label'=>'Imposto Pago',         'type'=>'currency_neg',    'dir'=>'min', 'icon'=>'bi-receipt',       'desc'=>'Menos imposto = melhor eficiência fiscal'],
+            ['key'=>'total_tax_paid',  'label'=>'Imposto Pago',         'type'=>'currency_neg',    'dir'=>'min', 'icon'=>'bi-receipt',       'desc'=>'Menos imposto = melhor eficiÃªncia fiscal'],
         ],
     ],
     [
@@ -111,9 +111,9 @@ $sections = [
         'color' => 'success',
         'rows'  => [
             ['key'=>'roi',                    'label'=>'ROI Total',                  'type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-tags',      'desc'=>'Retorno sobre todo o capital investido'],
-            ['key'=>'annual_return',          'label'=>'Retorno Anual (c/ aportes)', 'type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-percent',   'desc'=>'CAGR incluindo aportes periódicos'],
-            ['key'=>'strategy_annual_return', 'label'=>'Retorno Anual (estratégia)','type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-trophy',    'desc'=>'Performance pura dos ativos, sem aportes'],
-            ['key'=>'strategy_return',        'label'=>'Retorno Total (estratégia)','type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-bar-chart', 'desc'=>'Retorno acumulado da estratégia no período'],
+            ['key'=>'annual_return',          'label'=>'Retorno Anual (c/ aportes)', 'type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-percent',   'desc'=>'CAGR incluindo aportes periÃ³dicos'],
+            ['key'=>'strategy_annual_return', 'label'=>'Retorno Anual (estratÃ©gia)','type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-trophy',    'desc'=>'Performance pura dos ativos, sem aportes'],
+            ['key'=>'strategy_return',        'label'=>'Retorno Total (estratÃ©gia)','type'=>'pct_signed', 'dir'=>'max', 'icon'=>'bi-bar-chart', 'desc'=>'Retorno acumulado da estratÃ©gia no perÃ­odo'],
         ],
     ],
     [
@@ -121,11 +121,11 @@ $sections = [
         'label' => 'Risco',
         'color' => 'warning',
         'rows'  => [
-            ['key'=>'sharpe_ratio',    'label'=>'Índice Sharpe',   'type'=>'num2',   'dir'=>'max', 'icon'=>'bi-speedometer2',        'desc'=>'Retorno por unidade de risco. ≥1 excelente'],
-            ['key'=>'volatility',      'label'=>'Volatilidade',    'type'=>'pct',    'dir'=>'min', 'icon'=>'bi-activity',            'desc'=>'Oscilação mensal do portfólio. Menor = mais estável'],
-            ['key'=>'max_drawdown',    'label'=>'Drawdown Máximo', 'type'=>'pct_neg','dir'=>'min', 'icon'=>'bi-arrow-down-circle',   'desc'=>'Maior queda do pico. Menor impacto = melhor'],
-            ['key'=>'max_monthly_gain','label'=>'Melhor Mês',      'type'=>'pct_pos','dir'=>'max', 'icon'=>'bi-arrow-up-right-circle','desc'=>'Maior ganho em um único mês'],
-            ['key'=>'max_monthly_loss','label'=>'Pior Mês',        'type'=>'pct_neg','dir'=>'min', 'icon'=>'bi-arrow-down-left-circle','desc'=>'Maior queda em um único mês'],
+            ['key'=>'sharpe_ratio',    'label'=>'Ãndice Sharpe',   'type'=>'num2',   'dir'=>'max', 'icon'=>'bi-speedometer2',        'desc'=>'Retorno por unidade de risco. â‰¥1 excelente'],
+            ['key'=>'volatility',      'label'=>'Volatilidade',    'type'=>'pct',    'dir'=>'min', 'icon'=>'bi-activity',            'desc'=>'OscilaÃ§Ã£o mensal do portfÃ³lio. Menor = mais estÃ¡vel'],
+            ['key'=>'max_drawdown',    'label'=>'Drawdown MÃ¡ximo', 'type'=>'pct_neg','dir'=>'min', 'icon'=>'bi-arrow-down-circle',   'desc'=>'Maior queda do pico. Menor impacto = melhor'],
+            ['key'=>'max_monthly_gain','label'=>'Melhor MÃªs',      'type'=>'pct_pos','dir'=>'max', 'icon'=>'bi-arrow-up-right-circle','desc'=>'Maior ganho em um Ãºnico mÃªs'],
+            ['key'=>'max_monthly_loss','label'=>'Pior MÃªs',        'type'=>'pct_neg','dir'=>'min', 'icon'=>'bi-arrow-down-left-circle','desc'=>'Maior queda em um Ãºnico mÃªs'],
         ],
     ],
 ];
@@ -139,7 +139,7 @@ function fmtCmp(float $v, string $type, string $cur = 'BRL'): string {
         case 'currency_signed':
             return ($v >= 0 ? '+' : '') . $sym . ' ' . number_format(abs($v), 2, ',', '.');
         case 'currency_neg':
-            return '−' . $sym . ' ' . number_format(abs($v), 2, ',', '.');
+            return 'âˆ’' . $sym . ' ' . number_format(abs($v), 2, ',', '.');
         case 'pct_signed':
             return ($v >= 0 ? '+' : '') . number_format($v, 2, ',', '.') . '%';
         case 'pct':
@@ -147,7 +147,7 @@ function fmtCmp(float $v, string $type, string $cur = 'BRL'): string {
         case 'pct_pos':
             return '+' . number_format($v, 2, ',', '.') . '%';
         case 'pct_neg':
-            return '−' . number_format(abs($v), 2, ',', '.') . '%';
+            return 'âˆ’' . number_format(abs($v), 2, ',', '.') . '%';
         case 'num2':
             return number_format($v, 2, ',', '.');
         default:
@@ -170,9 +170,9 @@ function colorClass(float $v, string $type): string {
 }
 
 $simTypeLabels = [
-    'standard'           => 'Padrão',
+    'standard'           => 'PadrÃ£o',
     'monthly_deposit'    => 'Aporte Mensal',
-    'strategic_deposit'  => 'Aporte Estratégico',
+    'strategic_deposit'  => 'Aporte EstratÃ©gico',
     'smart_deposit'      => 'Aporte Inteligente',
     'selic_cash_deposit' => 'Selic + Aporte',
 ];
@@ -193,15 +193,15 @@ $freqLabels = [
 $colPalette = ['primary','success','danger','warning','info'];
 ?>
 
-<!-- ─── Cabeçalho ──────────────────────────────────────────────────────────── -->
+<!-- â”€â”€â”€ CabeÃ§alho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
         <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-bar-chart-steps text-primary"></i>
-            Comparativo de Simulações
+            Comparativo de SimulaÃ§Ãµes
         </h2>
         <p class="text-muted small mb-0 mt-1">
-            Análise lado a lado de <?= $n ?> simulações · A <span class="fw-bold text-warning">⭐ estrela</span> indica o melhor valor em cada indicador.
+            AnÃ¡lise lado a lado de <?= $n ?> simulaÃ§Ãµes Â· A <span class="fw-bold text-warning">â­ estrela</span> indica o melhor valor em cada indicador.
         </p>
     </div>
     <div class="d-flex gap-2">
@@ -212,28 +212,28 @@ $colPalette = ['primary','success','danger','warning','info'];
     </div>
 </div>
 
-<!-- ─── Banner do vencedor geral ──────────────────────────────────────────── -->
+<!-- â”€â”€â”€ Banner do vencedor geral â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="winner-banner mb-4">
     <div class="winner-banner-inner d-flex align-items-center gap-4 flex-wrap">
         <div class="winner-trophy-wrap d-flex align-items-center justify-content-center flex-shrink-0">
             <i class="bi bi-trophy-fill" style="font-size:2rem;color:#ffd700;"></i>
         </div>
         <div class="flex-grow-1">
-            <div class="winner-headline">🏆 Melhor Simulação Geral</div>
+            <div class="winner-headline">ðŸ† Melhor SimulaÃ§Ã£o Geral</div>
             <div class="winner-name">
-                Simulação #<?= $mapa[$overallWinner]['id'] ?>
-                <span class="winner-portfolio">— <?= htmlspecialchars($mapa[$overallWinner]['portfolio_name']) ?></span>
+                SimulaÃ§Ã£o #<?= $mapa[$overallWinner]['id'] ?>
+                <span class="winner-portfolio">â€” <?= htmlspecialchars($mapa[$overallWinner]['portfolio_name']) ?></span>
             </div>
             <div class="winner-stars mt-1">
                 <?php for ($s = 0; $s < $stars[$overallWinner]; $s++): ?>
-                    <span class="winner-star">⭐</span>
+                    <span class="winner-star">â­</span>
                 <?php endfor; ?>
-                <span class="winner-star-count"><?= $stars[$overallWinner] ?> critério<?= $stars[$overallWinner] !== 1 ? 's' : '' ?> vencedor<?= $stars[$overallWinner] !== 1 ? 'es' : '' ?></span>
+                <span class="winner-star-count"><?= $stars[$overallWinner] ?> critÃ©rio<?= $stars[$overallWinner] !== 1 ? 's' : '' ?> vencedor<?= $stars[$overallWinner] !== 1 ? 'es' : '' ?></span>
             </div>
         </div>
         <div class="d-flex gap-3 flex-wrap">
             <div class="winner-kpi">
-                <div class="winner-kpi-label">Patrimônio Final</div>
+                <div class="winner-kpi-label">PatrimÃ´nio Final</div>
                 <div class="winner-kpi-value"><?= fmtCmp($mapa[$overallWinner]['total_value'], 'currency', $mapa[$overallWinner]['currency']) ?></div>
             </div>
             <div class="winner-kpi">
@@ -241,14 +241,14 @@ $colPalette = ['primary','success','danger','warning','info'];
                 <div class="winner-kpi-value text-success"><?= fmtCmp($mapa[$overallWinner]['annual_return'], 'pct_signed') ?></div>
             </div>
             <div class="winner-kpi">
-                <div class="winner-kpi-label">Índice Sharpe</div>
+                <div class="winner-kpi-label">Ãndice Sharpe</div>
                 <div class="winner-kpi-value"><?= fmtCmp($mapa[$overallWinner]['sharpe_ratio'], 'num2') ?></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ─── Stars summary bar ─────────────────────────────────────────────────── -->
+<!-- â”€â”€â”€ Stars summary bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="row g-3 mb-4">
     <?php foreach ($mapa as $i => $m): ?>
     <div class="col">
@@ -258,11 +258,11 @@ $colPalette = ['primary','success','danger','warning','info'];
             <?php endif; ?>
             <div class="sim-score-header">
                 <span class="sim-score-num">#<?= $m['id'] ?></span>
-                <span class="sim-score-portfolio"><?= htmlspecialchars(mb_strlen($m['portfolio_name']) > 28 ? mb_substr($m['portfolio_name'], 0, 26) . '…' : $m['portfolio_name']) ?></span>
+                <span class="sim-score-portfolio"><?= htmlspecialchars(mb_strlen($m['portfolio_name']) > 28 ? mb_substr($m['portfolio_name'], 0, 26) . 'â€¦' : $m['portfolio_name']) ?></span>
             </div>
             <div class="sim-score-stars">
-                <?php for ($s = 0; $s < $stars[$i]; $s++): ?>⭐<?php endfor; ?>
-                <?php if ($stars[$i] === 0): ?><span class="text-muted small">—</span><?php endif; ?>
+                <?php for ($s = 0; $s < $stars[$i]; $s++): ?>â­<?php endfor; ?>
+                <?php if ($stars[$i] === 0): ?><span class="text-muted small">â€”</span><?php endif; ?>
             </div>
             <div class="sim-score-label"><?= $stars[$i] ?> estrela<?= $stars[$i] !== 1 ? 's' : '' ?></div>
             <div class="sim-score-date text-muted"><?= date('d/m/Y', strtotime($m['created_at'])) ?></div>
@@ -271,11 +271,11 @@ $colPalette = ['primary','success','danger','warning','info'];
     <?php endforeach; ?>
 </div>
 
-<!-- ─── Tabela comparativa ────────────────────────────────────────────────── -->
+<!-- â”€â”€â”€ Tabela comparativa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="card border-0 shadow rounded-4 mb-4 overflow-hidden">
     <div class="table-responsive">
         <table class="table cmp-table align-middle mb-0">
-            <!-- ── HEADER ── -->
+            <!-- â”€â”€ HEADER â”€â”€ -->
             <thead>
                 <tr class="cmp-header-row">
                     <th class="cmp-label-col cmp-sticky-col" style="width:220px;">
@@ -299,7 +299,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                             <span class="ms-2"><i class="bi bi-currency-exchange me-1"></i><?= $m['currency'] ?></span>
                         </div>
                         <div class="cmp-stars-row mt-1">
-                            <?php for ($s = 0; $s < $stars[$i]; $s++): ?>⭐<?php endfor; ?>
+                            <?php for ($s = 0; $s < $stars[$i]; $s++): ?>â­<?php endfor; ?>
                             <?php if ($stars[$i] === 0): ?><span style="opacity:.4;font-size:.7rem;">sem estrelas</span><?php endif; ?>
                         </div>
                     </th>
@@ -309,7 +309,7 @@ $colPalette = ['primary','success','danger','warning','info'];
 
             <tbody>
             <?php foreach ($sections as $section): ?>
-                <!-- ── Section header ── -->
+                <!-- â”€â”€ Section header â”€â”€ -->
                 <tr class="cmp-section-row">
                     <td colspan="<?= $n + 1 ?>">
                         <div class="d-flex align-items-center gap-2">
@@ -346,7 +346,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                         <div class="cmp-cell-wrap">
                             <span class="cmp-val <?= $clr ?>"><?= $fmt ?></span>
                             <?php if ($isWin): ?>
-                            <span class="cmp-star" title="Melhor valor neste indicador">⭐</span>
+                            <span class="cmp-star" title="Melhor valor neste indicador">â­</span>
                             <?php endif; ?>
                         </div>
                     </td>
@@ -355,12 +355,12 @@ $colPalette = ['primary','success','danger','warning','info'];
                 <?php endforeach; ?>
             <?php endforeach; ?>
 
-            <!-- ── Config section ── -->
+            <!-- â”€â”€ Config section â”€â”€ -->
             <tr class="cmp-section-row">
                 <td colspan="<?= $n + 1 ?>">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-gear text-secondary"></i>
-                        <span class="fw-bold text-secondary" style="font-size:.82rem;text-transform:uppercase;letter-spacing:.07em;">Configuração</span>
+                        <span class="fw-bold text-secondary" style="font-size:.82rem;text-transform:uppercase;letter-spacing:.07em;">ConfiguraÃ§Ã£o</span>
                     </div>
                 </td>
             </tr>
@@ -368,11 +368,11 @@ $colPalette = ['primary','success','danger','warning','info'];
             // Config rows from snapshot
             $configRows = [
                 ['label'=>'Capital Inicial',     'icon'=>'bi-bank',           'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); return formatCurrency((float)($pc['initial_capital']??0), $pc['output_currency']??'BRL'); }],
-                ['label'=>'Período',             'icon'=>'bi-calendar3',      'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); $s=$pc['start_date']??'-'; $e=$pc['end_date']??'Hoje'; return date('m/Y',strtotime($s)).' → '.($e?date('m/Y',strtotime($e)):'Hoje'); }],
-                ['label'=>'Tipo de Simulação',   'icon'=>'bi-layers',         'fn'=>function($sim) use($simTypeLabels){ $pc=json_decode($sim['portfolio_config']??'{}',true); return $simTypeLabels[$pc['simulation_type']??'standard']??'Padrão'; }],
+                ['label'=>'PerÃ­odo',             'icon'=>'bi-calendar3',      'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); $s=$pc['start_date']??'-'; $e=$pc['end_date']??'Hoje'; return date('m/Y',strtotime($s)).' â†’ '.($e?date('m/Y',strtotime($e)):'Hoje'); }],
+                ['label'=>'Tipo de SimulaÃ§Ã£o',   'icon'=>'bi-layers',         'fn'=>function($sim) use($simTypeLabels){ $pc=json_decode($sim['portfolio_config']??'{}',true); return $simTypeLabels[$pc['simulation_type']??'standard']??'PadrÃ£o'; }],
                 ['label'=>'Rebalanceamento',     'icon'=>'bi-arrow-repeat',   'fn'=>function($sim) use($freqLabels,$rebalTypeLabels){ $pc=json_decode($sim['portfolio_config']??'{}',true); $f=$freqLabels[$pc['rebalance_frequency']??'never']??'-'; $t=$rebalTypeLabels[$pc['rebalance_type']??'none']??'-'; return $f.' / '.$t; }],
-                ['label'=>'Valor do Aporte',     'icon'=>'bi-plus-circle',    'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); if(empty($pc['deposit_amount'])) return '—'; return formatCurrency((float)$pc['deposit_amount'], $pc['deposit_currency']??'BRL'); }],
-                ['label'=>'Ativos',              'icon'=>'bi-pie-chart',      'fn'=>function($sim){ $ac=json_decode($sim['assets_config']??'[]',true); if(!is_array($ac)) return '—'; return count($ac).' ativo'.( count($ac)!==1?'s':''); }],
+                ['label'=>'Valor do Aporte',     'icon'=>'bi-plus-circle',    'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); if(empty($pc['deposit_amount'])) return 'â€”'; return formatCurrency((float)$pc['deposit_amount'], $pc['deposit_currency']??'BRL'); }],
+                ['label'=>'Ativos',              'icon'=>'bi-pie-chart',      'fn'=>function($sim){ $ac=json_decode($sim['assets_config']??'[]',true); if(!is_array($ac)) return 'â€”'; return count($ac).' ativo'.( count($ac)!==1?'s':''); }],
             ];
             foreach ($configRows as $cr): ?>
             <tr class="cmp-data-row">
@@ -398,7 +398,7 @@ $colPalette = ['primary','success','danger','warning','info'];
     </div>
 </div>
 
-<!-- ─── Guia de interpretação ─────────────────────────────────────────────── -->
+<!-- â”€â”€â”€ Guia de interpretaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <div class="card border-0 rounded-4 bg-light shadow-sm mb-4">
     <div class="card-body py-3 px-4">
         <h6 class="fw-bold mb-3 text-muted small text-uppercase" style="letter-spacing:.05em;">
@@ -409,8 +409,8 @@ $colPalette = ['primary','success','danger','warning','info'];
                 <div class="d-flex gap-2 align-items-start">
                     <i class="bi bi-speedometer2 text-primary mt-1 flex-shrink-0"></i>
                     <div>
-                        <div class="fw-bold small">Índice Sharpe</div>
-                        <div class="text-muted" style="font-size:.75rem;">≥ 1 = excelente · 0,5–1 = bom · &lt; 0,5 = fraco. Mede o retorno ajustado ao risco.</div>
+                        <div class="fw-bold small">Ãndice Sharpe</div>
+                        <div class="text-muted" style="font-size:.75rem;">â‰¥ 1 = excelente Â· 0,5â€“1 = bom Â· &lt; 0,5 = fraco. Mede o retorno ajustado ao risco.</div>
                     </div>
                 </div>
             </div>
@@ -418,8 +418,8 @@ $colPalette = ['primary','success','danger','warning','info'];
                 <div class="d-flex gap-2 align-items-start">
                     <i class="bi bi-arrow-down-circle text-danger mt-1 flex-shrink-0"></i>
                     <div>
-                        <div class="fw-bold small">Drawdown Máximo</div>
-                        <div class="text-muted" style="font-size:.75rem;">Maior queda acumulada desde o pico. Quanto menor, mais estável a estratégia.</div>
+                        <div class="fw-bold small">Drawdown MÃ¡ximo</div>
+                        <div class="text-muted" style="font-size:.75rem;">Maior queda acumulada desde o pico. Quanto menor, mais estÃ¡vel a estratÃ©gia.</div>
                     </div>
                 </div>
             </div>
@@ -428,7 +428,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                     <i class="bi bi-activity text-warning mt-1 flex-shrink-0"></i>
                     <div>
                         <div class="fw-bold small">Volatilidade</div>
-                        <div class="text-muted" style="font-size:.75rem;">Desvio padrão mensal dos retornos. ≤10% = baixo · 10–20% = moderado · &gt;20% = alto.</div>
+                        <div class="text-muted" style="font-size:.75rem;">Desvio padrÃ£o mensal dos retornos. â‰¤10% = baixo Â· 10â€“20% = moderado Â· &gt;20% = alto.</div>
                     </div>
                 </div>
             </div>
@@ -436,8 +436,8 @@ $colPalette = ['primary','success','danger','warning','info'];
                 <div class="d-flex gap-2 align-items-start">
                     <i class="bi bi-trophy text-success mt-1 flex-shrink-0"></i>
                     <div>
-                        <div class="fw-bold small">Retorno Estratégia</div>
-                        <div class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influência dos aportes. Compara a carteira de forma isolada.</div>
+                        <div class="fw-bold small">Retorno EstratÃ©gia</div>
+                        <div class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influÃªncia dos aportes. Compara a carteira de forma isolada.</div>
                     </div>
                 </div>
             </div>
@@ -446,16 +446,16 @@ $colPalette = ['primary','success','danger','warning','info'];
                     <i class="bi bi-tags text-info mt-1 flex-shrink-0"></i>
                     <div>
                         <div class="fw-bold small">ROI Total</div>
-                        <div class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periódicos). Visão do investidor.</div>
+                        <div class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periÃ³dicos). VisÃ£o do investidor.</div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 col-sm-6">
                 <div class="d-flex gap-2 align-items-start">
-                    <span class="flex-shrink-0 mt-1" style="font-size:1rem;">⭐</span>
+                    <span class="flex-shrink-0 mt-1" style="font-size:1rem;">â­</span>
                     <div>
                         <div class="fw-bold small">Estrela</div>
-                        <div class="text-muted" style="font-size:.75rem;">Indica a simulação com o melhor valor naquele indicador. A que acumular mais estrelas é declarada vencedora.</div>
+                        <div class="text-muted" style="font-size:.75rem;">Indica a simulaÃ§Ã£o com o melhor valor naquele indicador. A que acumular mais estrelas Ã© declarada vencedora.</div>
                     </div>
                 </div>
             </div>
@@ -468,11 +468,11 @@ $content = ob_get_clean();
 
 $additional_css = '
 <style>
-/* ══════════════════════════════════════════════════════════
-   COMPARE PAGE — premium financial table
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   COMPARE PAGE â€” premium financial table
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Winner banner ── */
+/* â”€â”€ Winner banner â”€â”€ */
 .winner-banner {
     background: linear-gradient(135deg, #1a1f36 0%, #0d1b2a 100%);
     border-radius: 16px;
@@ -507,7 +507,7 @@ $additional_css = '
 .winner-kpi-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.45); margin-bottom: 2px; }
 .winner-kpi-value { font-size: 1rem; font-weight: 800; color: #fff; }
 
-/* ── Sim score cards ── */
+/* â”€â”€ Sim score cards â”€â”€ */
 .sim-score-card {
     position: relative;
     background: var(--bg-card, #fff);
@@ -538,7 +538,7 @@ $additional_css = '
 .sim-score-label { font-size: .7rem; font-weight: 700; color: var(--text-muted, #6c757d); }
 .sim-score-date { font-size: .65rem; margin-top: 4px; }
 
-/* ── Comparison table ── */
+/* â”€â”€ Comparison table â”€â”€ */
 .cmp-table { border-collapse: separate; border-spacing: 0; }
 .cmp-table thead th { background: var(--bg-card, #fff); position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border-color, #dee2e6); }
 .cmp-table th, .cmp-table td { padding: 0; }
@@ -596,7 +596,7 @@ $additional_css = '
 }
 @keyframes starPop { 0%{transform:scale(.5);opacity:0} 70%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
 
-/* ── Dark mode ── */
+/* â”€â”€ Dark mode â”€â”€ */
 [data-theme="dark"] .cmp-sticky-col { background: var(--bg-card) !important; }
 [data-theme="dark"] .cmp-section-row td { background: var(--bg-body) !important; }
 [data-theme="dark"] .cmp-table thead th { background: var(--bg-card) !important; }
@@ -608,4 +608,5 @@ $additional_css = '
 
 include_once __DIR__ . '/../layouts/main.php';
 ?>
+
 

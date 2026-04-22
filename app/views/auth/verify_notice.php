@@ -2,7 +2,8 @@
 /**
  * @var array $data Dados do usuário para verificação (email, full_name)
  */
-$title = 'Verifique seu e-mail';
+$title = 'Verifique seu e-mail - Smart Returns';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 

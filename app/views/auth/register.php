@@ -1,5 +1,7 @@
 <?php
-$title = 'Registro - Portfolio Backtest';
+$title = 'Criar Conta Grátis - Smart Returns | Backtest de Portfólios';
+$meta_description = 'Crie sua conta gratuita na Smart Returns e comece a simular portfólios de investimentos com dados históricos reais. Analise ações, FIIs, renda fixa e criptoativos.';
+$canonical_url = 'https://smartreturns.com.br/index.php?url=register';
 ob_start();
 ?>
 <div class="row justify-content-center min-vh-100 align-items-center">

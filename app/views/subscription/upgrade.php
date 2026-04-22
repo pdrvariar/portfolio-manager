@@ -13,7 +13,11 @@ $currentExpiration = !empty($userData['subscription_expires_at'])
     ? date('d/m/Y', strtotime($userData['subscription_expires_at']))
     : null;
 
-$title = $upgradeMode ? 'Upgrade para PRO Anual' : 'Desbloquear Plano PRO';
+$title = $upgradeMode ? 'Upgrade para PRO Anual - Smart Returns' : 'Planos e Preços - Smart Returns | Plano PRO';
+$meta_description = $upgradeMode
+    ? 'Faça upgrade para o plano Anual PRO da Smart Returns e economize com o crédito dos seus dias restantes.'
+    : 'Desbloqueie recursos premium da Smart Returns: 1000 simulações/mês, Monte Carlo, cálculo de impostos, histórico completo e muito mais. Plano PRO a partir de R$ 29,90/mês.';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 

@@ -1,14 +1,14 @@
-<?php
+﻿<?php
 /**
- * @var array|null  $activeSub       Assinatura ativa do usuário
- * @var array       $history         Histórico de assinaturas
- * @var bool        $refundEligible  Se ainda está na janela de 7 dias
+ * @var array|null  $activeSub       Assinatura ativa do usuÃ¡rio
+ * @var array       $history         HistÃ³rico de assinaturas
+ * @var bool        $refundEligible  Se ainda estÃ¡ na janela de 7 dias
  * @var int         $daysRemaining   Dias restantes
- * @var int         $usagePercent    % do período já consumido
- * @var float       $proratedCredit  Crédito proporcional para upgrade anual
- * @var array       $userData        Dados do usuário
+ * @var int         $usagePercent    % do perÃ­odo jÃ¡ consumido
+ * @var float       $proratedCredit  CrÃ©dito proporcional para upgrade anual
+ * @var array       $userData        Dados do usuÃ¡rio
  */
-$title = 'Gerenciar Assinatura';
+$title = 'Gerenciar Assinatura';`n$meta_robots = 'noindex, nofollow';
 ob_start();
 
 // Status badge helper
@@ -26,14 +26,14 @@ $statusBadge = function(string $status): string {
 };
 
 $planLabel = function(string $type): string {
-    return $type === 'yearly' ? '🌟 Anual' : '📅 Mensal';
+    return $type === 'yearly' ? 'ðŸŒŸ Anual' : 'ðŸ“… Mensal';
 };
 ?>
 
 <div class="row justify-content-center">
 <div class="col-lg-10">
 
-    <!-- ── Header ──────────────────────────────────────────────── -->
+    <!-- â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1">Gerenciar Assinatura</h2>
@@ -46,7 +46,7 @@ $planLabel = function(string $type): string {
         <?php endif; ?>
     </div>
 
-    <!-- ── Plano Atual ─────────────────────────────────────────── -->
+    <!-- â”€â”€ Plano Atual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <?php if ($activeSub): ?>
 
     <?php
@@ -73,7 +73,7 @@ $planLabel = function(string $type): string {
                     <?php if ($canceledEndPeriod): ?>
                         <div class="alert alert-warning py-2 small mb-3">
                             <i class="bi bi-exclamation-triangle me-1"></i>
-                            Cancelamento agendado — acesso PRO até <strong><?= date('d/m/Y', strtotime($activeSub['expires_at'])) ?></strong>.
+                            Cancelamento agendado â€” acesso PRO atÃ© <strong><?= date('d/m/Y', strtotime($activeSub['expires_at'])) ?></strong>.
                         </div>
                     <?php endif; ?>
 
@@ -87,7 +87,7 @@ $planLabel = function(string $type): string {
                         <div class="col-6">
                             <div class="bg-light rounded-3 p-3 text-center">
                                 <div class="small text-muted mb-1">
-                                    <?= $canceledEndPeriod ? 'Acesso até' : 'Renova em' ?>
+                                    <?= $canceledEndPeriod ? 'Acesso atÃ©' : 'Renova em' ?>
                                 </div>
                                 <div class="fw-bold"><?= date('d/m/Y', strtotime($activeSub['expires_at'])) ?></div>
                             </div>
@@ -108,9 +108,9 @@ $planLabel = function(string $type): string {
                         </div>
                     </div>
 
-                    <!-- Barra de progresso do período -->
+                    <!-- Barra de progresso do perÃ­odo -->
                     <div class="mb-1 d-flex justify-content-between small text-muted">
-                        <span>Início</span>
+                        <span>InÃ­cio</span>
                         <span><?= $daysRemaining ?> dias restantes</span>
                     </div>
                     <div class="progress mb-4" style="height: 8px;">
@@ -119,7 +119,7 @@ $planLabel = function(string $type): string {
                              role="progressbar" title="<?= $usagePercent ?>% consumido"></div>
                     </div>
 
-                    <!-- Ações -->
+                    <!-- AÃ§Ãµes -->
                     <div class="d-flex flex-wrap gap-2">
                         <?php if ($daysRemaining <= 30 || $canceledEndPeriod): ?>
                             <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>"
@@ -158,7 +158,7 @@ $planLabel = function(string $type): string {
                             <i class="bi bi-shield-check fs-2 text-warning"></i>
                         </div>
                         <h6 class="fw-bold">Garantia de 7 Dias</h6>
-                        <p class="small text-muted">Não ficou satisfeito? Reembolso total sem perguntas.</p>
+                        <p class="small text-muted">NÃ£o ficou satisfeito? Reembolso total sem perguntas.</p>
                     </div>
 
                     <div class="text-center mb-3">
@@ -167,7 +167,7 @@ $planLabel = function(string $type): string {
                             <?= $refundHoursLeft ?>h restantes
                         </div>
                         <div class="small text-muted mt-1">
-                            Prazo até: <?= date('d/m/Y H:i', $refundDeadline) ?>
+                            Prazo atÃ©: <?= date('d/m/Y H:i', $refundDeadline) ?>
                         </div>
                     </div>
 
@@ -180,7 +180,7 @@ $planLabel = function(string $type): string {
                     </div>
 
                     <p class="text-muted smaller text-center mt-2 mb-0">
-                        Reembolso via Mercado Pago em até 5 dias úteis.
+                        Reembolso via Mercado Pago em atÃ© 5 dias Ãºteis.
                     </p>
                 </div>
             </div>
@@ -192,7 +192,7 @@ $planLabel = function(string $type): string {
                     </div>
                     <h6 class="fw-bold">Plano PRO Ativo</h6>
                     <p class="small text-muted">
-                        Aproveite todos os recursos avançados de análise e simulação de portfólios.
+                        Aproveite todos os recursos avanÃ§ados de anÃ¡lise e simulaÃ§Ã£o de portfÃ³lios.
                     </p>
                     <a href="/index.php?url=<?= obfuscateUrl('dashboard') ?>" class="btn btn-success rounded-pill btn-sm px-4">
                         <i class="bi bi-house-door me-1"></i>Ir ao Dashboard
@@ -219,8 +219,8 @@ $planLabel = function(string $type): string {
             <div class="bg-soft-secondary rounded-circle d-inline-flex p-4 mb-3">
                 <i class="bi bi-star fs-1 text-secondary"></i>
             </div>
-            <h4 class="fw-bold mb-2">Você está no Plano Starter</h4>
-            <p class="text-muted mb-4">Desbloqueie recursos avançados assinando o Plano PRO.</p>
+            <h4 class="fw-bold mb-2">VocÃª estÃ¡ no Plano Starter</h4>
+            <p class="text-muted mb-4">Desbloqueie recursos avanÃ§ados assinando o Plano PRO.</p>
             <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold">
                 <i class="bi bi-gem me-2"></i>Ver Planos PRO
             </a>
@@ -229,11 +229,11 @@ $planLabel = function(string $type): string {
 
     <?php endif; ?>
 
-    <!-- ── Histórico de Assinaturas ───────────────────────────── -->
+    <!-- â”€â”€ HistÃ³rico de Assinaturas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <?php if (!empty($history)): ?>
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
-            <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Histórico de Assinaturas</h5>
+            <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>HistÃ³rico de Assinaturas</h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -243,8 +243,8 @@ $planLabel = function(string $type): string {
                             <th class="ps-4 small">Plano</th>
                             <th class="small">Status</th>
                             <th class="small">Valor</th>
-                            <th class="small">Início</th>
-                            <th class="small">Expiração</th>
+                            <th class="small">InÃ­cio</th>
+                            <th class="small">ExpiraÃ§Ã£o</th>
                             <th class="small">Detalhes</th>
                         </tr>
                     </thead>
@@ -262,11 +262,11 @@ $planLabel = function(string $type): string {
                                 <?php if ($sub['status'] === 'refunded'): ?>
                                     Reembolso: R$ <?= number_format($sub['refund_amount'] ?? 0, 2, ',', '.') ?>
                                 <?php elseif ($sub['status'] === 'canceled'): ?>
-                                    <?= $sub['cancel_type'] === 'immediate' ? 'Imediato' : 'Fim do período' ?>
+                                    <?= $sub['cancel_type'] === 'immediate' ? 'Imediato' : 'Fim do perÃ­odo' ?>
                                 <?php elseif (!empty($sub['notes'])): ?>
                                     <?= htmlspecialchars($sub['notes']) ?>
                                 <?php else: ?>
-                                    —
+                                    â€”
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -287,7 +287,7 @@ $planLabel = function(string $type): string {
 </div><!-- /col -->
 </div><!-- /row -->
 
-<!-- ── Modal Cancelamento ─────────────────────────────────────── -->
+<!-- â”€â”€ Modal Cancelamento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <?php if ($activeSub && $activeSub['status'] === 'active'): ?>
 <div class="modal fade" id="modalCancel" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -308,10 +308,10 @@ $planLabel = function(string $type): string {
                                 <input class="form-check-input" type="radio" name="cancel_type"
                                        id="cancel_end" value="end_of_period" checked>
                                 <label class="form-check-label ms-1 cursor-pointer" for="cancel_end">
-                                    <strong>No fim do período</strong> <span class="badge bg-soft-success text-success ms-1">Recomendado</span>
+                                    <strong>No fim do perÃ­odo</strong> <span class="badge bg-soft-success text-success ms-1">Recomendado</span>
                                     <div class="small text-muted">
-                                        Mantém acesso PRO até <?= date('d/m/Y', strtotime($activeSub['expires_at'])) ?>.
-                                        Sem novas cobranças.
+                                        MantÃ©m acesso PRO atÃ© <?= date('d/m/Y', strtotime($activeSub['expires_at'])) ?>.
+                                        Sem novas cobranÃ§as.
                                     </div>
                                 </label>
                             </div>
@@ -329,7 +329,7 @@ $planLabel = function(string $type): string {
                     <?php if ($refundEligible): ?>
                     <div class="alert alert-warning small">
                         <i class="bi bi-lightbulb me-1"></i>
-                        Você ainda está na janela de <strong>7 dias de garantia</strong>.
+                        VocÃª ainda estÃ¡ na janela de <strong>7 dias de garantia</strong>.
                         Considere solicitar o <strong>reembolso completo</strong> em vez de cancelar.
                     </div>
                     <?php endif; ?>
@@ -344,7 +344,7 @@ $planLabel = function(string $type): string {
 </div>
 <?php endif; ?>
 
-<!-- ── Modal Reembolso ────────────────────────────────────────── -->
+<!-- â”€â”€ Modal Reembolso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <?php if ($refundEligible): ?>
 <div class="modal fade" id="modalRefund" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -365,14 +365,14 @@ $planLabel = function(string $type): string {
 
                     <div class="alert alert-info small">
                         <i class="bi bi-info-circle me-1"></i>
-                        O valor será estornado no cartão utilizado em até <strong>5 dias úteis</strong> após o processamento.
-                        Seu acesso PRO será encerrado imediatamente após a confirmação.
+                        O valor serÃ¡ estornado no cartÃ£o utilizado em atÃ© <strong>5 dias Ãºteis</strong> apÃ³s o processamento.
+                        Seu acesso PRO serÃ¡ encerrado imediatamente apÃ³s a confirmaÃ§Ã£o.
                     </div>
 
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="confirmRefund" required>
                         <label class="form-check-label small" for="confirmRefund">
-                            Entendo que meu acesso PRO será encerrado imediatamente e o valor será estornado.
+                            Entendo que meu acesso PRO serÃ¡ encerrado imediatamente e o valor serÃ¡ estornado.
                         </label>
                     </div>
                 </div>
@@ -405,7 +405,7 @@ $planLabel = function(string $type): string {
     setInterval(update, 60000);
 })();
 
-// Habilitar botão de reembolso apenas após checkbox
+// Habilitar botÃ£o de reembolso apenas apÃ³s checkbox
 const chk = document.getElementById('confirmRefund');
 const btn = document.getElementById('btnConfirmRefund');
 if (chk && btn) {
@@ -419,4 +419,5 @@ if (chk && btn) {
 $content = ob_get_clean();
 include_once __DIR__ . '/../layouts/main.php';
 ?>
+
 

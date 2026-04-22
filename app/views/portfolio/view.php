@@ -1,17 +1,17 @@
-<?php
+﻿<?php
 /**
- * @var array $portfolio Dados do portfólio (id, name, start_date, etc.)
+ * @var array $portfolio Dados do portfÃ³lio (id, name, start_date, etc.)
  * @var array $assets Lista de ativos vinculados
- * @var array|null $latest Último resultado de simulação
- * @var array $metrics Métricas calculadas (total_return, volatility, etc.)
- * @var array $chartData Dados formatados para os gráficos JS
+ * @var array|null $latest Ãšltimo resultado de simulaÃ§Ã£o
+ * @var array $metrics MÃ©tricas calculadas (total_return, volatility, etc.)
+ * @var array $chartData Dados formatados para os grÃ¡ficos JS
  */
 
-$title = 'Resultados: ' . htmlspecialchars($portfolio['name']);
+$title = 'Resultados: ' . htmlspecialchars($portfolio['name']);`n$meta_robots = 'noindex, nofollow';
 
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
-    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => 'PortfÃ³lios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
     ['label' => htmlspecialchars($portfolio['name']), 'url' => '#'],
 ];
 
@@ -23,8 +23,8 @@ ob_start();
             <i class="bi bi-patch-check-fill text-white fs-5"></i>
         </div>
         <div class="flex-grow-1">
-            <h6 class="fw-bold mb-0 text-dark">Estratégia Oficial do Sistema</h6>
-            <p class="text-muted smaller mb-0">Este portfólio é um modelo curado para servir de benchmark e referência profissional.</p>
+            <h6 class="fw-bold mb-0 text-dark">EstratÃ©gia Oficial do Sistema</h6>
+            <p class="text-muted smaller mb-0">Este portfÃ³lio Ã© um modelo curado para servir de benchmark e referÃªncia profissional.</p>
         </div>
         <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 smaller fw-bold ms-3">
         CURADORIA ATIVA
@@ -37,28 +37,28 @@ ob_start();
             <div class="d-flex align-items-center gap-3">
                 <h2 class="fw-bold mb-0"><?php echo htmlspecialchars($portfolio['name']); ?></h2>
                 <button class="btn btn-sm btn-outline-primary rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#compositionCollapse">
-                    <i class="bi bi-pie-chart-fill me-1"></i> Composição
+                    <i class="bi bi-pie-chart-fill me-1"></i> ComposiÃ§Ã£o
                 </button>
             </div>
             <p class="text-muted mb-0 mt-1">
                 <i class="bi bi-calendar3 me-1"></i> <?php echo formatDate($portfolio['start_date']); ?>
-                <?php echo $portfolio['end_date'] ? ' até ' . formatDate($portfolio['end_date']) : ' (Até hoje)'; ?>
+                <?php echo $portfolio['end_date'] ? ' atÃ© ' . formatDate($portfolio['end_date']) : ' (AtÃ© hoje)'; ?>
                 | <i class="bi bi-currency-exchange ms-2 me-1"></i> <?php echo $portfolio['output_currency']; ?>
                 <?php if ($portfolio['simulation_type'] != 'standard'): ?>
-                    | <i class="bi bi-calculator ms-2 me-1"></i> Simulação:
+                    | <i class="bi bi-calculator ms-2 me-1"></i> SimulaÃ§Ã£o:
                     <?php
                     $simTooltips = [
-                        'monthly_deposit'    => 'Com Aportes Periódicos: a cada período configurado, um valor fixo é investido no portfólio e distribuído entre os ativos conforme as alocações-alvo.',
-                        'strategic_deposit'  => 'Aporte Estratégico: um aporte extra é realizado apenas quando o portfólio cai acima de um percentual configurado em um único mês — comprando na baixa.',
-                        'smart_deposit'      => 'Aporte Direcionado ao Alvo: o aporte periódico é direcionado ao ativo que está mais abaixo de sua alocação-alvo, maximizando a eficiência do rebalanceamento.',
-                        'selic_cash_deposit' => 'Aporte em Caixa (SELIC): os aportes ficam rendendo a taxa SELIC em caixa e são investidos no portfólio somente no momento do próximo rebalanceamento.',
+                        'monthly_deposit'    => 'Com Aportes PeriÃ³dicos: a cada perÃ­odo configurado, um valor fixo Ã© investido no portfÃ³lio e distribuÃ­do entre os ativos conforme as alocaÃ§Ãµes-alvo.',
+                        'strategic_deposit'  => 'Aporte EstratÃ©gico: um aporte extra Ã© realizado apenas quando o portfÃ³lio cai acima de um percentual configurado em um Ãºnico mÃªs â€” comprando na baixa.',
+                        'smart_deposit'      => 'Aporte Direcionado ao Alvo: o aporte periÃ³dico Ã© direcionado ao ativo que estÃ¡ mais abaixo de sua alocaÃ§Ã£o-alvo, maximizando a eficiÃªncia do rebalanceamento.',
+                        'selic_cash_deposit' => 'Aporte em Caixa (SELIC): os aportes ficam rendendo a taxa SELIC em caixa e sÃ£o investidos no portfÃ³lio somente no momento do prÃ³ximo rebalanceamento.',
                     ];
                     $currentSimTooltip = $simTooltips[$portfolio['simulation_type']] ?? '';
                     ?>
                     <?php if ($portfolio['simulation_type'] == 'monthly_deposit'): ?>
-                        <span class="badge bg-info bg-soft">Com Aportes Periódicos</span>
+                        <span class="badge bg-info bg-soft">Com Aportes PeriÃ³dicos</span>
                     <?php elseif ($portfolio['simulation_type'] == 'strategic_deposit'): ?>
-                        <span class="badge bg-warning bg-soft">Aporte Estratégico</span>
+                        <span class="badge bg-warning bg-soft">Aporte EstratÃ©gico</span>
                     <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
                         <span class="badge bg-success bg-soft">Aporte Direcionado ao Alvo</span>
                         <?php if (($portfolio['rebalance_type'] ?? 'full') == 'buy_only'): ?>
@@ -81,36 +81,36 @@ ob_start();
             </p>
         </div>
         <div class="col-md-4 text-end d-flex align-items-center justify-content-end gap-2 flex-wrap">
-            <!-- Ações principais -->
-            <div class="btn-group shadow-sm" role="group" aria-label="Ações da simulação">
-                <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Histórico de Simulações">
-                    <i class="bi bi-clock-history me-1"></i> Histórico
+            <!-- AÃ§Ãµes principais -->
+            <div class="btn-group shadow-sm" role="group" aria-label="AÃ§Ãµes da simulaÃ§Ã£o">
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/history/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="HistÃ³rico de SimulaÃ§Ãµes">
+                    <i class="bi bi-clock-history me-1"></i> HistÃ³rico
                 </a>
-                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-outline-info" title="Detalhes da Simulação">
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/simulation-details/' . $portfolio['id']) ?>" class="btn btn-outline-info" title="Detalhes da SimulaÃ§Ã£o">
                     <i class="bi bi-list-check me-1"></i> Detalhes
                 </a>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>" class="btn btn-primary">
                     <i class="bi bi-play-fill me-1"></i> Simular
                 </a>
-                <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar estratégia">
+                <a href="/index.php?url=<?= obfuscateUrl('portfolio/clone/' . $portfolio['id']) ?>" class="btn btn-outline-secondary" title="Clonar estratÃ©gia">
                     <i class="bi bi-files me-1"></i> Clonar
                 </a>
             </div>
 
             <?php if (!$portfolio['is_system_default'] || Auth::isAdmin()): ?>
-            <!-- Ações de gestão -->
-            <div class="btn-group shadow-sm" role="group" aria-label="Gestão da estratégia">
+            <!-- AÃ§Ãµes de gestÃ£o -->
+            <div class="btn-group shadow-sm" role="group" aria-label="GestÃ£o da estratÃ©gia">
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"
                    class="btn btn-outline-secondary"
-                   title="Editar estratégia"
+                   title="Editar estratÃ©gia"
                    data-bs-toggle="tooltip" data-bs-placement="bottom">
                     <i class="bi bi-pencil-square me-1"></i> Editar
                 </a>
                 <button type="button"
                         class="btn btn-outline-danger"
-                        title="Excluir estratégia"
+                        title="Excluir estratÃ©gia"
                         data-bs-toggle="tooltip" data-bs-placement="bottom"
-                        onclick="if(confirm('Tem certeza que deseja excluir esta estratégia?')) { document.getElementById('delete-portfolio-form').submit(); }">
+                        onclick="if(confirm('Tem certeza que deseja excluir esta estratÃ©gia?')) { document.getElementById('delete-portfolio-form').submit(); }">
                     <i class="bi bi-trash3 me-1"></i> Excluir
                 </button>
             </div>
@@ -126,11 +126,11 @@ ob_start();
         <div class="small">
             <i class="bi bi-shield-check me-2"></i>
             <strong>Painel Administrativo:</strong>
-            <?= $portfolio['is_system_default'] ? 'Este é um portfólio oficial do sistema.' : 'Deseja tornar este portfólio visível para todos?' ?>
+            <?= $portfolio['is_system_default'] ? 'Este Ã© um portfÃ³lio oficial do sistema.' : 'Deseja tornar este portfÃ³lio visÃ­vel para todos?' ?>
         </div>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/toggle-system/' . $portfolio['id']) ?>"
            class="btn btn-sm <?= $portfolio['is_system_default'] ? 'btn-outline-danger' : 'btn-primary' ?> rounded-pill px-3">
-            <?= $portfolio['is_system_default'] ? 'Remover do Sistema' : 'Tornar Portfólio de Sistema' ?>
+            <?= $portfolio['is_system_default'] ? 'Remover do Sistema' : 'Tornar PortfÃ³lio de Sistema' ?>
         </a>
     </div>
 <?php endif; ?>
@@ -141,20 +141,20 @@ ob_start();
             <i class="bi bi-cash-stack text-white fs-5"></i>
         </div>
         <div class="flex-grow-1">
-            <h6 class="fw-bold mb-1 text-dark">Estratégia de Aportes Ativa</h6>
+            <h6 class="fw-bold mb-1 text-dark">EstratÃ©gia de Aportes Ativa</h6>
             <p class="text-muted smaller mb-0">
                 <?php 
                 $freqTranslations = [
-                    'monthly'   => 'mês',
+                    'monthly'   => 'mÃªs',
                     'quarterly' => 'trimestre',
                     'biannual'  => 'semestre',
                     'annual'    => 'ano'
                 ];
                 $freq = $freqTranslations[$portfolio['deposit_frequency']] ?? $portfolio['deposit_frequency'];
-                $inflationAdj = ($portfolio['deposit_inflation_adjusted'] ?? 0) ? ' (Corrigido pelo IPCA)' : ' (Sem correção)';
+                $inflationAdj = ($portfolio['deposit_inflation_adjusted'] ?? 0) ? ' (Corrigido pelo IPCA)' : ' (Sem correÃ§Ã£o)';
                 ?>
                 <?php if ($portfolio['simulation_type'] == 'monthly_deposit'): ?>
-                    <strong>Com Aportes Periódicos:</strong>
+                    <strong>Com Aportes PeriÃ³dicos:</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
                     a cada <?php echo $freq; ?>
                     <?php echo $inflationAdj; ?>
@@ -162,28 +162,28 @@ ob_start();
                         (convertido para <?php echo $portfolio['output_currency']; ?> no momento do aporte)
                     <?php endif; ?>
                 <?php elseif ($portfolio['simulation_type'] == 'strategic_deposit'): ?>
-                    <strong>Aporte Estratégico:</strong>
-                    Se o portfólio cair <?php echo number_format($portfolio['strategic_threshold'], 1); ?>% em um mês,
-                    será aportado <?php echo number_format($portfolio['strategic_deposit_percentage'], 1); ?>% do valor atual.
+                    <strong>Aporte EstratÃ©gico:</strong>
+                    Se o portfÃ³lio cair <?php echo number_format($portfolio['strategic_threshold'], 1); ?>% em um mÃªs,
+                    serÃ¡ aportado <?php echo number_format($portfolio['strategic_deposit_percentage'], 1); ?>% do valor atual.
                 <?php elseif ($portfolio['simulation_type'] == 'smart_deposit'): ?>
                     <strong>Aporte Direcionado ao Alvo:</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
                     a cada <?php echo $freq; ?>
                     <?php echo $inflationAdj; ?>
-                    — direcionado ao ativo mais abaixo do percentual-alvo.
-                    Sobras acumuladas em Caixa SELIC até o próximo rebalanceamento.
+                    â€” direcionado ao ativo mais abaixo do percentual-alvo.
+                    Sobras acumuladas em Caixa SELIC atÃ© o prÃ³ximo rebalanceamento.
                     <?php if ($portfolio['use_cash_assets_for_rebalance']): ?>
-                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em déficit.
+                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em dÃ©ficit.
                     <?php endif; ?>
                 <?php elseif ($portfolio['simulation_type'] == 'selic_cash_deposit'): ?>
                     <strong>Aporte em Caixa (SELIC):</strong>
                     <?php echo formatCurrency($portfolio['deposit_amount'], $portfolio['deposit_currency'] ?? 'BRL'); ?>
                     a cada <?php echo $freq; ?>
                     <?php echo $inflationAdj; ?>
-                    — acumulado em Caixa SELIC e
+                    â€” acumulado em Caixa SELIC e
                     investido integralmente a cada rebalanceamento.
                     <?php if ($portfolio['use_cash_assets_for_rebalance']): ?>
-                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em déficit.
+                        <br><i class="bi bi-check2-circle text-success me-1"></i> Ativos marcados como <strong>Caixa</strong> podem ser vendidos no rebalanceamento para comprar ativos em dÃ©ficit.
                     <?php endif; ?>
                 <?php endif; ?>
             </p>
@@ -191,9 +191,9 @@ ob_start();
         <span class="badge bg-soft-info text-info rounded-pill px-3 py-2 smaller fw-bold ms-3">
         <?php
         $simTypeLabels = [
-            'standard'           => 'PADRÃO',
-            'monthly_deposit'    => 'COM APORTES PERIÓDICOS',
-            'strategic_deposit'  => 'APORTE ESTRATÉGICO',
+            'standard'           => 'PADRÃƒO',
+            'monthly_deposit'    => 'COM APORTES PERIÃ“DICOS',
+            'strategic_deposit'  => 'APORTE ESTRATÃ‰GICO',
             'smart_deposit'      => 'APORTE DIRECIONADO AO ALVO',
             'selic_cash_deposit' => 'APORTE EM CAIXA (SELIC)',
         ];
@@ -204,7 +204,7 @@ ob_start();
 <?php endif; ?>
 
 <?php
-// ─── AVISO: Caixa SELIC com rebalanceamento e aporte mensais ───────────────
+// â”€â”€â”€ AVISO: Caixa SELIC com rebalanceamento e aporte mensais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $isSelicMonthlyConflict = (
     $portfolio['simulation_type'] === 'selic_cash_deposit' &&
     $portfolio['rebalance_frequency'] === 'monthly' &&
@@ -219,22 +219,22 @@ $isSelicMonthlyConflict = (
             <i class="bi bi-lightbulb-fill text-white fs-5"></i>
         </div>
         <div class="flex-grow-1">
-            <h6 class="fw-bold mb-1 text-dark">Configuração pouco eficiente para esta estratégia</h6>
+            <h6 class="fw-bold mb-1 text-dark">ConfiguraÃ§Ã£o pouco eficiente para esta estratÃ©gia</h6>
             <p class="text-muted smaller mb-0">
-                Com <strong>aporte mensal</strong> e <strong>rebalanceamento mensal</strong>, o Caixa SELIC é
-                reinvestido todo mês, sem acumular rendimentos ao longo do tempo. A estratégia
-                <strong>Aporte em Caixa SELIC</strong> é mais eficiente quando o rebalanceamento é
-                <strong>trimestral, semestral ou anual</strong> — assim os aportes acumulam rendimentos
-                da SELIC por vários meses antes de serem investidos no portfólio.
+                Com <strong>aporte mensal</strong> e <strong>rebalanceamento mensal</strong>, o Caixa SELIC Ã©
+                reinvestido todo mÃªs, sem acumular rendimentos ao longo do tempo. A estratÃ©gia
+                <strong>Aporte em Caixa SELIC</strong> Ã© mais eficiente quando o rebalanceamento Ã©
+                <strong>trimestral, semestral ou anual</strong> â€” assim os aportes acumulam rendimentos
+                da SELIC por vÃ¡rios meses antes de serem investidos no portfÃ³lio.
                 <br>
                 <a href="/index.php?url=<?= obfuscateUrl('portfolio/edit/' . $portfolio['id']) ?>"
                    class="fw-bold text-warning-emphasis">
-                    <i class="bi bi-pencil me-1"></i>Editar portfólio para ajustar a frequência de rebalanceamento
+                    <i class="bi bi-pencil me-1"></i>Editar portfÃ³lio para ajustar a frequÃªncia de rebalanceamento
                 </a>
             </p>
         </div>
         <span class="badge bg-warning text-dark rounded-pill px-3 py-2 smaller fw-bold ms-3 flex-shrink-0">
-            ATENÇÃO
+            ATENÃ‡ÃƒO
         </span>
     </div>
 <?php endif; ?>
@@ -242,14 +242,14 @@ $isSelicMonthlyConflict = (
     <div class="collapse mb-4" id="compositionCollapse">
         <div class="card card-body shadow-sm border-0">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="mb-0 fw-bold">Composição da Carteira</h6>
+                <h6 class="mb-0 fw-bold">ComposiÃ§Ã£o da Carteira</h6>
                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="openQuickEditModal()">
-                    <i class="bi bi-pencil me-1"></i> Editar Alocações
+                    <i class="bi bi-pencil me-1"></i> Editar AlocaÃ§Ãµes
                 </button>
             </div>
 
             <?php
-            // Calcula o total para validação
+            // Calcula o total para validaÃ§Ã£o
             $totalPercent = 0;
             foreach ($assets as $asset) {
                 $totalPercent += $asset['allocation_percentage'];
@@ -286,16 +286,16 @@ $isSelicMonthlyConflict = (
                 <?php endforeach; ?>
             </div>
 
-            <!-- Status da composição -->
+            <!-- Status da composiÃ§Ã£o -->
             <div class="mt-3 pt-3 border-top">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <small class="text-muted">Total da alocação:</small>
+                        <small class="text-muted">Total da alocaÃ§Ã£o:</small>
                         <span class="ms-2 fw-bold <?php echo $totalPercent == 100 ? 'text-success' : 'text-danger'; ?>">
                             <?php echo number_format($totalPercent, 2); ?>%
                         </span>
                         <?php if ($totalPercent != 100): ?>
-                            <span class="badge bg-danger ms-2">Ajuste necessário</span>
+                            <span class="badge bg-danger ms-2">Ajuste necessÃ¡rio</span>
                         <?php endif; ?>
                     </div>
                     <div>
@@ -314,9 +314,9 @@ $isSelicMonthlyConflict = (
             <i class="bi bi-exclamation-triangle-fill text-white fs-5"></i>
         </div>
         <div class="flex-grow-1">
-            <h6 class="fw-bold mb-1 text-dark">Horizonte de Simulação Ajustado</h6>
+            <h6 class="fw-bold mb-1 text-dark">Horizonte de SimulaÃ§Ã£o Ajustado</h6>
             <p class="text-muted smaller mb-0">
-                Esta simulação foi processada até **<?= date('m/Y', strtotime($latest['simulation_date'])) ?>** porque um ou mais ativos da sua carteira não possuem dados históricos disponíveis após este mês.
+                Esta simulaÃ§Ã£o foi processada atÃ© **<?= date('m/Y', strtotime($latest['simulation_date'])) ?>** porque um ou mais ativos da sua carteira nÃ£o possuem dados histÃ³ricos disponÃ­veis apÃ³s este mÃªs.
             </p>
         </div>
     </div>
@@ -330,10 +330,10 @@ $isSelicMonthlyConflict = (
             <i class="bi bi-bar-chart-line-fill text-white fs-5"></i>
         </div>
         <div class="flex-grow-1">
-            <h6 class="fw-bold mb-1 text-dark">Nenhuma simulação disponível para este período</h6>
+            <h6 class="fw-bold mb-1 text-dark">Nenhuma simulaÃ§Ã£o disponÃ­vel para este perÃ­odo</h6>
             <p class="text-muted smaller mb-0">
-                Os gráficos e métricas aparecerão após você executar a simulação.
-                Clique em <strong>Simular</strong> para processar os dados históricos do período selecionado.
+                Os grÃ¡ficos e mÃ©tricas aparecerÃ£o apÃ³s vocÃª executar a simulaÃ§Ã£o.
+                Clique em <strong>Simular</strong> para processar os dados histÃ³ricos do perÃ­odo selecionado.
                 <?php
                 $start = new \DateTime($portfolio['start_date']);
                 $endDisplay = $portfolio['end_date'] ? new \DateTime($portfolio['end_date']) : new \DateTime();
@@ -341,8 +341,8 @@ $isSelicMonthlyConflict = (
                 if ($periodMonths < 12): ?>
                     <br><small class="text-warning fw-bold">
                         <i class="bi bi-exclamation-triangle me-1"></i>
-                        Período curto detectado (<?= $periodMonths ?> meses). Certifique-se de que os ativos possuem
-                        dados históricos disponíveis a partir de <strong><?= date('m/Y', strtotime($portfolio['start_date'])) ?></strong>.
+                        PerÃ­odo curto detectado (<?= $periodMonths ?> meses). Certifique-se de que os ativos possuem
+                        dados histÃ³ricos disponÃ­veis a partir de <strong><?= date('m/Y', strtotime($portfolio['start_date'])) ?></strong>.
                     </small>
                 <?php endif; ?>
             </p>
@@ -355,11 +355,11 @@ $isSelicMonthlyConflict = (
     <?php endif; ?>
 
     <?php
-    // ── Hero: 3 métricas em destaque ────────────────────────────────────────
+    // â”€â”€ Hero: 3 mÃ©tricas em destaque â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     $heroHasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
     ?>
     <div class="row g-3 mb-4">
-        <!-- Patrimônio Inicial -->
+        <!-- PatrimÃ´nio Inicial -->
         <div class="col-md-3">
             <div class="card border-0 rounded-4 shadow h-100 overflow-hidden position-relative"
                  style="background: var(--hero-initial-bg);">
@@ -370,11 +370,11 @@ $isSelicMonthlyConflict = (
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small"
                               style="background:var(--hero-initial-icon);color:#fff;letter-spacing:.05em;">
-                            <i class="bi bi-wallet2 me-1"></i> Patrimônio Inicial
+                            <i class="bi bi-wallet2 me-1"></i> PatrimÃ´nio Inicial
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                title="Capital investido no <strong>início da simulação</strong>, antes de qualquer rendimento ou aporte. É o ponto de partida de todo o cálculo.">
+                                title="Capital investido no <strong>inÃ­cio da simulaÃ§Ã£o</strong>, antes de qualquer rendimento ou aporte. Ã‰ o ponto de partida de todo o cÃ¡lculo.">
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
@@ -383,7 +383,7 @@ $isSelicMonthlyConflict = (
                             <?php echo formatCurrency($portfolio['initial_capital'], $portfolio['output_currency']); ?>
                         </div>
                         <div class="text-muted small mt-2">
-                            <i class="bi bi-calendar3 me-1"></i> Início em <?php echo formatDate($portfolio['start_date']); ?>
+                            <i class="bi bi-calendar3 me-1"></i> InÃ­cio em <?php echo formatDate($portfolio['start_date']); ?>
                         </div>
                     </div>
                 </div>
@@ -403,7 +403,7 @@ $isSelicMonthlyConflict = (
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                title="Soma de <strong>todos os aportes realizados</strong> durante o período simulado, além do capital inicial.<br><br>Total Investido = Capital Inicial + Aportes.">
+                                title="Soma de <strong>todos os aportes realizados</strong> durante o perÃ­odo simulado, alÃ©m do capital inicial.<br><br>Total Investido = Capital Inicial + Aportes.">
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
@@ -428,14 +428,14 @@ $isSelicMonthlyConflict = (
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                title="Nenhum aporte adicional foi configurado para esta simulação.<br>Apenas o <strong>capital inicial</strong> foi considerado.">
+                                title="Nenhum aporte adicional foi configurado para esta simulaÃ§Ã£o.<br>Apenas o <strong>capital inicial</strong> foi considerado.">
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
                     <div>
-                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">—</div>
+                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">â€”</div>
                         <div class="text-muted small mt-2">
-                            <i class="bi bi-dash-circle me-1"></i> Sem aportes periódicos
+                            <i class="bi bi-dash-circle me-1"></i> Sem aportes periÃ³dicos
                         </div>
                     </div>
                 </div>
@@ -459,17 +459,17 @@ $isSelicMonthlyConflict = (
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                title="Soma de todos os impostos estimados pagos ao longo da simulação.<br><br>Leva em conta a <strong>compensação de prejuízos acumulados</strong> por grupo de ativos.">
+                                title="Soma de todos os impostos estimados pagos ao longo da simulaÃ§Ã£o.<br><br>Leva em conta a <strong>compensaÃ§Ã£o de prejuÃ­zos acumulados</strong> por grupo de ativos.">
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
                     <?php if ($isPro): ?>
                     <div>
                         <div id="tax-paid-value" class="fs-2 fw-bold lh-1 mb-1 <?= $hasTax ? 'text-danger' : 'text-muted' ?>">
-                            <?= $hasTax ? formatCurrency($heroTotalTax, $portfolio['output_currency']) : '—' ?>
+                            <?= $hasTax ? formatCurrency($heroTotalTax, $portfolio['output_currency']) : 'â€”' ?>
                         </div>
                         <div id="tax-paid-label" class="text-muted small mt-2">
-                            <i class="bi bi-receipt me-1"></i> <?= $hasTax ? 'Impostos sobre lucro' : 'Sem impostos no período' ?>
+                            <i class="bi bi-receipt me-1"></i> <?= $hasTax ? 'Impostos sobre lucro' : 'Sem impostos no perÃ­odo' ?>
                         </div>
                     </div>
                     <?php else: ?>
@@ -484,7 +484,7 @@ $isSelicMonthlyConflict = (
             </div>
         </div>
 
-        <!-- Patrimônio Final -->
+        <!-- PatrimÃ´nio Final -->
         <div class="col-md-3">
             <?php
             $heroFinalValue = $metrics['final_value'] ?? $metrics['total_value'] ?? $portfolio['initial_capital'];
@@ -496,11 +496,11 @@ $isSelicMonthlyConflict = (
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span id="final-value-badge" class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase small <?= $heroPositive ? 'bg-primary' : 'bg-danger' ?>">
-                            <i class="bi bi-graph-up-arrow me-1"></i> Patrimônio Final
+                            <i class="bi bi-graph-up-arrow me-1"></i> PatrimÃ´nio Final
                         </span>
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                title="Valor total do portfólio ao <strong>final do período simulado</strong>, incluindo capital inicial, aportes e todos os rendimentos obtidos.">
+                                title="Valor total do portfÃ³lio ao <strong>final do perÃ­odo simulado</strong>, incluindo capital inicial, aportes e todos os rendimentos obtidos.">
                             <i class="bi bi-info-circle-fill fs-6"></i>
                         </button>
                     </div>
@@ -518,8 +518,8 @@ $isSelicMonthlyConflict = (
                     </div>
                     <?php else: ?>
                     <div>
-                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">—</div>
-                        <div class="text-muted small mt-2"><i class="bi bi-play-circle me-1"></i> Execute a simulação</div>
+                        <div class="fs-2 fw-bold text-muted lh-1 mb-1">â€”</div>
+                        <div class="text-muted small mt-2"><i class="bi bi-play-circle me-1"></i> Execute a simulaÃ§Ã£o</div>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -528,11 +528,11 @@ $isSelicMonthlyConflict = (
     </div>
 
     <?php
-    // --- Categorização das Métricas (Analista Sênior) ---
+    // --- CategorizaÃ§Ã£o das MÃ©tricas (Analista SÃªnior) ---
     $hasDeposits = isset($metrics['total_deposits']) && $metrics['total_deposits'] > 0;
     $isShort = $metrics['is_short_period'] ?? false;
 
-    // Calcula inflação média anual (IPCA) do período
+    // Calcula inflaÃ§Ã£o mÃ©dia anual (IPCA) do perÃ­odo
     $startDateObj = new DateTime($portfolio['start_date']);
     $endDateObj   = $portfolio['end_date'] ? new DateTime($portfolio['end_date']) : new DateTime();
     $periodMonths = max(1, $startDateObj->diff($endDateObj)->m + ($startDateObj->diff($endDateObj)->y * 12));
@@ -543,26 +543,26 @@ $isSelicMonthlyConflict = (
 
     $metricGroups = [
         [
-            'title' => 'Performance do Patrimônio (Com Aportes)',
+            'title' => 'Performance do PatrimÃ´nio (Com Aportes)',
             'icon'  => 'bi-bank',
             'color' => '#0d6efd',
-            'description' => 'Estes números refletem o que você veria no saldo da sua corretora. Incluem tanto o rendimento quanto o dinheiro que você tirou do bolso.',
+            'description' => 'Estes nÃºmeros refletem o que vocÃª veria no saldo da sua corretora. Incluem tanto o rendimento quanto o dinheiro que vocÃª tirou do bolso.',
             'metrics' => [
                 [
-                    'label' => 'Retorno Total do Patrimônio',
+                    'label' => 'Retorno Total do PatrimÃ´nio',
                     'val' => formatPercentage($metrics['total_return'], 2),
                     'class' => 'border-primary',
                     'text' => $metrics['total_return'] >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Crescimento total do saldo da conta, do início ao fim, somando rendimentos e aportes.',
+                    'tooltip' => 'Crescimento total do saldo da conta, do inÃ­cio ao fim, somando rendimentos e aportes.',
                     'sub' => 'Saldo Final vs Capital Inicial'
                 ],
                 [
-                    'label' => $isShort ? 'Rentabilidade no Período' : 'Rentabilidade Anual (Média)',
+                    'label' => $isShort ? 'Rentabilidade no PerÃ­odo' : 'Rentabilidade Anual (MÃ©dia)',
                     'val'   => formatPercentage($metrics['annual_return'], 2),
                     'class' => 'border-primary',
                     'text'  => 'text-primary',
-                    'tooltip' => 'A taxa média de crescimento do seu patrimônio por ano, considerando o efeito dos aportes.',
-                    'sub' => $isShort ? 'Período inferior a 1 ano' : 'CAGR do Patrimônio'
+                    'tooltip' => 'A taxa mÃ©dia de crescimento do seu patrimÃ´nio por ano, considerando o efeito dos aportes.',
+                    'sub' => $isShort ? 'PerÃ­odo inferior a 1 ano' : 'CAGR do PatrimÃ´nio'
                 ],
                 [
                     'label' => 'ROI (Retorno sobre Investimento)',
@@ -570,7 +570,7 @@ $isSelicMonthlyConflict = (
                     'class' => 'border-success',
                     'visible' => $hasDeposits,
                     'text' => ($metrics['roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'O quanto o seu capital rendeu de fato sobre <b>todo o dinheiro investido</b> (Início + Aportes).',
+                    'tooltip' => 'O quanto o seu capital rendeu de fato sobre <b>todo o dinheiro investido</b> (InÃ­cio + Aportes).',
                     'footer' => 'Investido: ' . formatCurrency($metrics['total_invested'], $portfolio['output_currency'])
                 ],
                 [
@@ -578,7 +578,7 @@ $isSelicMonthlyConflict = (
                     'val' => formatCurrency($metrics['interest_earned'] ?? ($metrics['final_value'] - $metrics['total_invested']), $portfolio['output_currency']),
                     'class' => 'border-success',
                     'text' => ($metrics['interest_earned'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'O valor em dinheiro que o mercado te deu, subtraindo tudo o que você investiu.',
+                    'tooltip' => 'O valor em dinheiro que o mercado te deu, subtraindo tudo o que vocÃª investiu.',
                     'sub' => 'Ganhos de capital + Proventos'
                 ]
             ]
@@ -587,15 +587,15 @@ $isSelicMonthlyConflict = (
             'title' => 'Desempenho da Carteira (Sem Aportes)',
             'icon'  => 'bi-gear-wide-connected',
             'color' => '#6610f2',
-            'description' => 'Isolamos o efeito do seu bolso para medir apenas a qualidade da alocação de ativos. É a métrica de performance do gestor.',
+            'description' => 'Isolamos o efeito do seu bolso para medir apenas a qualidade da alocaÃ§Ã£o de ativos. Ã‰ a mÃ©trica de performance do gestor.',
             'metrics' => [
                 [
                     'label' => 'Performance da Carteira',
                     'val' => formatPercentage($metrics['strategy_return'] ?? 0, 2),
                     'class' => 'border-indigo',
                     'text' => ($metrics['strategy_return'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Quanto a carteira rendeu <b>por conta própria</b>. É como se você tivesse investido R$ 100 no início e nunca mais mexido.',
-                    'sub' => 'Retorno Teórico da Carteira'
+                    'tooltip' => 'Quanto a carteira rendeu <b>por conta prÃ³pria</b>. Ã‰ como se vocÃª tivesse investido R$ 100 no inÃ­cio e nunca mais mexido.',
+                    'sub' => 'Retorno TeÃ³rico da Carteira'
                 ],
                 [
                     'label' => 'Performance Anualizada',
@@ -619,24 +619,24 @@ $isSelicMonthlyConflict = (
                     'val' => '<span id="betaValue">--</span>',
                     'class' => 'border-dark',
                     'text'  => 'text-main',
-                    'tooltip' => 'Mede o risco em relação ao mercado. <b>Beta > 1</b> indica que a carteira oscila mais que o benchmark selecionado.',
+                    'tooltip' => 'Mede o risco em relaÃ§Ã£o ao mercado. <b>Beta > 1</b> indica que a carteira oscila mais que o benchmark selecionado.',
                     'footer_id' => 'betaBenchmarkName',
                     'footer' => 'Selecione um benchmark'
                 ]
             ]
         ],
         [
-            'title' => 'Poder de Compra e Inflação (Ganhos REAIS)',
+            'title' => 'Poder de Compra e InflaÃ§Ã£o (Ganhos REAIS)',
             'icon'  => 'bi-shield-lock',
             'color' => '#fd7e14',
-            'description' => 'O termo "Real" aqui refere-se ao ganho acima do IPCA. É o que realmente te deixa mais rico após descontar o aumento de preços.',
+            'description' => 'O termo "Real" aqui refere-se ao ganho acima do IPCA. Ã‰ o que realmente te deixa mais rico apÃ³s descontar o aumento de preÃ§os.',
             'metrics' => [
                 [
-                    'label' => 'Ganho Real Acima da Inflação',
+                    'label' => 'Ganho Real Acima da InflaÃ§Ã£o',
                     'val' => formatPercentage($metrics['real_roi'] ?? 0, 2),
                     'class' => 'border-orange',
                     'text' => ($metrics['real_roi'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'O seu retorno total já descontando a inflação (IPCA) acumulada no período.',
+                    'tooltip' => 'O seu retorno total jÃ¡ descontando a inflaÃ§Ã£o (IPCA) acumulada no perÃ­odo.',
                     'sub' => 'Poder de Compra Adquirido'
                 ],
                 [
@@ -644,24 +644,24 @@ $isSelicMonthlyConflict = (
                     'val' => formatPercentage($metrics['real_roi_annual'] ?? 0, 2),
                     'class' => 'border-orange',
                     'text' => ($metrics['real_roi_annual'] ?? 0) >= 0 ? 'text-success' : 'text-danger',
-                    'tooltip' => 'Taxa de crescimento real ao ano. Se este número for positivo, seu patrimônio está vencendo o custo de vida.',
+                    'tooltip' => 'Taxa de crescimento real ao ano. Se este nÃºmero for positivo, seu patrimÃ´nio estÃ¡ vencendo o custo de vida.',
                     'sub' => 'Acima do IPCA'
                 ],
                 [
-                    'label' => 'Inflação Acumulada (IPCA)',
+                    'label' => 'InflaÃ§Ã£o Acumulada (IPCA)',
                     'val' => formatPercentage($metrics['total_inflation'] ?? 0, 2),
                     'class' => 'border-secondary',
                     'text' => 'text-muted',
-                    'tooltip' => 'A variação do IPCA no período simulado. Representa o quanto o seu dinheiro perdeu de valor para os preços.',
-                    'sub' => 'Custo de vida no período'
+                    'tooltip' => 'A variaÃ§Ã£o do IPCA no perÃ­odo simulado. Representa o quanto o seu dinheiro perdeu de valor para os preÃ§os.',
+                    'sub' => 'Custo de vida no perÃ­odo'
                 ],
                 [
-                    'label' => 'IPCA Médio ao Ano',
+                    'label' => 'IPCA MÃ©dio ao Ano',
                     'val' => formatPercentage($avgAnnualInflation, 2),
                     'class' => 'border-secondary',
                     'text' => 'text-muted',
-                    'tooltip' => 'Inflação média anual (IPCA) ao longo do período simulado. É o "custo" anual que o dinheiro paga para manter o poder de compra.',
-                    'sub' => 'Inflação anualizada do período'
+                    'tooltip' => 'InflaÃ§Ã£o mÃ©dia anual (IPCA) ao longo do perÃ­odo simulado. Ã‰ o "custo" anual que o dinheiro paga para manter o poder de compra.',
+                    'sub' => 'InflaÃ§Ã£o anualizada do perÃ­odo'
                 ]
             ]
         ],
@@ -669,30 +669,30 @@ $isSelicMonthlyConflict = (
             'title' => 'Risco e Volatilidade',
             'icon'  => 'bi-graph-down',
             'color' => '#dc3545',
-            'description' => 'A jornada importa tanto quanto o destino. Aqui medimos o quão "turbulenta" foi a simulação.',
+            'description' => 'A jornada importa tanto quanto o destino. Aqui medimos o quÃ£o "turbulenta" foi a simulaÃ§Ã£o.',
             'metrics' => [
                 [
                     'label' => 'Volatilidade Anual',
                     'val' => formatPercentage($metrics['volatility'], 2),
                     'class' => 'border-warning',
                     'text' => 'text-main',
-                    'tooltip' => 'Desvio padrão dos retornos. Quanto maior, mais a carteira "balança". Carteiras conservadoras buscam volatilidade baixa.',
+                    'tooltip' => 'Desvio padrÃ£o dos retornos. Quanto maior, mais a carteira "balanÃ§a". Carteiras conservadoras buscam volatilidade baixa.',
                     'sub' => 'Risco da jornada'
                 ],
                 [
-                    'label' => 'Índice de Sharpe',
+                    'label' => 'Ãndice de Sharpe',
                     'val' => number_format($metrics['sharpe_ratio'], 2),
                     'class' => 'border-info',
                     'text' => 'text-main',
-                    'tooltip' => 'Relação retorno/risco. Acima de 1 é considerado bom. Mostra se o risco que você correu valeu a pena em retorno.',
-                    'sub' => 'Eficiência de Risco'
+                    'tooltip' => 'RelaÃ§Ã£o retorno/risco. Acima de 1 Ã© considerado bom. Mostra se o risco que vocÃª correu valeu a pena em retorno.',
+                    'sub' => 'EficiÃªncia de Risco'
                 ],
                 [
                     'label' => 'Maior Alta Mensal',
                     'val' => formatPercentage($metrics['max_monthly_gain'] ?? 0, 2),
                     'class' => 'border-success',
                     'text' => 'text-success',
-                    'tooltip' => 'O melhor mês da história desta carteira. Reflete o potencial de "tiro" positivo.',
+                    'tooltip' => 'O melhor mÃªs da histÃ³ria desta carteira. Reflete o potencial de "tiro" positivo.',
                     'sub' => 'Recorde positivo mensal'
                 ],
                 [
@@ -700,15 +700,15 @@ $isSelicMonthlyConflict = (
                     'val' => formatPercentage($metrics['max_monthly_loss'] ?? 0, 2),
                     'class' => 'border-danger',
                     'text' => 'text-danger',
-                    'tooltip' => 'O pior mês enfrentado. Importante para testar seu estômago como investidor.',
-                    'sub' => 'Drawdown máximo mensal'
+                    'tooltip' => 'O pior mÃªs enfrentado. Importante para testar seu estÃ´mago como investidor.',
+                    'sub' => 'Drawdown mÃ¡ximo mensal'
                 ]
             ]
         ]
     ];
 
     foreach ($metricGroups as $group): 
-        $isGroupLocked = ($group['title'] === 'Poder de Compra e Inflação (Ganhos REAIS)' && !Auth::isPro());
+        $isGroupLocked = ($group['title'] === 'Poder de Compra e InflaÃ§Ã£o (Ganhos REAIS)' && !Auth::isPro());
     ?>
         <div class="col-12 mt-4 mb-2">
             <div class="d-flex align-items-center gap-2 mb-1">
@@ -734,8 +734,8 @@ $isSelicMonthlyConflict = (
                         <div class="rounded-circle bg-soft-primary text-primary mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                             <i class="bi bi-gem fs-2"></i>
                         </div>
-                        <h6 class="fw-bold mb-1">Análise de Ganhos Reais</h6>
-                        <p class="text-muted small mb-3">Veja o quanto você realmente enriqueceu acima da inflação.</p>
+                        <h6 class="fw-bold mb-1">AnÃ¡lise de Ganhos Reais</h6>
+                        <p class="text-muted small mb-3">Veja o quanto vocÃª realmente enriqueceu acima da inflaÃ§Ã£o.</p>
                         <a href="/index.php?url=<?= obfuscateUrl('upgrade') ?>" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
                             <i class="bi bi-rocket-takeoff me-1"></i> Desbloquear Plano PRO
                         </a>
@@ -787,10 +787,10 @@ $isSelicMonthlyConflict = (
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Evolução do Patrimônio
+                        EvoluÃ§Ã£o do PatrimÃ´nio
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Mostra o <strong>valor total do portfólio</strong> a cada mês simulado. Inclui o efeito dos aportes, rebalanceamentos e variação de preços dos ativos.<br><br>Use o seletor <em>Comparar com</em> para adicionar um benchmark.">
+                                title="Mostra o <strong>valor total do portfÃ³lio</strong> a cada mÃªs simulado. Inclui o efeito dos aportes, rebalanceamentos e variaÃ§Ã£o de preÃ§os dos ativos.<br><br>Use o seletor <em>Comparar com</em> para adicionar um benchmark.">
                             <i class="bi bi-info-circle-fill"></i>
                         </button>
                     </h5>
@@ -821,7 +821,7 @@ $isSelicMonthlyConflict = (
                                     ?>
                                     <option value="<?= $b['id'] ?>" <?= !$isValid ? 'disabled' : '' ?> <?= $isSP500 ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($b['name']) ?>
-                                        <?= !$isValid ? ' (Histórico insuficiente)' : '' ?>
+                                        <?= !$isValid ? ' (HistÃ³rico insuficiente)' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -833,7 +833,7 @@ $isSelicMonthlyConflict = (
         </div>
     </div>
 <?php
-// Extrair os últimos valores do gráfico de performance da estratégia
+// Extrair os Ãºltimos valores do grÃ¡fico de performance da estratÃ©gia
 $strategyChart = $chartData['strategy_performance_chart'] ?? null;
 $lastStrategyReturn = 0;
 $lastPortfolioReturn = 0;
@@ -852,22 +852,22 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 ?>
 
     <?php if (isset($chartData['projection_chart'])): ?>
-    <!-- NOVO: Gráfico de Projeção de Patrimônio Futuro -->
+    <!-- NOVO: GrÃ¡fico de ProjeÃ§Ã£o de PatrimÃ´nio Futuro -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0 overflow-hidden">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
-                            <i class="bi bi-graph-up-arrow me-1"></i>Projeção de Patrimônio Futuro (<span id="titleProjectionYears">10</span> anos)
+                            <i class="bi bi-graph-up-arrow me-1"></i>ProjeÃ§Ã£o de PatrimÃ´nio Futuro (<span id="titleProjectionYears">10</span> anos)
                             <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                     data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                    title="<strong>Estimativa futura</strong> baseada na rentabilidade anual histórica da estratégia, com juros compostos mensais.<br><br>⚠️ Rentabilidade passada <strong>não garante</strong> rentabilidade futura. Use como referência de planejamento.">
+                                    title="<strong>Estimativa futura</strong> baseada na rentabilidade anual histÃ³rica da estratÃ©gia, com juros compostos mensais.<br><br>âš ï¸ Rentabilidade passada <strong>nÃ£o garante</strong> rentabilidade futura. Use como referÃªncia de planejamento.">
                                 <i class="bi bi-info-circle-fill"></i>
                             </button>
                         </h5>
                         <p class="text-muted small mb-0">
-                            Baseado na rentabilidade anual da estratégia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
+                            Baseado na rentabilidade anual da estratÃ©gia de <strong><?= number_format($metrics['strategy_annual_return'], 4) ?>%</strong>
                             <?php if (isset($monthlyDeposit) && $monthlyDeposit > 0): ?>
                                 e aporte mensal de <strong><?= formatCurrency($monthlyDeposit, $portfolio['output_currency']) ?></strong>.
                             <?php else: ?>
@@ -877,7 +877,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex align-items-center">
-                            <label for="projectionYears" class="me-2 small fw-bold text-muted text-uppercase" style="white-space: nowrap;">Período:</label>
+                            <label for="projectionYears" class="me-2 small fw-bold text-muted text-uppercase" style="white-space: nowrap;">PerÃ­odo:</label>
                             <select id="projectionYears" class="form-select form-select-sm border-0 bg-light-subtle text-main shadow-sm rounded-pill px-3" style="width: 100px;">
                                 <option value="5">5 anos</option>
                                 <option value="10" selected>10 anos</option>
@@ -888,7 +888,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             </select>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PROJEÇÃO</span>
+                            <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PROJEÃ‡ÃƒO</span>
                         </div>
                     </div>
                 </div>
@@ -896,7 +896,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
                             <div class="p-3 bg-card rounded-4 border shadow-sm h-100">
-                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">Patrimônio Inicial (Simulado)</div>
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase">PatrimÃ´nio Inicial (Simulado)</div>
                                 <div class="input-group input-group-sm mt-2">
                                     <span class="input-group-text border-0 bg-light-subtle text-muted border-end-0">
                                         <?= $portfolio['output_currency'] === 'BRL' ? 'R$' : '$' ?>
@@ -904,12 +904,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                     <input type="text" class="form-control border-0 bg-light-subtle fw-bold text-main border-start-0" id="projectionInitialValue" 
                                            value="<?= number_format($metrics['final_value'], 2, ',', '.') ?>">
                                 </div>
-                                <div class="smaller text-muted mt-1">Valor atual do portfólio</div>
+                                <div class="smaller text-muted mt-1">Valor atual do portfÃ³lio</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="p-3 bg-card rounded-4 border shadow-sm h-100">
-                                <div class="text-muted smaller fw-bold mb-1 text-uppercase" id="labelProjectionYears">Patrimônio em 10 anos</div>
+                                <div class="text-muted smaller fw-bold mb-1 text-uppercase" id="labelProjectionYears">PatrimÃ´nio em 10 anos</div>
                                 <div class="h4 fw-bold mb-0 text-primary mt-2" id="valueProjectionFinal">
                                     <?php 
                                     $projectionValues = $chartData['projection_chart']['datasets'][0]['data'];
@@ -938,8 +938,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     <div class="alert alert-soft-warning border-0 rounded-4 small mb-0 d-flex align-items-start">
                         <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
                         <div>
-                            <strong>Importante:</strong> Esta é uma simulação baseada em rentabilidade passada, que não é garantia de rentabilidade futura. 
-                            O cálculo utiliza juros compostos mensais e considera que os aportes configurados serão mantidos fielmente ao longo de todo o período.
+                            <strong>Importante:</strong> Esta Ã© uma simulaÃ§Ã£o baseada em rentabilidade passada, que nÃ£o Ã© garantia de rentabilidade futura. 
+                            O cÃ¡lculo utiliza juros compostos mensais e considera que os aportes configurados serÃ£o mantidos fielmente ao longo de todo o perÃ­odo.
                         </div>
                     </div>
                 </div>
@@ -948,7 +948,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
     </div>
     <?php endif; ?>
 
-    <!-- NOVO: Gráfico de Performance da Estratégia (sem aportes) -->
+    <!-- NOVO: GrÃ¡fico de Performance da EstratÃ©gia (sem aportes) -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -957,11 +957,11 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         Desempenho da Carteira
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Compara o crescimento do patrimônio <strong>com aportes</strong> (linha verde) versus o <strong>desempenho puro da carteira</strong> (linha roxa), sem aportes.<br><br>A diferença entre as linhas representa o quanto o seu esforço de poupança (aportes) contribuiu para o valor final.">
+                                title="Compara o crescimento do patrimÃ´nio <strong>com aportes</strong> (linha verde) versus o <strong>desempenho puro da carteira</strong> (linha roxa), sem aportes.<br><br>A diferenÃ§a entre as linhas representa o quanto o seu esforÃ§o de poupanÃ§a (aportes) contribuiu para o valor final.">
                             <i class="bi bi-info-circle-fill"></i>
                         </button>
                     </h5>
-                    <p class="text-muted small mb-0">Comparação entre o patrimônio total (com aportes) e o desempenho da carteira (sem aportes).</p>
+                    <p class="text-muted small mb-0">ComparaÃ§Ã£o entre o patrimÃ´nio total (com aportes) e o desempenho da carteira (sem aportes).</p>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -974,7 +974,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         </div>
                         <div class="d-inline-block">
                             <span class="badge bg-success me-1" style="width: 15px; height: 15px; display: inline-block;"></span>
-                            <span class="small">Portfólio Total (<?php echo formatPercentage($lastPortfolioReturn); ?>)</span>
+                            <span class="small">PortfÃ³lio Total (<?php echo formatPercentage($lastPortfolioReturn); ?>)</span>
                         </div>
                     </div>
                 </div>
@@ -982,13 +982,13 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         </div>
     </div>
 
-    <!-- NOVO: Gráfico de Juros Acumulados -->
+    <!-- NOVO: GrÃ¡fico de Juros Acumulados -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Evolução dos Juros
+                        EvoluÃ§Ã£o dos Juros
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
                                 title="Exibe os <strong>juros mensais obtidos</strong> (barras) e o <strong>total acumulado de juros</strong> (linha) ao longo do tempo.<br><br>Juros = rendimento gerado pelos ativos, excluindo capital aportado.">
@@ -1012,10 +1012,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             <div class="card shadow-sm border-0">
                 <div class="card-header py-3">
                     <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        Histórico de Aportes
+                        HistÃ³rico de Aportes
                         <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                title="Exibe os <strong>aportes realizados</strong> a cada mês (barras verdes) e o valor total do portfólio ao longo do tempo (linha azul).<br><br>Meses sem aporte correspondem a períodos em que a condição de aporte não foi atingida.">
+                                title="Exibe os <strong>aportes realizados</strong> a cada mÃªs (barras verdes) e o valor total do portfÃ³lio ao longo do tempo (linha azul).<br><br>Meses sem aporte correspondem a perÃ­odos em que a condiÃ§Ã£o de aporte nÃ£o foi atingida.">
                             <i class="bi bi-info-circle-fill"></i>
                         </button>
                     </h5>
@@ -1038,16 +1038,16 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         <div>
                             <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                                 <i class="bi bi-pie-chart-fill text-warning"></i>
-                                Composição Histórica
+                                ComposiÃ§Ã£o HistÃ³rica
                                 <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                         data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                        title="<strong>Como a alocação entre os ativos evoluiu</strong> ano a ano — mostra a fatia de cada ativo no portfólio ao longo do tempo, refletindo os rebalanceamentos periódicos.">
+                                        title="<strong>Como a alocaÃ§Ã£o entre os ativos evoluiu</strong> ano a ano â€” mostra a fatia de cada ativo no portfÃ³lio ao longo do tempo, refletindo os rebalanceamentos periÃ³dicos.">
                                     <i class="bi bi-info-circle-fill"></i>
                                 </button>
                             </h5>
-                            <p class="mb-0 mt-1 text-muted small">Distribuição dos ativos ano a ano</p>
+                            <p class="mb-0 mt-1 text-muted small">DistribuiÃ§Ã£o dos ativos ano a ano</p>
                         </div>
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 text-nowrap small">Alocação</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 text-nowrap small">AlocaÃ§Ã£o</span>
                     </div>
                 </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="compositionChart"></canvas></div></div>
@@ -1063,7 +1063,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                 Rentabilidade da Carteira
                                 <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                         data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                        title="<strong>Como sua carteira efetivamente se comportou</strong> ano a ano — considera todos os aportes realizados, rebalanceamentos e o fluxo de caixa. É o resultado que você, de fato, obteve.">
+                                        title="<strong>Como sua carteira efetivamente se comportou</strong> ano a ano â€” considera todos os aportes realizados, rebalanceamentos e o fluxo de caixa. Ã‰ o resultado que vocÃª, de fato, obteve.">
                                     <i class="bi bi-info-circle-fill"></i>
                                 </button>
                             </h5>
@@ -1082,16 +1082,16 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         <div>
                             <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
                                 <i class="bi bi-graph-up-arrow text-success"></i>
-                                Performance da Estratégia
+                                Performance da EstratÃ©gia
                                 <button type="button" class="btn btn-link btn-sm p-0 text-muted info-tooltip"
                                         data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="right"
-                                        title="<strong>Quanto os ativos selecionados renderam</strong>, isolados de qualquer aporte ou retirada. Mede a qualidade da alocação em si — o quanto a estratégia de investimento entregou, independentemente do capital investido.">
+                                        title="<strong>Quanto os ativos selecionados renderam</strong>, isolados de qualquer aporte ou retirada. Mede a qualidade da alocaÃ§Ã£o em si â€” o quanto a estratÃ©gia de investimento entregou, independentemente do capital investido.">
                                     <i class="bi bi-info-circle-fill"></i>
                                 </button>
                             </h5>
                             <p class="mb-0 mt-1 text-muted small">Performance pura dos ativos, sem efeito dos aportes</p>
                         </div>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-nowrap small">Estratégia pura</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-nowrap small">EstratÃ©gia pura</span>
                     </div>
                 </div>
                 <div class="card-body"><div class="chart-container" style="height: 300px;"><canvas id="strategyReturnsChart"></canvas></div></div>
@@ -1101,12 +1101,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
 
 
-    <!-- Modal de Edição Rápida de Alocações -->
+    <!-- Modal de EdiÃ§Ã£o RÃ¡pida de AlocaÃ§Ãµes -->
     <div class="modal fade" id="editCompositionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Editar Alocação</h5>
+                    <h5 class="modal-title fw-bold">Editar AlocaÃ§Ã£o</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
@@ -1116,7 +1116,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
                         <div class="p-3 border-bottom">
                             <div class="alert alert-info py-2 small">
-                                <i class="bi bi-lightbulb me-1"></i> Ajuste os percentuais e experimente diferentes configurações. A soma deve ser 100%.
+                                <i class="bi bi-lightbulb me-1"></i> Ajuste os percentuais e experimente diferentes configuraÃ§Ãµes. A soma deve ser 100%.
                             </div>
                         </div>
 
@@ -1126,9 +1126,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                     <thead class="table-light">
                                     <tr>
                                         <th>Ativo</th>
-                                        <th style="width: 150px;">Alocação Atual</th>
+                                        <th style="width: 150px;">AlocaÃ§Ã£o Atual</th>
                                         <th style="width: 180px;">Novo Percentual</th>
-                                        <th style="width: 120px;">Variação</th>
+                                        <th style="width: 120px;">VariaÃ§Ã£o</th>
                                     </tr>
                                     </thead>
                                     <tbody id="editCompositionBody">
@@ -1194,7 +1194,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                                 <div class="mt-3">
                                     <div class="alert alert-warning py-2" id="allocationWarning" style="display: <?php echo $totalPercent != 100 ? 'block' : 'none'; ?>;">
                                         <i class="bi bi-exclamation-triangle me-2"></i>
-                                        A soma das alocações deve ser exatamente 100%. Diferença atual:
+                                        A soma das alocaÃ§Ãµes deve ser exatamente 100%. DiferenÃ§a atual:
                                         <span id="difference"><?php echo number_format(abs($totalPercent - 100), 2); ?>%</span>
                                     </div>
                                 </div>
@@ -1208,7 +1208,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Inicialização de dados e gráficos
+        // InicializaÃ§Ã£o de dados e grÃ¡ficos
         const currency = '<?php echo $portfolio['output_currency']; ?>';
         const chartData = <?php echo json_encode($chartData); ?>;
         const assetNames = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.htmlspecialchars($a['name']).'",'; ?>};
@@ -1216,11 +1216,11 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         const assetTaxGroups = {<?php foreach ($assets as $a) echo '"'.$a['asset_id'].'": "'.($a['tax_group'] ?? 'RENDA_FIXA').'",'; ?>};
         const outputCurrency = '<?php echo $portfolio['output_currency']; ?>';
 
-        // Remove metadados do log de auditoria para gráficos e cálculos
+        // Remove metadados do log de auditoria para grÃ¡ficos e cÃ¡lculos
         const auditLog = { ...chartData.audit_log };
         delete auditLog._metadata;
 
-        /* ── Helper: formata moeda ───────────────────────────────────────────────── */
+        /* â”€â”€ Helper: formata moeda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         function fmtCur(value, currency) {
             const targetCurrency = currency || outputCurrency;
             return new Intl.NumberFormat('pt-BR', {
@@ -1230,7 +1230,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             }).format(value);
         }
 
-        /* ── Cálculo de Impostos e Atualização do Hero ────────────────────────── */
+        /* â”€â”€ CÃ¡lculo de Impostos e AtualizaÃ§Ã£o do Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         (function processTaxAndHero() {
             const log = auditLog;
             if (!log) return;
@@ -1367,12 +1367,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         })();
 
         // ============================================================
-        // Helpers: formatação de eixo X e tooltip de período
+        // Helpers: formataÃ§Ã£o de eixo X e tooltip de perÃ­odo
         // ============================================================
 
         /**
-         * Converte data ISO (YYYY-MM-DD) para rótulo compacto MM/AA.
-         * Ex.: "2026-01-31" → "01/26"
+         * Converte data ISO (YYYY-MM-DD) para rÃ³tulo compacto MM/AA.
+         * Ex.: "2026-01-31" â†’ "01/26"
          */
         function formatXAxisLabel(isoDate) {
             if (!isoDate || !String(isoDate).match(/^\d{4}-\d{2}-\d{2}$/)) return isoDate;
@@ -1381,9 +1381,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         }
 
         /**
-         * Gera título de tooltip com período de referência.
-         * Clarifica que "01/26" = variação entre o fechamento de 31/12/25 e 31/01/26.
-         * Retorna array de duas linhas para exibição no Chart.js.
+         * Gera tÃ­tulo de tooltip com perÃ­odo de referÃªncia.
+         * Clarifica que "01/26" = variaÃ§Ã£o entre o fechamento de 31/12/25 e 31/01/26.
+         * Retorna array de duas linhas para exibiÃ§Ã£o no Chart.js.
          */
         function formatPeriodTitle(isoDate) {
             if (!isoDate || !String(isoDate).match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -1392,21 +1392,21 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             const d    = new Date(isoDate + "T12:00:00");
             const mm   = String(d.getMonth() + 1).padStart(2, '0');
             const yy   = String(d.getFullYear()).slice(2);
-            // Último dia do mês atual
+            // Ãšltimo dia do mÃªs atual
             const endDate  = new Date(d.getFullYear(), d.getMonth() + 1, 0);
             const endDay   = String(endDate.getDate()).padStart(2, '0');
-            // Último dia do mês anterior
+            // Ãšltimo dia do mÃªs anterior
             const prevDate = new Date(d.getFullYear(), d.getMonth(), 0);
             const prevDay  = String(prevDate.getDate()).padStart(2, '0');
             const prevMm   = String(prevDate.getMonth() + 1).padStart(2, '0');
             const prevYy   = String(prevDate.getFullYear()).slice(2);
             return [
                 mm + '/' + yy,
-                'Variação: ' + prevDay + '/' + prevMm + '/' + prevYy + ' → ' + endDay + '/' + mm + '/' + yy
+                'VariaÃ§Ã£o: ' + prevDay + '/' + prevMm + '/' + prevYy + ' â†’ ' + endDay + '/' + mm + '/' + yy
             ];
         }
 
-        /** Configuração padrão de eixo X para gráficos mensais (MM/AA, inclinado 45°) */
+        /** ConfiguraÃ§Ã£o padrÃ£o de eixo X para grÃ¡ficos mensais (MM/AA, inclinado 45Â°) */
         const xAxisMonthly = {
             ticks: {
                 callback: function(value) {
@@ -1420,7 +1420,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         window.valueChart = new Chart(document.getElementById('valueChart'), {
             type: 'line',
             data: {
-                labels: chartData.value_chart.labels, // ISO dates – formatados via ticks.callback
+                labels: chartData.value_chart.labels, // ISO dates â€“ formatados via ticks.callback
                 datasets: chartData.value_chart.datasets
             },
             options: {
@@ -1536,7 +1536,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         }
 
         <?php if ($hasDeposits && isset($chartData['audit_log'])): ?>
-        // Gráfico de Aportes
+        // GrÃ¡fico de Aportes
         const depositDates = [];
         const depositAmounts = [];
         const portfolioValuesPlot = [];
@@ -1550,10 +1550,10 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
         new Chart(document.getElementById('depositsChart'), {
             type: 'bar',
             data: {
-                labels: depositDates, // ISO dates – formatados via ticks.callback
+                labels: depositDates, // ISO dates â€“ formatados via ticks.callback
                 datasets: [
                     {
-                        label: 'Valor do Portfólio',
+                        label: 'Valor do PortfÃ³lio',
                         data: portfolioValuesPlot,
                         type: 'line',
                         borderColor: '#007bff',
@@ -1610,7 +1610,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             },
                             label: function(context) {
                                 if (context.datasetIndex === 0) {
-                                    return `Portfólio: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(context.raw)}`;
+                                    return `PortfÃ³lio: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(context.raw)}`;
                                 } else {
                                     return `Aporte: ${new Intl.NumberFormat('pt-BR', {style:'currency', currency}).format(context.raw)}`;
                                 }
@@ -1624,11 +1624,11 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
 
 
-        // Lógica para Projeção de Patrimônio Futuro (Cards de resumo)
+        // LÃ³gica para ProjeÃ§Ã£o de PatrimÃ´nio Futuro (Cards de resumo)
         const currentPatrimonyInput = document.getElementById('currentPatrimony');
         if (currentPatrimonyInput) {
             currentPatrimonyInput.addEventListener('input', function(e) {
-                // Remove tudo que não é dígito
+                // Remove tudo que nÃ£o Ã© dÃ­gito
                 let value = this.value.replace(/\D/g, '');
                 
                 // Formata como moeda
@@ -1642,7 +1642,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     this.value = '0,00';
                 }
 
-                // Cálculo da projeção para os cards de 5 a 30 anos
+                // CÃ¡lculo da projeÃ§Ã£o para os cards de 5 a 30 anos
                 const numericValue = parseFloat(value) || 0;
                 const monthlyDeposit = <?= $monthlyDeposit ?>;
                 const annualReturn = <?= $metrics['strategy_annual_return'] ?? $metrics['annual_return'] ?>;
@@ -1661,7 +1661,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         futureValue = numericValue + (monthlyDeposit * n);
                     }
 
-                    // Atualiza o título (valor completo)
+                    // Atualiza o tÃ­tulo (valor completo)
                     el.setAttribute('title', formatCurrencyJS(futureValue, outputCurrency));
 
                     // Atualiza o texto (formato compacto)
@@ -1676,9 +1676,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             });
         }
 
-        // Função auxiliar de formatação para JS (equivalente ao PHP formatCurrency)
+        // FunÃ§Ã£o auxiliar de formataÃ§Ã£o para JS (equivalente ao PHP formatCurrency)
         function formatCurrencyJS(value, currency) {
-            const symbols = { 'BRL': 'R$', 'USD': '$', 'EUR': '€' };
+            const symbols = { 'BRL': 'R$', 'USD': '$', 'EUR': 'â‚¬' };
             const symbol = symbols[currency] || currency;
             return symbol + ' ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
@@ -1709,8 +1709,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 .then(res => {
                     if (!res.success) return;
 
-                    // Cálculo do Beta em tempo real
-                    // Utilizamos os dados do gráfico (valueChart) para garantir sincronia temporal com o benchmark
+                    // CÃ¡lculo do Beta em tempo real
+                    // Utilizamos os dados do grÃ¡fico (valueChart) para garantir sincronia temporal com o benchmark
                     const portfolioValues = chart.data.datasets[0].data;
                     const portfolioReturns = [];
                     for (let i = 1; i < portfolioValues.length; i++) {
@@ -1724,14 +1724,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     document.getElementById('betaValue').innerText = isFinite(beta) ? beta.toFixed(2) : '--';
                     document.getElementById('betaBenchmarkName').innerText = 'Benchmark: ' + this.options[this.selectedIndex].text;
 
-                    // Se o gráfico tem o ponto 0 (capital inicial), o benchmark precisa de um
-                    // null no início para alinhar corretamente (benchmark não tem dado para t=0)
+                    // Se o grÃ¡fico tem o ponto 0 (capital inicial), o benchmark precisa de um
+                    // null no inÃ­cio para alinhar corretamente (benchmark nÃ£o tem dado para t=0)
                     const chartLabelCount = chart.data.labels.length;
                     const benchmarkData = chartLabelCount > res.values.length
                         ? [null, ...res.values]
                         : res.values;
 
-                    // Adiciona a linha ao gráfico
+                    // Adiciona a linha ao grÃ¡fico
                     chart.data.datasets.push({
                         label: 'Benchmark: ' + this.options[this.selectedIndex].text,
                         data: benchmarkData,
@@ -1747,7 +1747,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 });
         });
 
-        // Função auxiliar de estatística
+        // FunÃ§Ã£o auxiliar de estatÃ­stica
         function calculateBeta(pRet, bRet) {
             const minLen = Math.min(pRet.length, bRet.length);
             if (minLen < 2) return 1;
@@ -1764,9 +1764,9 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             return varB === 0 ? 1 : cov / varB;
         }
 
-        // Gráfico de Performance da Estratégia
+        // GrÃ¡fico de Performance da EstratÃ©gia
         const strategyPerformanceData = chartData.strategy_performance_chart || { labels: [], datasets: [] };
-        // Labels já são ISO dates (YYYY-MM-DD) – formatados via ticks.callback
+        // Labels jÃ¡ sÃ£o ISO dates (YYYY-MM-DD) â€“ formatados via ticks.callback
 
         new Chart(document.getElementById('strategyPerformanceChart'), {
             type: 'line',
@@ -1813,7 +1813,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             }
         });
 
-        // Gráfico de Juros
+        // GrÃ¡fico de Juros
         new Chart(document.getElementById('interestChart'), {
             type: 'line',
             data: chartData.interest_chart,
@@ -1885,7 +1885,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             }
         });
 
-        // Gráfico de Projeção
+        // GrÃ¡fico de ProjeÃ§Ã£o
         if (chartData.projection_chart && document.getElementById('projectionChart')) {
             window.projectionChartInstance = new Chart(document.getElementById('projectionChart'), {
                 type: 'line',
@@ -1900,7 +1900,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     scales: {
                         x: {
                             ticks: {
-                                // Para projeções longas: exibe apenas Janeiro de cada ano
+                                // Para projeÃ§Ãµes longas: exibe apenas Janeiro de cada ano
                                 callback: function(value, index) {
                                     const lbl = this.getLabelForValue(value);
                                     if (!lbl || !String(lbl).match(/^\d{4}-\d{2}-\d{2}$/)) return lbl;
@@ -1946,7 +1946,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             });
         }
 
-        // Lógica para atualização dinâmica do Gráfico de Projeção (Anos e Capital Inicial)
+        // LÃ³gica para atualizaÃ§Ã£o dinÃ¢mica do GrÃ¡fico de ProjeÃ§Ã£o (Anos e Capital Inicial)
         const projectionYearsSelect = document.getElementById('projectionYears');
         const projectionInitialInput = document.getElementById('projectionInitialValue');
 
@@ -1961,8 +1961,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             projectionYearsSelect.disabled = true;
             if (projectionInitialInput) projectionInitialInput.disabled = true;
 
-            // Filtra o initialCapital para remover qualquer coisa que não seja dígito, vírgula ou ponto
-            // Se o campo estiver vazio, envia vazio para o controlador usar o padrão
+            // Filtra o initialCapital para remover qualquer coisa que nÃ£o seja dÃ­gito, vÃ­rgula ou ponto
+            // Se o campo estiver vazio, envia vazio para o controlador usar o padrÃ£o
             let initialCapitalParam = '';
             if (projectionInitialInput && projectionInitialInput.value.trim() !== '') {
                 initialCapitalParam = projectionInitialInput.value.replace(/[^\d,.]/g, '');
@@ -1976,7 +1976,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                             return JSON.parse(text);
                         } catch (e) {
                             console.error('Falha ao parsear JSON. Resposta recebida:', text);
-                            throw new Error('Resposta do servidor não é um JSON válido');
+                            throw new Error('Resposta do servidor nÃ£o Ã© um JSON vÃ¡lido');
                         }
                     });
                 })
@@ -1986,12 +1986,12 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     if (projectionInitialInput) projectionInitialInput.disabled = false;
                     
                     if (!data.success) {
-                        console.error('Erro ao carregar projeção:', data.message);
-                        alert('Erro ao carregar projeção: ' + data.message);
+                        console.error('Erro ao carregar projeÃ§Ã£o:', data.message);
+                        alert('Erro ao carregar projeÃ§Ã£o: ' + data.message);
                         return;
                     }
 
-                    // Atualiza o gráfico
+                    // Atualiza o grÃ¡fico
                     if (window.projectionChartInstance) {
                         console.log('Updating chart instance...');
                         window.projectionChartInstance.data = data.chart;
@@ -2006,7 +2006,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                     if (titleYears) titleYears.innerText = years;
 
                     const labelYears = document.getElementById('labelProjectionYears');
-                    if (labelYears) labelYears.innerText = `Patrimônio em ${years} anos`;
+                    if (labelYears) labelYears.innerText = `PatrimÃ´nio em ${years} anos`;
                     
                     const valueFinal = document.getElementById('valueProjectionFinal');
                     if (valueFinal) valueFinal.innerText = formatCurrencyJS(data.final_value, outputCurrency);
@@ -2017,8 +2017,8 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 .catch(error => {
                     projectionYearsSelect.disabled = false;
                     if (projectionInitialInput) projectionInitialInput.disabled = false;
-                    console.error('Erro na requisição de projeção:', error);
-                    alert('Erro na requisição de projeção. Verifique o console.');
+                    console.error('Erro na requisiÃ§Ã£o de projeÃ§Ã£o:', error);
+                    alert('Erro na requisiÃ§Ã£o de projeÃ§Ã£o. Verifique o console.');
                 });
         }
 
@@ -2035,7 +2035,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 }
             });
 
-            // Máscara de moeda simples para o input
+            // MÃ¡scara de moeda simples para o input
             projectionInitialInput.addEventListener('input', function(e) {
                 let value = this.value.replace(/\D/g, '');
                 if (value.length > 0) {
@@ -2048,7 +2048,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             });
         }
 
-        // Funções para edição rápida de alocações
+        // FunÃ§Ãµes para ediÃ§Ã£o rÃ¡pida de alocaÃ§Ãµes
         function openQuickEditModal() {
             // Calcula o total inicial
             updateAllocationTotal();
@@ -2064,7 +2064,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 const value = parseFloat(input.value) || 0;
                 total += value;
 
-                // Atualiza a variação
+                // Atualiza a variaÃ§Ã£o
                 const current = parseFloat(input.dataset.current) || 0;
                 const change = value - current;
                 const changeBadge = document.getElementById(`change-${input.dataset.assetId}`);
@@ -2114,7 +2114,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
             const form = document.getElementById('quickEditForm');
             const formData = new FormData(form);
 
-            // Adiciona a ação específica
+            // Adiciona a aÃ§Ã£o especÃ­fica
             formData.append('action', 'update_allocation');
 
             // Mostra loading
@@ -2143,14 +2143,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                         // Atualiza a interface
                         location.reload();
                     } else {
-                        alert(data.message || 'Erro ao salvar alocações');
+                        alert(data.message || 'Erro ao salvar alocaÃ§Ãµes');
                         saveBtn.innerHTML = originalText;
                         saveBtn.disabled = false;
                     }
                 })
                 .catch(error => {
                     console.error('Erro detalhado:', error);
-                    alert('Erro na comunicação com o servidor: ' + error.message);
+                    alert('Erro na comunicaÃ§Ã£o com o servidor: ' + error.message);
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
                 });
@@ -2158,7 +2158,7 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 
         // Adiciona eventos aos inputs
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializa todos os tooltips Bootstrap da página
+            // Inicializa todos os tooltips Bootstrap da pÃ¡gina
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             tooltipTriggerList.forEach(function(el) {
                 new bootstrap.Tooltip(el, { html: true, trigger: 'hover focus' });
@@ -2169,14 +2169,14 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
                 input.addEventListener('change', updateAllocationTotal);
             });
 
-            // Disparar o benchmark padrão (S&P 500) se estiver selecionado
+            // Disparar o benchmark padrÃ£o (S&P 500) se estiver selecionado
             const benchmarkSelector = document.getElementById('benchmarkSelector');
             if (benchmarkSelector && benchmarkSelector.value) {
                 benchmarkSelector.dispatchEvent(new Event('change'));
             }
         });
 
-        // Função para sugerir ajuste automático
+        // FunÃ§Ã£o para sugerir ajuste automÃ¡tico
         function suggestAllocation() {
             const badges = document.querySelectorAll('.allocation-badge');
             let total = 0;
@@ -2226,4 +2226,5 @@ if ($strategyChart && !empty($strategyChart['datasets'])) {
 $content = ob_get_clean();
 include_once __DIR__ . '/../layouts/main.php';
 ?>
+
 

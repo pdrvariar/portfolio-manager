@@ -1,5 +1,5 @@
-<?php
-$title = 'Importar Dados - Portfolio Backtest';
+﻿<?php
+$title = 'Importar Dados - Portfolio Backtest';`n$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="container mt-4">
@@ -7,15 +7,15 @@ ob_start();
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="mb-0">Importar Dados Históricos</h4>
+                    <h4 class="mb-0">Importar Dados HistÃ³ricos</h4>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <h5><i class="bi bi-info-circle"></i> Instruções:</h5>
+                        <h5><i class="bi bi-info-circle"></i> InstruÃ§Ãµes:</h5>
                         <ul class="mb-0">
                             <li>Use arquivos CSV no formato: <code>YYYY-MM,VALOR</code></li>
-                            <li>O nome do arquivo será usado como código do ativo (ex: <code>BTC-USD.csv</code>)</li>
-                            <li>Primeira linha deve ser o cabeçalho (será ignorada pelo sistema)</li>
+                            <li>O nome do arquivo serÃ¡ usado como cÃ³digo do ativo (ex: <code>BTC-USD.csv</code>)</li>
+                            <li>Primeira linha deve ser o cabeÃ§alho (serÃ¡ ignorada pelo sistema)</li>
                             <li>Valores devem estar no formato americano (ponto decimal, ex: 100.50)</li>
                         </ul>
                     </div>
@@ -51,10 +51,10 @@ ob_start();
             
             <div class="card mt-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Ativos Disponíveis para Importação</h5>
+                    <h5 class="mb-0">Ativos DisponÃ­veis para ImportaÃ§Ã£o</h5>
                 </div>
                 <div class="card-body">
-                    <p>Use estes nomes de arquivo para importação automática (o sistema criará o ativo se ele não existir):</p>
+                    <p>Use estes nomes de arquivo para importaÃ§Ã£o automÃ¡tica (o sistema criarÃ¡ o ativo se ele nÃ£o existir):</p>
                     <div class="row">
                         <div class="col-md-6">
                             <ul>
@@ -68,8 +68,8 @@ ob_start();
                             <ul>
                                 <li><code>SELIC.csv</code> - Taxa Selic</li>
                                 <li><code>IRX-RF-USA.csv</code> - Tesouro EUA</li>
-                                <li><code>USD-BRL.csv</code> - Dólar</li>
-                                <li><code>IFIX.csv</code> - Fundos Imobiliários</li>
+                                <li><code>USD-BRL.csv</code> - DÃ³lar</li>
+                                <li><code>IFIX.csv</code> - Fundos ImobiliÃ¡rios</li>
                             </ul>
                         </div>
                     </div>
