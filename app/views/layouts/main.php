@@ -182,13 +182,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo $is_active('assets'); ?>" href="/index.php?url=<?= obfuscateUrl('assets') ?>">
-                                <i class="bi bi-layers me-1"></i> Ativos
+                            <a class="nav-link <?php echo $is_active('portfolio/simulations'); ?>" href="/index.php?url=<?= obfuscateUrl('portfolio/simulations') ?>">
+                                <i class="bi bi-clock-history me-1"></i> Simulações
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo $is_active('portfolio/simulations'); ?>" href="/index.php?url=<?= obfuscateUrl('portfolio/simulations') ?>">
-                                <i class="bi bi-clock-history me-1"></i> Simulações
+                            <a class="nav-link <?php echo $is_active('assets'); ?>" href="/index.php?url=<?= obfuscateUrl('assets') ?>">
+                                <i class="bi bi-layers me-1"></i> Ativos
                             </a>
                         </li>
                     <?php endif; ?>

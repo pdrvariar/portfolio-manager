@@ -438,7 +438,7 @@ function buildChildRow(simId) {
             kpi("bi-plus-circle", "Total de Aportes",  fmtCurrency(totalDeposits,  cur), "text-info",      "kpi-info") +
             kpi("bi-graph-up-arrow","Patrimônio Final", fmtCurrency(totalValue,    cur), totalValue >= totalInvested ? "text-success" : "text-danger", totalValue >= totalInvested ? "kpi-success" : "kpi-danger") +
             kpi("bi-cash-stack",  "Ganho Bruto",       (interestEarned >= 0 ? "+" : "") + fmtCurrency(interestEarned, cur), interestEarned >= 0 ? "text-success" : "text-danger", interestEarned >= 0 ? "kpi-success" : "kpi-danger") +
-            (taxPaid > 0 ? kpi("bi-receipt", "Imposto Pago", "âˆ’" + fmtCurrency(taxPaid, cur), "text-danger", "kpi-danger") : "") +
+            (taxPaid > 0 ? kpi("bi-receipt", "Imposto Pago", "−" + fmtCurrency(taxPaid, cur), "text-danger", "kpi-danger") : "") +
         '</div>'+
 
         /*  Grupo Performance  */
@@ -454,9 +454,9 @@ function buildChildRow(simId) {
         '<div class="result-kpi-grid">'+
             kpi("bi-activity",        "Volatilidade",        fmt(vol) + "%",   volColor) +
             kpi("bi-speedometer2",    "Índice Sharpe",       fmt(sharpe),      sharpeColor) +
-            kpi("bi-arrow-down-circle","Drawdown Máx.",      "âˆ’" + fmt(dd) + "%", ddColor) +
+            kpi("bi-arrow-down-circle","Drawdown Máx.",      "−" + fmt(dd) + "%", ddColor) +
             kpi("bi-arrow-up-right",  "Melhor Mês",         "+" + fmt(maxGain) + "%", "text-success") +
-            kpi("bi-arrow-down-left", "Pior Mês",           "âˆ’" + fmt(maxLoss) + "%", "text-danger") +
+            kpi("bi-arrow-down-left", "Pior Mês",           "−" + fmt(maxLoss) + "%", "text-danger") +
         '</div>'+
 
         '</div>';

@@ -53,7 +53,7 @@ ob_start();
             <i class="bi bi-lightbulb-fill flex-shrink-0 mt-1" style="color:#3b82f6;font-size:1rem;"></i>
             <div style="color:#374151;line-height:1.6;">
                 <strong style="color:#1e3a5f;font-size:.85rem;letter-spacing:.01em;">
-                    ðŸ“… Como ler a coluna Mês/Ano
+                    📅 Como ler a coluna Mês/Ano
                 </strong>
                 <p class="mb-2 mt-1">
                     Cada período exibido nesta tabela tem sua performance calculada com base no

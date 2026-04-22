@@ -122,7 +122,7 @@ $sections = [
         'label' => 'Risco',
         'color' => 'warning',
         'rows'  => [
-            ['key'=>'sharpe_ratio',    'label'=>'Índice Sharpe',   'type'=>'num2',   'dir'=>'max', 'icon'=>'bi-speedometer2',        'desc'=>'Retorno por unidade de risco. à1 excelente'],
+            ['key'=>'sharpe_ratio',    'label'=>'Índice Sharpe',   'type'=>'num2',   'dir'=>'max', 'icon'=>'bi-speedometer2',        'desc'=>'Retorno por unidade de risco. ≥1 excelente'],
             ['key'=>'volatility',      'label'=>'Volatilidade',    'type'=>'pct',    'dir'=>'min', 'icon'=>'bi-activity',            'desc'=>'Oscilação mensal do portfólio. Menor = mais estável'],
             ['key'=>'max_drawdown',    'label'=>'Drawdown Máximo', 'type'=>'pct_neg','dir'=>'min', 'icon'=>'bi-arrow-down-circle',   'desc'=>'Maior queda do pico. Menor impacto = melhor'],
             ['key'=>'max_monthly_gain','label'=>'Melhor Mês',      'type'=>'pct_pos','dir'=>'max', 'icon'=>'bi-arrow-up-right-circle','desc'=>'Maior ganho em um único mês'],
@@ -140,7 +140,7 @@ function fmtCmp(float $v, string $type, string $cur = 'BRL'): string {
         case 'currency_signed':
             return ($v >= 0 ? '+' : '') . $sym . ' ' . number_format(abs($v), 2, ',', '.');
         case 'currency_neg':
-            return 'âˆ’' . $sym . ' ' . number_format(abs($v), 2, ',', '.');
+            return '−' . $sym . ' ' . number_format(abs($v), 2, ',', '.');
         case 'pct_signed':
             return ($v >= 0 ? '+' : '') . number_format($v, 2, ',', '.') . '%';
         case 'pct':
@@ -148,7 +148,7 @@ function fmtCmp(float $v, string $type, string $cur = 'BRL'): string {
         case 'pct_pos':
             return '+' . number_format($v, 2, ',', '.') . '%';
         case 'pct_neg':
-            return 'âˆ’' . number_format(abs($v), 2, ',', '.') . '%';
+            return '−' . number_format(abs($v), 2, ',', '.') . '%';
         case 'num2':
             return number_format($v, 2, ',', '.');
         default:
@@ -202,7 +202,7 @@ $colPalette = ['primary','success','danger','warning','info'];
             Comparativo de Simulações
         </h2>
         <p class="text-muted small mb-0 mt-1">
-            Análise lado a lado de <?= $n ?> simulações · A <span class="fw-bold text-warning">â­ estrela</span> indica o melhor valor em cada indicador.
+            Análise lado a lado de <?= $n ?> simulações · A <span class="fw-bold text-warning">⭐ estrela</span> indica o melhor valor em cada indicador.
         </p>
     </div>
     <div class="d-flex gap-2">
@@ -220,14 +220,14 @@ $colPalette = ['primary','success','danger','warning','info'];
             <i class="bi bi-trophy-fill" style="font-size:2rem;color:#ffd700;"></i>
         </div>
         <div class="flex-grow-1">
-            <div class="winner-headline">ðŸ† Melhor Simulação Geral</div>
+            <div class="winner-headline">🏆 Melhor Simulação Geral</div>
             <div class="winner-name">
                 Simulação #<?= $mapa[$overallWinner]['id'] ?>
                 <span class="winner-portfolio">— <?= htmlspecialchars($mapa[$overallWinner]['portfolio_name']) ?></span>
             </div>
             <div class="winner-stars mt-1">
                 <?php for ($s = 0; $s < $stars[$overallWinner]; $s++): ?>
-                    <span class="winner-star">â­</span>
+                    <span class="winner-star">⭐</span>
                 <?php endfor; ?>
                 <span class="winner-star-count"><?= $stars[$overallWinner] ?> critério<?= $stars[$overallWinner] !== 1 ? 's' : '' ?> vencedor<?= $stars[$overallWinner] !== 1 ? 'es' : '' ?></span>
             </div>
@@ -259,10 +259,10 @@ $colPalette = ['primary','success','danger','warning','info'];
             <?php endif; ?>
             <div class="sim-score-header">
                 <span class="sim-score-num">#<?= $m['id'] ?></span>
-                <span class="sim-score-portfolio"><?= htmlspecialchars(mb_strlen($m['portfolio_name']) > 28 ? mb_substr($m['portfolio_name'], 0, 26) . '™' : $m['portfolio_name']) ?></span>
+                <span class="sim-score-portfolio"><?= htmlspecialchars(mb_strlen($m['portfolio_name']) > 28 ? mb_substr($m['portfolio_name'], 0, 26) . '...' : $m['portfolio_name']) ?></span>
             </div>
             <div class="sim-score-stars">
-                <?php for ($s = 0; $s < $stars[$i]; $s++): ?>â­<?php endfor; ?>
+                <?php for ($s = 0; $s < $stars[$i]; $s++): ?>⭐<?php endfor; ?>
                 <?php if ($stars[$i] === 0): ?><span class="text-muted small">—</span><?php endif; ?>
             </div>
             <div class="sim-score-label"><?= $stars[$i] ?> estrela<?= $stars[$i] !== 1 ? 's' : '' ?></div>
@@ -300,7 +300,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                             <span class="ms-2"><i class="bi bi-currency-exchange me-1"></i><?= $m['currency'] ?></span>
                         </div>
                         <div class="cmp-stars-row mt-1">
-                            <?php for ($s = 0; $s < $stars[$i]; $s++): ?>â­<?php endfor; ?>
+                            <?php for ($s = 0; $s < $stars[$i]; $s++): ?>⭐<?php endfor; ?>
                             <?php if ($stars[$i] === 0): ?><span style="opacity:.4;font-size:.7rem;">sem estrelas</span><?php endif; ?>
                         </div>
                     </th>
@@ -347,8 +347,8 @@ $colPalette = ['primary','success','danger','warning','info'];
                         <div class="cmp-cell-wrap">
                             <span class="cmp-val <?= $clr ?>"><?= $fmt ?></span>
                             <?php if ($isWin): ?>
-                            <span class="cmp-star" title="Melhor valor neste indicador">â­</span>
-                            <?php endif; ?>
+                            <span class="cmp-star" title="Melhor valor neste indicador">⭐</span>
+<?php endif; ?>
                         </div>
                     </td>
                     <?php endforeach; ?>
@@ -369,7 +369,7 @@ $colPalette = ['primary','success','danger','warning','info'];
             // Config rows from snapshot
             $configRows = [
                 ['label'=>'Capital Inicial',     'icon'=>'bi-bank',           'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); return formatCurrency((float)($pc['initial_capital']??0), $pc['output_currency']??'BRL'); }],
-                ['label'=>'Período',             'icon'=>'bi-calendar3',      'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); $s=$pc['start_date']??'-'; $e=$pc['end_date']??'Hoje'; return date('m/Y',strtotime($s)).' â†’ '.($e?date('m/Y',strtotime($e)):'Hoje'); }],
+                ['label'=>'Período',             'icon'=>'bi-calendar3',      'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); $s=$pc['start_date']??'-'; $e=$pc['end_date']??'Hoje'; return date('m/Y',strtotime($s)).' → '.($e?date('m/Y',strtotime($e)):'Hoje'); }],
                 ['label'=>'Tipo de Simulação',   'icon'=>'bi-layers',         'fn'=>function($sim) use($simTypeLabels){ $pc=json_decode($sim['portfolio_config']??'{}',true); return $simTypeLabels[$pc['simulation_type']??'standard']??'Padrão'; }],
                 ['label'=>'Rebalanceamento',     'icon'=>'bi-arrow-repeat',   'fn'=>function($sim) use($freqLabels,$rebalTypeLabels){ $pc=json_decode($sim['portfolio_config']??'{}',true); $f=$freqLabels[$pc['rebalance_frequency']??'never']??'-'; $t=$rebalTypeLabels[$pc['rebalance_type']??'none']??'-'; return $f.' / '.$t; }],
                 ['label'=>'Valor do Aporte',     'icon'=>'bi-plus-circle',    'fn'=>function($sim){ $pc=json_decode($sim['portfolio_config']??'{}',true); if(empty($pc['deposit_amount'])) return '—'; return formatCurrency((float)$pc['deposit_amount'], $pc['deposit_currency']??'BRL'); }],
@@ -411,7 +411,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                     <i class="bi bi-speedometer2 text-primary mt-1 flex-shrink-0"></i>
                     <div>
                         <div class="fw-bold small">Índice Sharpe</div>
-                        <div class="text-muted" style="font-size:.75rem;">à 1 = excelente · 0,5–1 = bom · &lt; 0,5 = fraco. Mede o retorno ajustado ao risco.</div>
+                        <div class="text-muted" style="font-size:.75rem;">≥ 1 = excelente · 0,5–1 = bom · < 0,5 = fraco. Mede o retorno ajustado ao risco.</div>
                     </div>
                 </div>
             </div>
@@ -429,7 +429,7 @@ $colPalette = ['primary','success','danger','warning','info'];
                     <i class="bi bi-activity text-warning mt-1 flex-shrink-0"></i>
                     <div>
                         <div class="fw-bold small">Volatilidade</div>
-                        <div class="text-muted" style="font-size:.75rem;">Desvio padrão mensal dos retornos. â‰¤10% = baixo · 10–20% = moderado · &gt;20% = alto.</div>
+                        <div class="text-muted" style="font-size:.75rem;">Desvio padrão mensal dos retornos. ≤10% = baixo · 10–20% = moderado · >20% = alto.</div>
                     </div>
                 </div>
             </div>
@@ -453,7 +453,7 @@ $colPalette = ['primary','success','danger','warning','info'];
             </div>
             <div class="col-md-4 col-sm-6">
                 <div class="d-flex gap-2 align-items-start">
-                    <span class="flex-shrink-0 mt-1" style="font-size:1rem;">â­</span>
+                    <span class="flex-shrink-0 mt-1" style="font-size:1rem;">⭐</span>
                     <div>
                         <div class="fw-bold small">Estrela</div>
                         <div class="text-muted" style="font-size:.75rem;">Indica a simulação com o melhor valor naquele indicador. A que acumular mais estrelas é declarada vencedora.</div>
@@ -469,9 +469,9 @@ $content = ob_get_clean();
 
 $additional_css = '
 <style>
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ==========================================================
    COMPARE PAGE — premium financial table
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ========================================================== */
 
 /*  Winner banner  */
 .winner-banner {

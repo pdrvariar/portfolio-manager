@@ -73,7 +73,7 @@ $statusBadge = function(string $status): string {
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card me-2 text-primary"></i>Todas as Assinaturas</h5>
-        <input type="text" id="subSearch" class="form-control form-control-sm w-auto" placeholder="ðŸ” Buscar usuário...">
+        <input type="text" id="subSearch" class="form-control form-control-sm w-auto" placeholder="🔍 Buscar usuário...">
     </div>
     <div class="card-body p-0">
         <?php if (empty($subscriptions)): ?>

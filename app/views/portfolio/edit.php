@@ -128,9 +128,9 @@ ob_start();
                                         <select class="form-select" id="simulation_type" name="simulation_type" required onchange="handleSimulationTypeChange(this)">
                                             <option value="standard" <?= $portfolio['simulation_type'] == 'standard' ? 'selected' : '' ?>>Padrão (sem aportes)</option>
                                             <option value="monthly_deposit" <?= $portfolio['simulation_type'] == 'monthly_deposit' ? 'selected' : '' ?>>Com Aportes Periódicos</option>
-                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Aportes Estratégicos <?= !Auth::isPro() ? 'ðŸ”’' : '' ?></option>
-                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte Direcionado ao Alvo <?= !Auth::isPro() ? 'ðŸ”’' : '' ?></option>
-                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte em Caixa (SELIC) <?= !Auth::isPro() ? 'ðŸ”’' : '' ?></option>
+                                            <option value="strategic_deposit" <?= $portfolio['simulation_type'] == 'strategic_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Aportes Estratégicos <?= !Auth::isPro() ? '🔒' : '' ?></option>
+                                            <option value="smart_deposit" <?= $portfolio['simulation_type'] == 'smart_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte Direcionado ao Alvo <?= !Auth::isPro() ? '🔒' : '' ?></option>
+                                            <option value="selic_cash_deposit" <?= $portfolio['simulation_type'] == 'selic_cash_deposit' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Aporte em Caixa (SELIC) <?= !Auth::isPro() ? '🔒' : '' ?></option>
                                         </select>
                                     </div>
                                 </div>
@@ -146,7 +146,7 @@ ob_start();
                                                 <div class="form-check form-switch mb-2 ms-2">
                                                     <?php $hasTax = !empty($portfolio['profit_tax_rates_json']) || !empty($portfolio['profit_tax_rate']); ?>
                                                     <input class="form-check-input" type="checkbox" id="enable_tax" onchange="handleTaxToggle(this)" <?= $hasTax ? 'checked' : '' ?>>
-                                                    <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto <?= !Auth::isPro() ? 'ðŸ”’' : '' ?></label>
+                                                    <label class="form-check-label small text-muted" for="enable_tax">Calcular Imposto <?= !Auth::isPro() ? '🔒' : '' ?></label>
                                                 </div>
                                                 <div id="tax_input_container" style="display: <?= $hasTax ? 'block' : 'none' ?>;">
                                                     <hr class="my-2 opacity-10">
@@ -271,7 +271,7 @@ ob_start();
                                                 <select class="form-select" id="rebalance_type" name="rebalance_type" onchange="handleRebalanceTypeChange(this)">
                                                     <option value="full" <?= ($portfolio['rebalance_type'] ?? 'full') == 'full' ? 'selected' : '' ?>>Completo (Compra e Venda)</option>
                                                     <option value="buy_only" <?= ($portfolio['rebalance_type'] ?? 'full') == 'buy_only' ? 'selected' : '' ?>>Apenas Compras (Sem Vendas)</option>
-                                                    <option value="custom_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'custom_margin' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Margens Customizadas por Ativo <?= !Auth::isPro() ? 'ðŸ”’' : '' ?></option>
+                                                    <option value="custom_margin" <?= ($portfolio['rebalance_type'] ?? 'full') == 'custom_margin' ? 'selected' : '' ?> <?= !Auth::isPro() ? 'data-premium="true"' : '' ?>>Com Margens Customizadas por Ativo <?= !Auth::isPro() ? '🔒' : '' ?></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -399,7 +399,7 @@ ob_start();
                         <h5 class="mb-3 fw-bold">
                             <i class="bi bi-pie-chart me-2 text-primary"></i>Alocação Estratégica de Ativos
                             <?php if (!Auth::isPro()): ?>
-                                <span class="ms-2 cursor-pointer" onclick="showPaywallModal('Limite de Ativos', 'No plano Starter você pode adicionar até 5 ativos por portfólio. No plano PRO, não há limites.')">ðŸ”’</span>
+                                <span class="ms-2 cursor-pointer" onclick="showPaywallModal('Limite de Ativos', 'No plano Starter você pode adicionar até 5 ativos por portfólio. No plano PRO, não há limites.')">🔒</span>
                             <?php endif; ?>
                         </h5>
 
@@ -514,7 +514,7 @@ ob_start();
         function handleSimulationTypeChange(select) {
             const selectedOption = select.options[select.selectedIndex];
             if (selectedOption.getAttribute('data-premium') === 'true') {
-                const feature = selectedOption.text.replace(' ðŸ”’', '');
+                const feature = selectedOption.text.replace(' 🔒', '');
                 let desc = '';
                 
                 if (selectedOption.value === 'smart_deposit') desc = 'O aporte é usado para comprar o ativo que está mais longe do alvo, evitando vendas e reduzindo impostos.';
@@ -544,7 +544,7 @@ ob_start();
         function handleRebalanceTypeChange(select) {
             const selectedOption = select.options[select.selectedIndex];
             if (selectedOption.getAttribute('data-premium') === 'true') {
-                const feature = selectedOption.text.replace(' ðŸ”’', '');
+                const feature = selectedOption.text.replace(' 🔒', '');
                 let desc = '';
                 
                 if (selectedOption.value === 'custom_margin') desc = 'Permite definir margens de rebalanceamento diferentes para cada ativo da sua carteira.';
@@ -863,7 +863,7 @@ ob_start();
                 label = "-10% / +20%";
             } else {
                 downPer = 5; upPer = 5;
-                label = "Â±5%";
+                label = "±5%";
             }
 
             const downValue = allocation * (1 - downPer / 100);

@@ -1,4 +1,4 @@
-﻿﻿<?php
+<?php
 /**
  * @var array  $portfolios        Portfólios do usuário (para o filtro)
  * @var array  $simulations       Lista de simulações filtradas
@@ -545,12 +545,12 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                         <th class="text-end" style="width:7%">Volatili-<br>dade
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Volatilidade anualizada: mede o quanto o retorno da carteira oscila. Quanto menor, mais estável. Verde â‰¤10%, Amarelo â‰¤20%, Vermelho >20%."></i>
+                               title="Volatilidade anualizada: mede o quanto o retorno da carteira oscila. Quanto menor, mais estável. Verde ≤10%, Amarelo ≤20%, Vermelho >20%."></i>
                         </th>
                         <th class="text-end" style="width:7%">Sharpe
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Índice de Sharpe: retorno obtido por unidade de risco assumido. à1 = excelente · 0,5–1 = bom · <0,5 = fraco. Quanto maior, melhor a relação riscoÃ—retorno."></i>
+                               title="Índice de Sharpe: retorno obtido por unidade de risco assumido. ≥1 = excelente · 0,5–1 = bom · <0,5 = fraco. Quanto maior, melhor a relação risco×retorno."></i>
                         </th>
                         <th class="text-end" style="width:8%">Drawdown<br>Máx.
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
@@ -565,7 +565,7 @@ $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
                         <th class="text-end" style="width:7%">Calmar
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Índice de Calmar: retorno anual da estratégia dividido pelo Drawdown Máximo. Mede a recompensa em relação  pior queda. à1 = excelente · 0,5–1 = razoável · <0,5 = fraco."></i>
+                               title="Índice de Calmar: retorno anual da estratégia dividido pelo Drawdown Máximo. Mede a recompensa em relação à pior queda. ≥1 = excelente · 0,5–1 = razoável · <0,5 = fraco."></i>
                         </th>
                     </tr>
                 </thead>
@@ -1097,7 +1097,7 @@ function buildChildRow(simId, portfolioId) {
             kpi("bi-plus-circle","Total de Aportes",fmtCurrency(totalDeposits,cur),"text-info","kpi-info")+
             kpi("bi-graph-up-arrow","Patrimônio Final",fmtCurrency(totalValue,cur),totalValue>=totalInvested?"text-success":"text-danger",totalValue>=totalInvested?"kpi-success":"kpi-danger")+
             kpi("bi-cash-stack","Ganho Bruto",(interestEarned>=0?"+":"")+fmtCurrency(interestEarned,cur),interestEarned>=0?"text-success":"text-danger",interestEarned>=0?"kpi-success":"kpi-danger")+
-            (taxPaid>0?kpi("bi-receipt","Imposto Pago","âˆ’"+fmtCurrency(taxPaid,cur),"text-danger","kpi-danger"):"")+
+            (taxPaid>0?kpi("bi-receipt","Imposto Pago","−"+fmtCurrency(taxPaid,cur),"text-danger","kpi-danger"):"")+
         '</div>'+
         '<div class="result-group-label mt-3"><i class="bi bi-bar-chart-line me-1"></i>Performance</div>'+
         '<div class="result-kpi-grid">'+
@@ -1109,12 +1109,12 @@ function buildChildRow(simId, portfolioId) {
         '<div class="result-kpi-grid">'+
             kpi("bi-activity","Volatilidade",fmt(vol)+"%",volColor)+
             kpi("bi-speedometer2","Índice Sharpe",fmt(sharpe),sharpeColor)+
-            kpi("bi-arrow-down-circle","Drawdown Máx.","âˆ’"+fmt(dd)+"%",ddColor)+
+            kpi("bi-arrow-down-circle","Drawdown Máx.","−"+fmt(dd)+"%",ddColor)+
             (dd > 0 ? kpi("bi-shield-check","Calmar<br><small style='font-size:.6rem;opacity:.7;'>ret.estr./drawdown</small>",
                 (function(){const c=strReturn/dd;return (c>=1?'<span class="text-success fw-bold">':'<span class="'+(c>=0.5?"text-warning":"text-danger")+'">') + fmt(c) + '</span>';})(),
                 strReturn/dd >= 1 ? "text-success" : (strReturn/dd >= 0.5 ? "text-warning" : "text-danger")) : "")+
             kpi("bi-arrow-up-right","Melhor Mês","+"+fmt(maxGain)+"%","text-success")+
-            kpi("bi-arrow-down-left","Pior Mês","âˆ’"+fmt(maxLoss)+"%","text-danger")+
+            kpi("bi-arrow-down-left","Pior Mês","−"+fmt(maxLoss)+"%","text-danger")+
         '</div>'+
         (m.allocation_label ? '<div class="result-group-label mt-3"><i class="bi bi-stars me-1" style="color:#fd7e14;"></i>Cenário de Alocação (Monte Carlo)</div>'+
             '<div class="d-flex flex-wrap gap-2"><span class="config-pill"><i class="bi bi-pie-chart text-warning"></i><strong>'+m.allocation_label+'</strong></span></div>' : '')+

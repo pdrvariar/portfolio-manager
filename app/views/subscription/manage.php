@@ -27,7 +27,7 @@ $statusBadge = function(string $status): string {
 };
 
 $planLabel = function(string $type): string {
-    return $type === 'yearly' ? 'ðŸŒŸ Anual' : 'ðŸ“… Mensal';
+    return $type === 'yearly' ? '🌟 Anual' : '📅 Mensal';
 };
 ?>
 
