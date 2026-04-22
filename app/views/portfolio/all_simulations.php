@@ -1,14 +1,15 @@
-﻿<?php
+﻿﻿<?php
 /**
- * @var array  $portfolios        PortfÃ³lios do usuÃ¡rio (para o filtro)
- * @var array  $simulations       Lista de simulaÃ§Ãµes filtradas
- * @var int    $portfolioId       ID do portfÃ³lio selecionado (0 = todos)
- * @var array|null $selectedPortfolio PortfÃ³lio selecionado (null = todos)
+ * @var array  $portfolios        Portfólios do usuário (para o filtro)
+ * @var array  $simulations       Lista de simulações filtradas
+ * @var int    $portfolioId       ID do portfólio selecionado (0 = todos)
+ * @var array|null $selectedPortfolio Portfólio selecionado (null = todos)
  */
 
 $title = $selectedPortfolio
-    ? 'HistÃ³rico â€” ' . htmlspecialchars($selectedPortfolio['name'])
-    : 'HistÃ³rico de SimulaÃ§Ãµes';`n$meta_robots = 'noindex, nofollow';
+    ? 'Histórico — ' . htmlspecialchars($selectedPortfolio['name'])
+    : 'Histórico de Simulações';
+$meta_robots = 'noindex, nofollow';
 
 ob_start();
 
@@ -17,9 +18,9 @@ $freqLabels = [
     'quarterly'=> 'Trimestral','biannual' => 'Semestral','annual'   => 'Anual',
 ];
 $simTypeLabels = [
-    'standard'           => 'PadrÃ£o (sem aportes)',
-    'monthly_deposit'    => 'Aporte periÃ³dico',
-    'strategic_deposit'  => 'Aporte estratÃ©gico',
+    'standard'           => 'Padrão (sem aportes)',
+    'monthly_deposit'    => 'Aporte periódico',
+    'strategic_deposit'  => 'Aporte estratégico',
     'smart_deposit'      => 'Aporte inteligente',
     'selic_cash_deposit' => 'Reserva Selic + Aporte',
 ];
@@ -98,26 +99,26 @@ foreach ($displaySimulations as $s) {
 // Breadcrumb injetado no layout
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
-    ['label' => 'PortfÃ³lios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
 ];
 if ($selectedPortfolio) {
     $breadcrumbs[] = ['label' => htmlspecialchars($selectedPortfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $selectedPortfolio['id'])];
 }
-$breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
+$breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
 ?>
 
-<!-- â”€â”€ CabeÃ§alho â”€â”€ -->
+<!--  Cabeçalho  -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
         <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-clock-history text-primary"></i>
-            HistÃ³rico de SimulaÃ§Ãµes
+            Histórico de Simulações
         </h2>
         <p class="text-muted small mb-0 mt-1">
             <?php if ($selectedPortfolio): ?>
-                Exibindo simulaÃ§Ãµes de <strong><?= htmlspecialchars($selectedPortfolio['name']) ?></strong>.
+                Exibindo simulações de <strong><?= htmlspecialchars($selectedPortfolio['name']) ?></strong>.
             <?php else: ?>
-                Todas as suas simulaÃ§Ãµes em um sÃ³ lugar. Use o filtro para focar em um portfÃ³lio especÃ­fico.
+                Todas as suas simulações em um só lugar. Use o filtro para focar em um portfólio específico.
             <?php endif; ?>
         </p>
     </div>
@@ -125,19 +126,19 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
         <?php if ($selectedPortfolio): ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $selectedPortfolio['id']) ?>"
            class="btn btn-primary rounded-pill px-4 shadow-sm">
-            <i class="bi bi-play-fill me-1"></i> Nova SimulaÃ§Ã£o
+            <i class="bi bi-play-fill me-1"></i> Nova Simulação
         </a>
         <?php if (Auth::isPro()): ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run-advanced/' . $selectedPortfolio['id']) ?>"
            class="btn btn-warning rounded-pill px-4 shadow-sm"
-           title="Gera automaticamente atÃ© 20 cenÃ¡rios com alocaÃ§Ãµes variando pela volatilidade dos ativos">
-            <i class="bi bi-stars me-1"></i> SimulaÃ§Ã£o AvanÃ§ada
+           title="Gera automaticamente até 20 cenários com alocações variando pela volatilidade dos ativos">
+            <i class="bi bi-stars me-1"></i> Simulação Avançada
         </a>
         <?php else: ?>
         <button type="button" class="btn btn-warning rounded-pill px-4 shadow-sm position-relative"
-            onclick="showPaywallModal('SimulaÃ§Ã£o AvanÃ§ada (Monte Carlo)', 'Gere automaticamente atÃ© 20 cenÃ¡rios otimizados por volatilidade e encontre a alocaÃ§Ã£o com o melhor Sharpe Ratio. Descubra combinaÃ§Ãµes que vocÃª nunca imaginaria â€” exclusivo para assinantes PRO.')"
-            title="SimulaÃ§Ã£o AvanÃ§ada â€” Recurso PRO">
-            <i class="bi bi-stars me-1"></i> SimulaÃ§Ã£o AvanÃ§ada
+            onclick="showPaywallModal('Simulação Avançada (Monte Carlo)', 'Gere automaticamente até 20 cenários otimizados por volatilidade e encontre a alocação com o melhor Sharpe Ratio. Descubra combinações que você nunca imaginaria — exclusivo para assinantes PRO.')"
+            title="Simulação Avançada — Recurso PRO">
+            <i class="bi bi-stars me-1"></i> Simulação Avançada
             <i class="bi bi-lock-fill ms-1" style="font-size:.75rem;opacity:.85;"></i>
         </button>
         <?php endif; ?>
@@ -148,14 +149,14 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
         <?php else: ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>"
            class="btn btn-outline-secondary rounded-pill px-3">
-            <i class="bi bi-grid-1x2 me-1"></i> PortfÃ³lios
+            <i class="bi bi-grid-1x2 me-1"></i> Portfólios
         </a>
         <?php endif; ?>
     </div>
 </div>
 
 <?php if ($advancedGroup): ?>
-<!-- â”€â”€ Advanced Simulation Group Banner â”€â”€ -->
+<!--  Advanced Simulation Group Banner  -->
 <div class="alert border-0 rounded-4 mb-3 shadow-sm d-flex align-items-center gap-3"
      style="background:linear-gradient(135deg,#fff8e1 0%,#fff3cd 100%); border-left: 4px solid #fd7e14 !important;">
     <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
@@ -164,11 +165,11 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
     </div>
     <div class="flex-grow-1">
         <div class="fw-bold" style="color:#9a4a00;font-size:.9rem;">
-            SimulaÃ§Ã£o AvanÃ§ada Â· <?= $totalCount ?> cenÃ¡rio<?= $totalCount != 1 ? 's' : '' ?> gerado<?= $totalCount != 1 ? 's' : '' ?>
+            Simulação Avançada · <?= $totalCount ?> cenário<?= $totalCount != 1 ? 's' : '' ?> gerado<?= $totalCount != 1 ? 's' : '' ?>
         </div>
         <div class="text-muted small">
-            AlocaÃ§Ãµes geradas automaticamente por <strong>Volatilidade Inversa + Monte Carlo</strong>.
-            A linha destacada em verde Ã© o melhor cenÃ¡rio pelo Ãndice Sharpe.
+            Alocações geradas automaticamente por <strong>Volatilidade Inversa + Monte Carlo</strong>.
+            A linha destacada em verde é o melhor cenário pelo Índice Sharpe.
             <?php if ($selectedPortfolio): ?>
             <a href="/index.php?url=<?= $baseHistoryUrl ?>&portfolio_id=<?= $selectedPortfolio['id'] ?>" class="ms-2 link-secondary small">
                 <i class="bi bi-x-circle me-1"></i>Limpar filtro de grupo
@@ -182,13 +183,13 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
 </div>
 <?php endif; ?>
 
-<!-- â”€â”€ Filtro de PortfÃ³lio â”€â”€ -->
+<!--  Filtro de Portfólio  -->
 <div class="card border-0 shadow-sm rounded-4 mb-3" id="filterCard">
     <div class="card-body py-3 px-4">
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                 <i class="bi bi-funnel-fill text-primary fs-5"></i>
-                <span class="fw-bold text-dark" style="font-size:.9rem;">Filtrar por PortfÃ³lio</span>
+                <span class="fw-bold text-dark" style="font-size:.9rem;">Filtrar por Portfólio</span>
             </div>
 
             <!-- Pill: Todos -->
@@ -198,21 +199,21 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                 <span class="filter-pill-count"><?= $portfolioId === 0 ? $totalCount : count($simulations) ?></span>
             </a>
 
-            <!-- Pills por portfÃ³lio -->
+            <!-- Pills por portfólio -->
             <?php foreach ($sortedPortfolios as $p): ?>
             <a href="/index.php?url=<?= $baseHistoryUrl ?>&portfolio_id=<?= $p['id'] ?>"
                class="filter-pill <?= $portfolioId === (int)$p['id'] ? 'active' : '' ?>"
                title="<?= htmlspecialchars($p['name']) ?>">
-                <i class="bi bi-briefcase me-1"></i><?= htmlspecialchars(mb_strlen($p['name']) > 22 ? mb_substr($p['name'],0,20).'â€¦' : $p['name']) ?>
+                <i class="bi bi-briefcase me-1"></i><?= htmlspecialchars(mb_strlen($p['name']) > 22 ? mb_substr($p['name'],0,20).'™' : $p['name']) ?>
             </a>
             <?php endforeach; ?>
         </div>
     </div>
 </div>
 
-<!-- â”€â”€ Filtros AvanÃ§ados (colapsÃ¡vel) â”€â”€ -->
+<!--  Filtros Avançados (colapsável)  -->
 <div class="card border-0 shadow-sm rounded-4 mb-4" id="advancedFilterCard">
-    <!-- CabeÃ§alho do painel -->
+    <!-- Cabeçalho do painel -->
     <div class="card-body py-0 px-0">
         <button id="advFilterToggle" type="button"
                 class="w-100 d-flex align-items-center justify-content-between px-4 py-3 bg-transparent border-0 text-start"
@@ -221,7 +222,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                 <div class="adv-filter-icon-wrap">
                     <i class="bi bi-sliders2 text-primary"></i>
                 </div>
-                <span class="fw-bold text-dark" style="font-size:.9rem;">Filtros AvanÃ§ados de MÃ©tricas</span>
+                <span class="fw-bold text-dark" style="font-size:.9rem;">Filtros Avançados de Métricas</span>
                 <span id="advFilterBadge" class="badge rounded-pill bg-primary ms-1 d-none" style="font-size:.7rem;">0</span>
             </div>
             <div class="d-flex align-items-center gap-3">
@@ -245,28 +246,28 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_annual_return_min"
                                    data-field="annual_return" data-bound="min"
                                    placeholder="Min %" step="0.1">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_annual_return_max"
                                    data-field="annual_return" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1">
+                                   placeholder="Máx %" step="0.1">
                         </div>
                     </div>
                 </div>
-                <!-- Retorno Anual EstratÃ©gia -->
+                <!-- Retorno Anual Estratégia -->
                 <div class="col-6 col-md-4 col-lg-3 col-xl-2">
                     <div class="adv-filter-group">
                         <div class="adv-filter-label">
                             <i class="bi bi-trophy text-primary"></i>
-                            Ret. Anual EstratÃ©gia
+                            Ret. Anual Estratégia
                         </div>
                         <div class="adv-filter-inputs">
                             <input type="number" class="adv-filter-input" id="f_strategy_annual_return_min"
                                    data-field="strategy_annual_return" data-bound="min"
                                    placeholder="Min %" step="0.1">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_strategy_annual_return_max"
                                    data-field="strategy_annual_return" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1">
+                                   placeholder="Máx %" step="0.1">
                         </div>
                     </div>
                 </div>
@@ -281,10 +282,10 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_volatility_min"
                                    data-field="volatility" data-bound="min"
                                    placeholder="Min %" step="0.1" min="0">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_volatility_max"
                                    data-field="volatility" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1" min="0">
+                                   placeholder="Máx %" step="0.1" min="0">
                         </div>
                     </div>
                 </div>
@@ -293,34 +294,34 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                     <div class="adv-filter-group">
                         <div class="adv-filter-label">
                             <i class="bi bi-speedometer2 text-success"></i>
-                            Ãndice Sharpe
+                            Índice Sharpe
                         </div>
                         <div class="adv-filter-inputs">
                             <input type="number" class="adv-filter-input" id="f_sharpe_ratio_min"
                                    data-field="sharpe_ratio" data-bound="min"
                                    placeholder="Min" step="0.01">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_sharpe_ratio_max"
                                    data-field="sharpe_ratio" data-bound="max"
-                                   placeholder="MÃ¡x" step="0.01">
+                                   placeholder="Máx" step="0.01">
                         </div>
                     </div>
                 </div>
-                <!-- Drawdown MÃ¡ximo -->
+                <!-- Drawdown Máximo -->
                 <div class="col-6 col-md-4 col-lg-3 col-xl-2">
                     <div class="adv-filter-group">
                         <div class="adv-filter-label">
                             <i class="bi bi-arrow-down-circle text-danger"></i>
-                            Drawdown MÃ¡x.
+                            Drawdown Máx.
                         </div>
                         <div class="adv-filter-inputs">
                             <input type="number" class="adv-filter-input" id="f_max_drawdown_min"
                                    data-field="max_drawdown" data-bound="min"
                                    placeholder="Min %" step="0.1" min="0">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_max_drawdown_max"
                                    data-field="max_drawdown" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1" min="0">
+                                   placeholder="Máx %" step="0.1" min="0">
                         </div>
                     </div>
                 </div>
@@ -335,10 +336,10 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_roi_min"
                                    data-field="roi" data-bound="min"
                                    placeholder="Min %" step="0.1">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_roi_max"
                                    data-field="roi" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1">
+                                   placeholder="Máx %" step="0.1">
                         </div>
                     </div>
                 </div>
@@ -353,10 +354,10 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_calmar_min"
                                    data-field="calmar" data-bound="min"
                                    placeholder="Min" step="0.01">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_calmar_max"
                                    data-field="calmar" data-bound="max"
-                                   placeholder="MÃ¡x" step="0.01">
+                                   placeholder="Máx" step="0.01">
                         </div>
                     </div>
                 </div>
@@ -371,10 +372,10 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_max_monthly_loss_min"
                                    data-field="max_monthly_loss" data-bound="min"
                                    placeholder="Min %" step="0.1" min="0">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_max_monthly_loss_max"
                                    data-field="max_monthly_loss" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1" min="0">
+                                   placeholder="Máx %" step="0.1" min="0">
                         </div>
                     </div>
                 </div>
@@ -389,20 +390,20 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input type="number" class="adv-filter-input" id="f_max_monthly_gain_min"
                                    data-field="max_monthly_gain" data-bound="min"
                                    placeholder="Min %" step="0.1" min="0">
-                            <span class="adv-filter-sep">â€“</span>
+                            <span class="adv-filter-sep">–</span>
                             <input type="number" class="adv-filter-input" id="f_max_monthly_gain_max"
                                    data-field="max_monthly_gain" data-bound="max"
-                                   placeholder="MÃ¡x %" step="0.1" min="0">
+                                   placeholder="Máx %" step="0.1" min="0">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RodapÃ© do painel -->
+            <!-- Rodapé do painel -->
             <div class="d-flex align-items-center justify-content-between mt-4 pt-3 adv-filter-footer">
                 <div class="text-muted small d-flex align-items-center gap-2">
                     <i class="bi bi-lightbulb text-warning"></i>
-                    <span>Deixe campos vazios para ignorar o critÃ©rio. Valores em <strong>%</strong> onde indicado.</span>
+                    <span>Deixe campos vazios para ignorar o critério. Valores em <strong>%</strong> onde indicado.</span>
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" id="advFilterClear" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-none">
@@ -418,27 +419,27 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
 </div>
 
 <?php if (empty($simulations)): ?>
-<!-- â”€â”€ Estado Vazio â”€â”€ -->
+<!--  Estado Vazio  -->
 <div class="card shadow-sm border-0 rounded-4 text-center py-5">
     <div class="card-body">
         <i class="bi bi-bar-chart-line text-muted mb-3 d-block" style="font-size:3.5rem;opacity:.35;"></i>
-        <h5 class="fw-bold text-muted">Nenhuma simulaÃ§Ã£o encontrada</h5>
+        <h5 class="fw-bold text-muted">Nenhuma simulação encontrada</h5>
         <p class="text-muted small mb-4">
             <?php if ($selectedPortfolio): ?>
-                Execute a primeira simulaÃ§Ã£o neste portfÃ³lio para comeÃ§ar a comparar resultados.
+                Execute a primeira simulação neste portfólio para começar a comparar resultados.
             <?php else: ?>
-                Crie um portfÃ³lio e execute simulaÃ§Ãµes para ver seu histÃ³rico aqui.
+                Crie um portfólio e execute simulações para ver seu histórico aqui.
             <?php endif; ?>
         </p>
         <?php if ($selectedPortfolio): ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $selectedPortfolio['id']) ?>"
            class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-play-fill me-1"></i> Executar SimulaÃ§Ã£o
+            <i class="bi bi-play-fill me-1"></i> Executar Simulação
         </a>
         <?php else: ?>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio') ?>"
            class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-grid-1x2 me-1"></i> Ver PortfÃ³lios
+            <i class="bi bi-grid-1x2 me-1"></i> Ver Portfólios
         </a>
         <?php endif; ?>
     </div>
@@ -446,13 +447,13 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
 
 <?php else: ?>
 
-<!-- â”€â”€ KPI Summary Strip â”€â”€ -->
+<!--  KPI Summary Strip  -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="summary-kpi-card">
             <div class="summary-kpi-icon bg-soft-primary"><i class="bi bi-list-check text-primary"></i></div>
             <div>
-                <div class="summary-kpi-label">SimulaÃ§Ãµes</div>
+                <div class="summary-kpi-label">Simulações</div>
                 <div class="summary-kpi-value text-primary"><?= $totalCount ?></div>
             </div>
         </div>
@@ -480,7 +481,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
         <div class="summary-kpi-card">
             <div class="summary-kpi-icon bg-soft-warning"><i class="bi bi-folder2-open text-warning"></i></div>
             <div>
-                <div class="summary-kpi-label">PortfÃ³lios</div>
+                <div class="summary-kpi-label">Portfólios</div>
                 <div class="summary-kpi-value"><?= count($sortedPortfolios) ?></div>
             </div>
         </div>
@@ -488,7 +489,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
     <?php endif; ?>
 </div>
 
-<!-- â”€â”€ Banner melhor simulaÃ§Ã£o â”€â”€ -->
+<!--  Banner melhor simulação  -->
 <?php if ($bestSharpe): ?>
 <div class="alert border-0 rounded-4 mb-4 shadow-sm d-flex align-items-center gap-3"
      style="background:linear-gradient(135deg,#e8f5e9 0%,#f1f8e9 100%);">
@@ -497,29 +498,29 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
         <i class="bi bi-trophy-fill text-white fs-5"></i>
     </div>
     <div class="flex-grow-1">
-        <div class="fw-bold text-success mb-0" style="font-size:.9rem;">Melhor SimulaÃ§Ã£o Â· Maior Ãndice Sharpe</div>
+        <div class="fw-bold text-success mb-0" style="font-size:.9rem;">Melhor Simulação · Maior Índice Sharpe</div>
         <div class="text-muted small">
             <span class="badge bg-soft-secondary border me-1"><?= htmlspecialchars($bestSharpe['portfolio_name']) ?></span>
-            Executada em <strong><?= date('d/m/Y H:i', strtotime($bestSharpe['created_at'])) ?></strong> &nbsp;Â·&nbsp;
-            Retorno anual: <strong><?= number_format((float)$bestSharpe['annual_return'], 2, ',', '.') ?>%</strong> &nbsp;Â·&nbsp;
-            Sharpe: <strong><?= number_format((float)$bestSharpe['sharpe_ratio'], 2, ',', '.') ?></strong> &nbsp;Â·&nbsp;
-            Drawdown mÃ¡x.: <strong>-<?= number_format(abs((float)$bestSharpe['max_drawdown']), 2, ',', '.') ?>%</strong>
+            Executada em <strong><?= date('d/m/Y H:i', strtotime($bestSharpe['created_at'])) ?></strong> &nbsp;·&nbsp;
+            Retorno anual: <strong><?= number_format((float)$bestSharpe['annual_return'], 2, ',', '.') ?>%</strong> &nbsp;·&nbsp;
+            Sharpe: <strong><?= number_format((float)$bestSharpe['sharpe_ratio'], 2, ',', '.') ?></strong> &nbsp;·&nbsp;
+            Drawdown máx.: <strong>-<?= number_format(abs((float)$bestSharpe['max_drawdown']), 2, ',', '.') ?>%</strong>
         </div>
     </div>
     <span class="badge bg-success rounded-pill px-3 py-2 fs-6 flex-shrink-0">#<?= $bestSharpe['id'] ?></span>
 </div>
 <?php endif; ?>
 
-<!-- â”€â”€ Dica de uso â”€â”€ -->
+<!--  Dica de uso  -->
 <div class="alert border-0 rounded-3 mb-3 py-2 px-3 small d-flex align-items-center gap-2"
      style="background:#eef6fd;color:#374151;">
     <i class="bi bi-info-circle-fill flex-shrink-0" style="color:#3b82f6;"></i>
     Clique em <kbd><i class="bi bi-chevron-down"></i></kbd> ou em qualquer linha para ver a
-    <strong>configuraÃ§Ã£o completa</strong>. Marque atÃ© <strong>5 simulaÃ§Ãµes</strong> e clique em
+    <strong>configuração completa</strong>. Marque até <strong>5 simulações</strong> e clique em
     <strong>Comparar</strong> para ver um comparativo detalhado lado a lado.
 </div>
 
-<!-- â”€â”€ Tabela â”€â”€ -->
+<!--  Tabela  -->
 <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -534,37 +535,37 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                         <th style="width:3%">&nbsp;</th>
                         <th style="width:4%">#</th>
                         <?php if (!$selectedPortfolio): ?>
-                        <th style="width:13%">PortfÃ³lio</th>
+                        <th style="width:13%">Portfólio</th>
                         <?php endif; ?>
                         <th style="width:10%">Data Simulada</th>
                         <th style="width:10%">Executada em</th>
                         <th class="text-end" style="width:11%">Valor Final</th>
                         <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Com aportes</small></th>
-                        <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">EstratÃ©gia</small></th>
+                        <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Estratégia</small></th>
                         <th class="text-end" style="width:7%">Volatili-<br>dade
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Volatilidade anualizada: mede o quanto o retorno da carteira oscila. Quanto menor, mais estÃ¡vel. Verde â‰¤10%, Amarelo â‰¤20%, Vermelho >20%."></i>
+                               title="Volatilidade anualizada: mede o quanto o retorno da carteira oscila. Quanto menor, mais estável. Verde â‰¤10%, Amarelo â‰¤20%, Vermelho >20%."></i>
                         </th>
                         <th class="text-end" style="width:7%">Sharpe
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Ãndice de Sharpe: retorno obtido por unidade de risco assumido. â‰¥1 = excelente Â· 0,5â€“1 = bom Â· <0,5 = fraco. Quanto maior, melhor a relaÃ§Ã£o riscoÃ—retorno."></i>
+                               title="Índice de Sharpe: retorno obtido por unidade de risco assumido. à1 = excelente · 0,5–1 = bom · <0,5 = fraco. Quanto maior, melhor a relação riscoÃ—retorno."></i>
                         </th>
-                        <th class="text-end" style="width:8%">Drawdown<br>MÃ¡x.
+                        <th class="text-end" style="width:8%">Drawdown<br>Máx.
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Drawdown MÃ¡ximo: maior queda percentual do patrimÃ´nio, do pico ao vale, ao longo de todo o perÃ­odo simulado. Quanto menor (em mÃ³dulo), mais protegido o portfÃ³lio contra perdas."></i>
+                               title="Drawdown Máximo: maior queda percentual do patrimônio, do pico ao vale, ao longo de todo o período simulado. Quanto menor (em módulo), mais protegido o portfólio contra perdas."></i>
                         </th>
                         <th class="text-end" style="width:7%">ROI
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="ROI (Return on Investment): retorno percentual total sobre todo o capital investido (aporte inicial + aportes periÃ³dicos). Indica o lucro lÃ­quido em relaÃ§Ã£o ao que foi investido."></i>
+                               title="ROI (Return on Investment): retorno percentual total sobre todo o capital investido (aporte inicial + aportes periódicos). Indica o lucro líquido em relação ao que foi investido."></i>
                         </th>
                         <th class="text-end" style="width:7%">Calmar
                             <i class="bi bi-info-circle text-muted ms-1" style="font-size:.7rem;cursor:pointer;"
                                data-bs-toggle="tooltip" data-bs-placement="top"
-                               title="Ãndice de Calmar: retorno anual da estratÃ©gia dividido pelo Drawdown MÃ¡ximo. Mede a recompensa em relaÃ§Ã£o Ã  pior queda. â‰¥1 = excelente Â· 0,5â€“1 = razoÃ¡vel Â· <0,5 = fraco."></i>
+                               title="Índice de Calmar: retorno anual da estratégia dividido pelo Drawdown Máximo. Mede a recompensa em relação  pior queda. à1 = excelente · 0,5–1 = razoável · <0,5 = fraco."></i>
                         </th>
                     </tr>
                 </thead>
@@ -593,20 +594,20 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                             <input class="form-check-input sim-checkbox" type="checkbox"
                                    value="<?= $sim['id'] ?>"
                                    data-sim-id="<?= $sim['id'] ?>"
-                                   data-label="SimulaÃ§Ã£o #<?= $sim['id'] ?> â€” <?= htmlspecialchars($sim['portfolio_name']) ?>"
+                                   data-label="Simulação #<?= $sim['id'] ?> — <?= htmlspecialchars($sim['portfolio_name']) ?>"
                                    title="Selecionar para comparar">
                         </div>
                     </td>
                     <td class="ps-1 text-center">
                         <button class="btn btn-sm btn-outline-secondary border-0 btn-expand rounded-circle p-0"
-                                style="width:28px;height:28px;line-height:1;" title="Ver configuraÃ§Ã£o">
+                                style="width:28px;height:28px;line-height:1;" title="Ver configuração">
                             <i class="bi bi-chevron-down" style="font-size:.75rem;"></i>
                         </button>
                     </td>
                     <td>
                         <span class="badge <?= $isBest ? 'bg-success' : 'bg-light text-muted border' ?> rounded-pill px-2"><?= $sim['id'] ?></span>
                         <?php if ($isBest): ?><i class="bi bi-trophy-fill text-success ms-1" title="Melhor Sharpe"></i><?php endif; ?>
-                        <?php if ($isAdv): ?><i class="bi bi-stars ms-1" style="color:#fd7e14;" title="SimulaÃ§Ã£o AvanÃ§ada (Monte Carlo)"></i><?php endif; ?>
+                        <?php if ($isAdv): ?><i class="bi bi-stars ms-1" style="color:#fd7e14;" title="Simulação Avançada (Monte Carlo)"></i><?php endif; ?>
                     </td>
                     <?php if (!$selectedPortfolio): ?>
                     <td>
@@ -655,7 +656,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                         <?= ($roi >= 0 ? '+' : '') . number_format($roi, 2, ',', '.') ?>%
                     </td>
                     <td class="text-end pe-3 small <?= $calmar === null ? 'text-muted' : ($calmar >= 1 ? 'text-success fw-bold' : ($calmar >= 0.5 ? 'text-warning' : 'text-danger')) ?>">
-                        <?php if ($calmar === null): ?>â€”<?php else: ?><?= number_format($calmar, 2, ',', '.') ?><?php endif; ?>
+                        <?php if ($calmar === null): ?>—<?php else: ?><?= number_format($calmar, 2, ',', '.') ?><?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -665,7 +666,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
     </div>
 </div>
 
-<!-- â”€â”€ Floating Compare Bar â”€â”€ -->
+<!--  Floating Compare Bar  -->
 <div id="compareBar" class="compare-bar d-none">
     <div class="compare-bar-inner d-flex align-items-center gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -673,7 +674,7 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
                 <i class="bi bi-bar-chart-steps text-white fs-5"></i>
             </div>
             <div>
-                <div class="text-white fw-bold" style="font-size:.9rem;">Comparar SimulaÃ§Ãµes</div>
+                <div class="text-white fw-bold" style="font-size:.9rem;">Comparar Simulações</div>
                 <div class="text-white-50 small" id="compareCount">0 selecionadas</div>
             </div>
         </div>
@@ -689,47 +690,47 @@ $breadcrumbs[] = ['label' => 'HistÃ³rico de SimulaÃ§Ãµes', 'url' => '#'];
     </div>
 </div>
 
-<!-- â”€â”€ Legenda â”€â”€ -->
+<!--  Legenda  -->
 <div class="card border-0 rounded-4 bg-light shadow-sm mt-3">
     <div class="card-body py-3 px-4">
         <h6 class="fw-bold mb-2 text-muted small text-uppercase" style="letter-spacing:.05em;">
-            <i class="bi bi-info-circle me-1"></i> Guia de InterpretaÃ§Ã£o
+            <i class="bi bi-info-circle me-1"></i> Guia de Interpretação
         </h6>
         <div class="row g-2">
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Ret. EstratÃ©gia</span>
-                    <span class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influÃªncia dos aportes.</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Ret. Estratégia</span>
+                    <span class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influência dos aportes.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">Sharpe</span>
-                    <span class="text-muted" style="font-size:.75rem;">â‰¥ 1 = excelente Â· 0,5â€“1 = bom Â· &lt; 0,5 = fraco. Retorno por unidade de risco.</span>
+                    <span class="text-muted" style="font-size:.75rem;">à 1 = excelente · 0,5–1 = bom · &lt; 0,5 = fraco. Retorno por unidade de risco.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">Drawdown</span>
-                    <span class="text-muted" style="font-size:.75rem;">Maior queda. Quanto menor, mais estÃ¡vel a estratÃ©gia.</span>
+                    <span class="text-muted" style="font-size:.75rem;">Maior queda. Quanto menor, mais estável a estratégia.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">ROI</span>
-                    <span class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periÃ³dicos).</span>
+                    <span class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periódicos).</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Calmar</span>
-                    <span class="text-muted" style="font-size:.75rem;">Retorno anual da estratÃ©gia Ã· Drawdown mÃ¡x. â‰¥ 1 = excelente. Recompensa vs pior queda.</span>
+                    <span class="text-muted" style="font-size:.75rem;">Retorno anual da estratégia  Drawdown máx. à 1 = excelente. Recompensa vs pior queda.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <i class="bi bi-stars mt-1 flex-shrink-0" style="color:#fd7e14;font-size:.85rem;"></i>
-                    <span class="text-muted" style="font-size:.75rem;">Ãcone laranja = simulaÃ§Ã£o gerada pelo modo <strong>SimulaÃ§Ã£o AvanÃ§ada</strong> (Monte Carlo + Volatilidade Inversa).</span>
+                    <span class="text-muted" style="font-size:.75rem;">Ícone laranja = simulação gerada pelo modo <strong>Simulação Avançada</strong> (Monte Carlo + Volatilidade Inversa).</span>
                 </div>
             </div>
         </div>
@@ -747,7 +748,7 @@ $showPortfolioCol    = !$selectedPortfolio ? 'true' : 'false';
 $additional_css = '
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <style>
-    /* â”€â”€ Filter Pills â”€â”€ */
+    /*  Filter Pills  */
     .filter-pill {
         display: inline-flex;
         align-items: center;
@@ -798,7 +799,7 @@ $additional_css = '
         #filterCard .d-flex { flex-wrap: wrap !important; }
     }
 
-    /* â”€â”€ Summary KPI Strip â”€â”€ */
+    /*  Summary KPI Strip  */
     .summary-kpi-card {
         display: flex;
         align-items: center;
@@ -822,13 +823,13 @@ $additional_css = '
     }
     .summary-kpi-value { font-size: 1.15rem; font-weight: 800; line-height: 1.1; color: var(--text-main); }
 
-    /* â”€â”€ Table â”€â”€ */
+    /*  Table  */
     #allHistoryTable thead th { font-size:.78rem; font-weight:700; white-space:nowrap; vertical-align:middle; }
     #allHistoryTable tbody td { font-size:.82rem; vertical-align:middle; }
     .table-success td { background-color:rgba(25,135,84,.06) !important; }
     tr.dt-hasChild td { background-color:rgba(13,110,253,.04) !important; }
 
-    /* â”€â”€ Child row â”€â”€ */
+    /*  Child row  */
     .child-config {
         background: var(--bg-body, #f8f9fa);
         border-radius: 12px;
@@ -852,7 +853,7 @@ $additional_css = '
     .asset-bar { height:8px; border-radius:6px; }
     #allHistoryTable tbody tr.child td { background-color: var(--bg-body, #f8f9fa) !important; padding:0 !important; }
 
-    /* â”€â”€ Result KPI Cards â”€â”€ */
+    /*  Result KPI Cards  */
     .result-summary-block {
         background: var(--bg-card, #fff);
         border: 1px solid var(--border-color, #dee2e6);
@@ -894,7 +895,7 @@ $additional_css = '
     [data-theme="dark"] .asset-bar-wrap { background:var(--border-color) !important; }
     [data-theme="dark"] tr.dt-hasChild td { background-color:rgba(13,110,253,.08) !important; }
 
-    /* â”€â”€ Action Cards (snapshot actions) â”€â”€ */
+    /*  Action Cards (snapshot actions)  */
     .action-card {
         display: flex; flex-direction: column;
         border-radius: 12px; padding: 14px 16px;
@@ -912,7 +913,7 @@ $additional_css = '
     [data-theme="dark"] .action-card-warning { background: rgba(255,193,7,.1); border-color: rgba(255,193,7,.3); }
     [data-theme="dark"] .action-card-success { background: rgba(25,135,84,.1); border-color: rgba(25,135,84,.3); }
 
-    /* â”€â”€ Compare Bar â”€â”€ */
+    /*  Compare Bar  */
     .compare-bar {
         position: fixed; bottom: 0; left: 0; right: 0; z-index: 1050;
         background: linear-gradient(135deg, #1a1f36 0%, #0d1b2a 100%);
@@ -942,11 +943,11 @@ $additional_css = '
     @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
     .shake { animation: shake .4s ease; }
 
-    /* â”€â”€ Row selected â”€â”€ */
+    /*  Row selected  */
     tr.sim-selected td { background-color: rgba(13,110,253,.07) !important; }
     tr.sim-selected .sim-checkbox { accent-color: #0d6efd; }
 
-    /* â”€â”€ Advanced Filter Panel â”€â”€ */
+    /*  Advanced Filter Panel  */
     #advancedFilterCard { overflow: hidden; }
     #advFilterToggle {
         cursor: pointer;
@@ -1028,7 +1029,7 @@ const PORTFOLIO_URLS    = {$portfolioUrlsJsonPhp};
 const CSRF_TOKEN        = {$csrfTokenJson};
 const SHOW_PORTFOLIO_COL = {$showPortfolioCol};
 const FREQ_LABELS = {never:"Nunca",monthly:"Mensal",quarterly:"Trimestral",biannual:"Semestral",annual:"Anual"};
-const SIM_TYPE_LABELS = {standard:"PadrÃ£o (sem aportes)",monthly_deposit:"Aporte periÃ³dico",strategic_deposit:"Aporte estratÃ©gico",smart_deposit:"Aporte inteligente",selic_cash_deposit:"Reserva Selic + Aporte"};
+const SIM_TYPE_LABELS = {standard:"Padrão (sem aportes)",monthly_deposit:"Aporte periódico",strategic_deposit:"Aporte estratégico",smart_deposit:"Aporte inteligente",selic_cash_deposit:"Reserva Selic + Aporte"};
 const REBAL_TYPE_LABELS = {full:"Rebalanceamento total",partial:"Rebalanceamento parcial",none:"Sem rebalanceamento"};
 const BAR_COLORS = ["#0d6efd","#198754","#dc3545","#fd7e14","#6f42c1","#20c997","#0dcaf0","#ffc107","#6c757d","#d63384"];
 
@@ -1059,7 +1060,7 @@ function buildChildRow(simId, portfolioId) {
                '</div>';
     }
     function pctBadge(val) {
-        if (val === null || val === undefined || val === "") return '<span class="text-muted">â€”</span>';
+        if (val === null || val === undefined || val === "") return '<span class="text-muted">—</span>';
         const v = parseFloat(val); const sign = v >= 0 ? "+" : ""; const cls = v >= 0 ? "text-success" : "text-danger";
         return '<span class="'+cls+'">'+sign+fmt(v)+'%</span>';
     }
@@ -1084,54 +1085,54 @@ function buildChildRow(simId, portfolioId) {
 
     // Portfolio badge header
     const pNameBadge = pUrls.name
-        ? '<div class="mb-3 d-flex align-items-center gap-2"><i class="bi bi-briefcase text-muted"></i><span class="text-muted" style="font-size:.8rem;">PortfÃ³lio:</span> <a href="'+pUrls.view+'" class="fw-bold text-primary text-decoration-none" style="font-size:.85rem;">'+pUrls.name+'</a></div>'
+        ? '<div class="mb-3 d-flex align-items-center gap-2"><i class="bi bi-briefcase text-muted"></i><span class="text-muted" style="font-size:.8rem;">Portfólio:</span> <a href="'+pUrls.view+'" class="fw-bold text-primary text-decoration-none" style="font-size:.85rem;">'+pUrls.name+'</a></div>'
         : '';
 
     const summaryHtml =
         '<div class="result-summary-block mb-3">'+
         pNameBadge +
-        '<div class="result-group-label"><i class="bi bi-wallet2 me-1"></i>PatrimÃ´nio</div>'+
+        '<div class="result-group-label"><i class="bi bi-wallet2 me-1"></i>Patrimônio</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-bank","Capital Inicial",fmtCurrency(totalInvested,cur),"text-primary","kpi-primary")+
             kpi("bi-plus-circle","Total de Aportes",fmtCurrency(totalDeposits,cur),"text-info","kpi-info")+
-            kpi("bi-graph-up-arrow","PatrimÃ´nio Final",fmtCurrency(totalValue,cur),totalValue>=totalInvested?"text-success":"text-danger",totalValue>=totalInvested?"kpi-success":"kpi-danger")+
+            kpi("bi-graph-up-arrow","Patrimônio Final",fmtCurrency(totalValue,cur),totalValue>=totalInvested?"text-success":"text-danger",totalValue>=totalInvested?"kpi-success":"kpi-danger")+
             kpi("bi-cash-stack","Ganho Bruto",(interestEarned>=0?"+":"")+fmtCurrency(interestEarned,cur),interestEarned>=0?"text-success":"text-danger",interestEarned>=0?"kpi-success":"kpi-danger")+
             (taxPaid>0?kpi("bi-receipt","Imposto Pago","âˆ’"+fmtCurrency(taxPaid,cur),"text-danger","kpi-danger"):"")+
         '</div>'+
         '<div class="result-group-label mt-3"><i class="bi bi-bar-chart-line me-1"></i>Performance</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-percent","Retorno Anual<br><small style=\'font-size:.6rem;opacity:.7;\'>com aportes</small>",pctBadge(m.annual_return),annReturn>=0?"text-success":"text-danger")+
-            kpi("bi-trophy","Retorno EstratÃ©gia<br><small style=\'font-size:.6rem;opacity:.7;\'>puro dos ativos</small>",pctBadge(m.strategy_annual_return),strReturn>=0?"text-success":"text-danger")+
+            kpi("bi-trophy","Retorno Estratégia<br><small style=\'font-size:.6rem;opacity:.7;\'>puro dos ativos</small>",pctBadge(m.strategy_annual_return),strReturn>=0?"text-success":"text-danger")+
             kpi("bi-tags","ROI Total",(roi>=0?"+":"")+fmt(roi)+"%",roi>=0?"text-success":"text-danger")+
         '</div>'+
         '<div class="result-group-label mt-3"><i class="bi bi-shield-exclamation me-1"></i>Risco</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-activity","Volatilidade",fmt(vol)+"%",volColor)+
-            kpi("bi-speedometer2","Ãndice Sharpe",fmt(sharpe),sharpeColor)+
-            kpi("bi-arrow-down-circle","Drawdown MÃ¡x.","âˆ’"+fmt(dd)+"%",ddColor)+
+            kpi("bi-speedometer2","Índice Sharpe",fmt(sharpe),sharpeColor)+
+            kpi("bi-arrow-down-circle","Drawdown Máx.","âˆ’"+fmt(dd)+"%",ddColor)+
             (dd > 0 ? kpi("bi-shield-check","Calmar<br><small style='font-size:.6rem;opacity:.7;'>ret.estr./drawdown</small>",
                 (function(){const c=strReturn/dd;return (c>=1?'<span class="text-success fw-bold">':'<span class="'+(c>=0.5?"text-warning":"text-danger")+'">') + fmt(c) + '</span>';})(),
                 strReturn/dd >= 1 ? "text-success" : (strReturn/dd >= 0.5 ? "text-warning" : "text-danger")) : "")+
-            kpi("bi-arrow-up-right","Melhor MÃªs","+"+fmt(maxGain)+"%","text-success")+
-            kpi("bi-arrow-down-left","Pior MÃªs","âˆ’"+fmt(maxLoss)+"%","text-danger")+
+            kpi("bi-arrow-up-right","Melhor Mês","+"+fmt(maxGain)+"%","text-success")+
+            kpi("bi-arrow-down-left","Pior Mês","âˆ’"+fmt(maxLoss)+"%","text-danger")+
         '</div>'+
-        (m.allocation_label ? '<div class="result-group-label mt-3"><i class="bi bi-stars me-1" style="color:#fd7e14;"></i>CenÃ¡rio de AlocaÃ§Ã£o (Monte Carlo)</div>'+
+        (m.allocation_label ? '<div class="result-group-label mt-3"><i class="bi bi-stars me-1" style="color:#fd7e14;"></i>Cenário de Alocação (Monte Carlo)</div>'+
             '<div class="d-flex flex-wrap gap-2"><span class="config-pill"><i class="bi bi-pie-chart text-warning"></i><strong>'+m.allocation_label+'</strong></span></div>' : '')+
         '</div>';
 
     if (!data || !data.portfolio) {
         return '<div class="child-config p-3 m-2">'+summaryHtml+
-               '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>ConfiguraÃ§Ã£o nÃ£o disponÃ­vel (simulaÃ§Ã£o anterior Ã  ativaÃ§Ã£o desta funcionalidade).</div></div>';
+               '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>Configuração não disponível (simulação anterior  ativação desta funcionalidade).</div></div>';
     }
     const p = data.portfolio;
     const assets = data.assets || [];
 
     const genPills = [
         pill("bi-cash-coin","Capital inicial",fmtCurrency(p.initial_capital,p.output_currency)),
-        pill("bi-calendar3","PerÃ­odo",
+        pill("bi-calendar3","Período",
              (p.start_date?p.start_date.substring(0,7).split("-").reverse().join("/"):"?")+
              " > "+(p.end_date?p.end_date.substring(0,7).split("-").reverse().join("/"):"Hoje")),
-        pill("bi-currency-exchange","Moeda saÃ­da",p.output_currency||"BRL"),
+        pill("bi-currency-exchange","Moeda saída",p.output_currency||"BRL"),
         pill("bi-arrow-repeat","Rebalanceamento",FREQ_LABELS[p.rebalance_frequency]||p.rebalance_frequency||"-"),
         pill("bi-sliders","Tipo rebal.",REBAL_TYPE_LABELS[p.rebalance_type]||p.rebalance_type||"-"),
     ];
@@ -1143,18 +1144,18 @@ function buildChildRow(simId, portfolioId) {
         const dPills = [pill("bi-wallet2","Tipo",SIM_TYPE_LABELS[p.simulation_type]||p.simulation_type)];
         if (p.deposit_amount) {
             dPills.push(pill("bi-plus-circle","Valor aporte",fmtCurrency(p.deposit_amount,p.deposit_currency)));
-            dPills.push(pill("bi-calendar-check","FrequÃªncia",FREQ_LABELS[p.deposit_frequency]||p.deposit_frequency||"-"));
+            dPills.push(pill("bi-calendar-check","Frequência",FREQ_LABELS[p.deposit_frequency]||p.deposit_frequency||"-"));
         }
-        if (p.deposit_inflation_adjusted==1) dPills.push('<span class="config-pill"><i class="bi bi-graph-up text-success"></i><strong class="text-success">Ajustado pela inflaÃ§Ã£o</strong></span>');
-        if (p.strategic_threshold)           dPills.push(pill("bi-bullseye","Gatilho estratÃ©gico",fmt(p.strategic_threshold)+"%"));
+        if (p.deposit_inflation_adjusted==1) dPills.push('<span class="config-pill"><i class="bi bi-graph-up text-success"></i><strong class="text-success">Ajustado pela inflação</strong></span>');
+        if (p.strategic_threshold)           dPills.push(pill("bi-bullseye","Gatilho estratégico",fmt(p.strategic_threshold)+"%"));
         if (p.strategic_deposit_percentage)  dPills.push(pill("bi-percent","% no gatilho",fmt(p.strategic_deposit_percentage)+"%"));
-        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet-fill me-1"></i>EstratÃ©gia de Aportes</div><div class="d-flex flex-wrap gap-2">'+dPills.join("")+'</div></div>';
+        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet-fill me-1"></i>Estratégia de Aportes</div><div class="d-flex flex-wrap gap-2">'+dPills.join("")+'</div></div>';
     } else {
-        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet me-1"></i>Aportes</div><span class="config-pill text-muted"><i class="bi bi-dash-circle"></i> Sem aportes periÃ³dicos</span></div>';
+        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet me-1"></i>Aportes</div><span class="config-pill text-muted"><i class="bi bi-dash-circle"></i> Sem aportes periódicos</span></div>';
     }
 
     let taxHtml = "";
-    const TAX_GROUP_LABELS = {CRIPTOMOEDA:"Criptomoeda",ETF_US:"ETF (EUA)",ETF_BR:"ETF (BR)",RENDA_FIXA:"Renda Fixa",FUNDO_IMOBILIARIO:"Fundo ImobiliÃ¡rio"};
+    const TAX_GROUP_LABELS = {CRIPTOMOEDA:"Criptomoeda",ETF_US:"ETF (EUA)",ETF_BR:"ETF (BR)",RENDA_FIXA:"Renda Fixa",FUNDO_IMOBILIARIO:"Fundo Imobiliário"};
     const TAX_GROUPS_ORDER = ["CRIPTOMOEDA","ETF_US","ETF_BR","RENDA_FIXA","FUNDO_IMOBILIARIO"];
     let taxRates = null;
     if (p.profit_tax_rates_json) { try { taxRates = (typeof p.profit_tax_rates_json==="string")?JSON.parse(p.profit_tax_rates_json):p.profit_tax_rates_json; } catch(e){} }
@@ -1165,7 +1166,7 @@ function buildChildRow(simId, portfolioId) {
         }).filter(Boolean).join("");
         if (taxPills) taxHtml='<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+taxPills+'</div></div>';
     } else if (p.profit_tax_rate) {
-        taxHtml='<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+pill("bi-percent","AlÃ­quota geral",fmt(p.profit_tax_rate)+"%","text-danger")+'</div></div>';
+        taxHtml='<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+pill("bi-percent","Alíquota geral",fmt(p.profit_tax_rate)+"%","text-danger")+'</div></div>';
     }
 
     let assetsRows = "";
@@ -1173,7 +1174,7 @@ function buildChildRow(simId, portfolioId) {
         const pct   = parseFloat(a.allocation_percentage||0);
         const color = BAR_COLORS[i%BAR_COLORS.length];
         const margin= (a.rebalance_margin_down||a.rebalance_margin_up)
-            ? '<span>Entre '+fmt(a.rebalance_margin_down||0)+'% Ã  '+fmt(a.rebalance_margin_up||0)+'%</span>' : "-";
+            ? '<span>Entre '+fmt(a.rebalance_margin_down||0)+'%  '+fmt(a.rebalance_margin_up||0)+'%</span>' : "-";
         assetsRows +=
             '<tr>'+
             '<td style="font-size:.8rem;padding:5px 8px;"><span class="fw-bold">'+(a.name||"-")+'</span> <span class="text-muted" style="font-size:.72rem;">'+(a.code||"")+'</span></td>'+
@@ -1184,52 +1185,52 @@ function buildChildRow(simId, portfolioId) {
     });
 
     const assetsHtml = assets.length>0
-        ? '<div class="mt-3"><div class="config-section-title"><i class="bi bi-pie-chart-fill me-1"></i>ComposiÃ§Ã£o dos Ativos</div>'+
+        ? '<div class="mt-3"><div class="config-section-title"><i class="bi bi-pie-chart-fill me-1"></i>Composição dos Ativos</div>'+
           '<table class="table table-borderless mb-0" style="background:transparent;"><thead><tr>'+
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Ativo</th>'+
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Moeda</th>'+
-          '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">AlocaÃ§Ã£o</th>'+
+          '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Alocação</th>'+
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;text-align:right;">Margem Rebal.</th>'+
           '</tr></thead><tbody>'+assetsRows+'</tbody></table></div>'
         : "";
 
     const applyUrl       = pUrls.apply || "#";
     const createSnapUrl  = pUrls.create_from_snap || "#";
-    const pDisplayName   = pUrls.name ? pUrls.name : "este portfÃ³lio";
+    const pDisplayName   = pUrls.name ? pUrls.name : "este portfólio";
 
     const applyBtn =
         '<div class="mt-4 pt-3 border-top">'+
         '<div class="d-flex align-items-center gap-2 mb-3">'+
         '<i class="bi bi-lightbulb-fill text-warning fs-5"></i>'+
-        '<span class="fw-bold child-config-title" style="font-size:.88rem;">O que deseja fazer com esta configuraÃ§Ã£o?</span>'+
+        '<span class="fw-bold child-config-title" style="font-size:.88rem;">O que deseja fazer com esta configuração?</span>'+
         '</div>'+
         '<div class="row g-3">'+
-        /* â”€â”€ Card: Aplicar ao portfÃ³lio atual â”€â”€ */
+        /*  Card: Aplicar ao portfólio atual  */
         '<div class="col-12 col-md-6">'+
         '<div class="action-card action-card-warning h-100">'+
         '<div class="action-card-icon"><i class="bi bi-arrow-counterclockwise"></i></div>'+
         '<div class="action-card-body">'+
-        '<div class="action-card-title">Aplicar ao PortfÃ³lio Atual</div>'+
-        '<div class="action-card-desc">Substitui as configuraÃ§Ãµes de <strong>'+pDisplayName+'</strong> pelos parÃ¢metros desta simulaÃ§Ã£o. AÃ§Ã£o reversÃ­vel via ediÃ§Ã£o.</div>'+
+        '<div class="action-card-title">Aplicar ao Portfólio Atual</div>'+
+        '<div class="action-card-desc">Substitui as configurações de <strong>'+pDisplayName+'</strong> pelos parâmetros desta simulação. Ação reversível via edição.</div>'+
         '</div>'+
-        '<form method="POST" action="'+applyUrl+'" onsubmit="return confirm(\'AtenÃ§Ã£o: isso irÃ¡ substituir as configuraÃ§Ãµes atuais do portfÃ³lio.\\n\\nCapital, perÃ­odo, aportes, rebalanceamento e ativos serÃ£o alterados.\\n\\nDeseja continuar?\')">'+
+        '<form method="POST" action="'+applyUrl+'" onsubmit="return confirm(\'Atenção: isso irá substituir as configurações atuais do portfólio.\\n\\nCapital, período, aportes, rebalanceamento e ativos serão alterados.\\n\\nDeseja continuar?\')">'+
         '<input type="hidden" name="csrf_token" value="'+CSRF_TOKEN+'">'+
         '<input type="hidden" name="simulation_id" value="'+simId+'">'+
         '<button type="submit" class="btn btn-warning rounded-pill px-4 fw-semibold shadow-sm no-spinner w-100 mt-2">'+
-        '<i class="bi bi-arrow-counterclockwise me-2"></i>Aplicar ao PortfÃ³lio'+
+        '<i class="bi bi-arrow-counterclockwise me-2"></i>Aplicar ao Portfólio'+
         '</button></form>'+
         '</div></div>'+
-        /* â”€â”€ Card: Criar novo portfÃ³lio â”€â”€ */
+        /*  Card: Criar novo portfólio  */
         '<div class="col-12 col-md-6">'+
         '<div class="action-card action-card-success h-100">'+
         '<div class="action-card-icon"><i class="bi bi-plus-circle"></i></div>'+
         '<div class="action-card-body">'+
-        '<div class="action-card-title">Criar Novo PortfÃ³lio</div>'+
-        '<div class="action-card-desc">Gera um portfÃ³lio novo com exatamente esta configuraÃ§Ã£o, sem alterar nenhum portfÃ³lio existente.</div>'+
+        '<div class="action-card-title">Criar Novo Portfólio</div>'+
+        '<div class="action-card-desc">Gera um portfólio novo com exatamente esta configuração, sem alterar nenhum portfólio existente.</div>'+
         '</div>'+
         '<button type="button" class="btn btn-success rounded-pill px-4 fw-semibold shadow-sm w-100 mt-2"'+
         ' data-sim-id="'+simId+'" data-create-url="'+createSnapUrl+'" data-bs-toggle="modal" data-bs-target="#createFromSnapshotModal" onclick="prepareCreateFromSnapshot(this)">'+
-        '<i class="bi bi-plus-lg me-2"></i>Criar Novo PortfÃ³lio'+
+        '<i class="bi bi-plus-lg me-2"></i>Criar Novo Portfólio'+
         '</button>'+
         '</div></div>'+
         '</div>'+ /* /row */
@@ -1239,10 +1240,10 @@ function buildChildRow(simId, portfolioId) {
         summaryHtml+
         '<div class="d-flex align-items-center gap-2 mb-3">'+
         '<i class="bi bi-clipboard-data text-primary fs-5"></i>'+
-        '<span class="fw-bold child-config-title" style="font-size:.9rem;">ConfiguraÃ§Ã£o usada nesta simulaÃ§Ã£o</span>'+
+        '<span class="fw-bold child-config-title" style="font-size:.9rem;">Configuração usada nesta simulação</span>'+
         '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1" style="font-size:.68rem;">ID #'+simId+'</span>'+
         '</div>'+
-        '<div class="config-section-title"><i class="bi bi-gear me-1"></i>ParÃ¢metros Gerais</div>'+
+        '<div class="config-section-title"><i class="bi bi-gear me-1"></i>Parâmetros Gerais</div>'+
         '<div class="d-flex flex-wrap gap-2">'+genPills.join("")+'</div>'+
         depositHtml + taxHtml + assetsHtml + applyBtn +
         '</div>';
@@ -1251,7 +1252,7 @@ function buildChildRow(simId, portfolioId) {
 const COMPARE_URL_BASE = "{$compareUrlBase}";
 
 $(document).ready(function () {
-    // Ativar tooltips Bootstrap nos Ã­cones (i) dos cabeÃ§alhos
+    // Ativar tooltips Bootstrap nos ícones (i) dos cabeçalhos
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
         new bootstrap.Tooltip(el, { html: false });
     });
@@ -1259,7 +1260,7 @@ $(document).ready(function () {
     // Column indexes: now there's an extra checkbox col at index 0
     // cols: 0=checkbox, 1=expand, 2=#id, [3=portfolio?], 3/4=simDate, 4/5=createdAt, ...
     const colOffset = SHOW_PORTFOLIO_COL ? 1 : 0;
-    // text-end columns (value/return/etc.) â€” shifted by 1 due to new checkbox col
+    // text-end columns (value/return/etc.) — shifted by 1 due to new checkbox col
     const textEndCols = SHOW_PORTFOLIO_COL
         ? [6,7,8,9,10,11,12,13]
         : [5,6,7,8,9,10,11,12];
@@ -1274,11 +1275,11 @@ $(document).ready(function () {
         ],
         language: {
             sProcessing:"Processando...", sLengthMenu:"Mostrar _MENU_ registros",
-            sZeroRecords:"Nenhuma simulaÃ§Ã£o encontrada", sEmptyTable:"Nenhum dado disponÃ­vel",
+            sZeroRecords:"Nenhuma simulação encontrada", sEmptyTable:"Nenhum dado disponível",
             sInfo:"Mostrando _START_ a _END_ de _TOTAL_ registros",
             sInfoEmpty:"Mostrando 0 a 0 de 0 registros",
             sInfoFiltered:"(filtrado de _MAX_ no total)",
-            sSearch:"Pesquisar:", sSearchPlaceholder:"Buscar simulaÃ§Ã£o ou portfÃ³lio...",
+            sSearch:"Pesquisar:", sSearchPlaceholder:"Buscar simulação ou portfólio...",
             oPaginate:{
                 sFirst:'<i class="bi bi-chevron-bar-left"></i>',
                 sPrevious:'<i class="bi bi-chevron-left"></i>',
@@ -1289,7 +1290,7 @@ $(document).ready(function () {
         dom:"<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-sm-end'f>><'row'<'col-12'tr>><'row mt-3 align-items-center'<'col-sm-5 text-muted small'i><'col-sm-7'p>>"
     });
 
-    // â”€â”€ Expand button â”€â”€
+    //  Expand button 
     $("#allHistoryTable tbody").on("click", "button.btn-expand", function (e) {
         e.stopPropagation();
         const btn        = $(this);
@@ -1318,7 +1319,7 @@ $(document).ready(function () {
         $(this).find(".btn-expand").trigger("click");
     });
 
-    // â”€â”€ Compare selection â”€â”€
+    //  Compare selection 
     const MAX_SELECT = 5;
     let selectedSims = {}; // {id: label}
 
@@ -1333,7 +1334,7 @@ $(document).ready(function () {
             return;
         }
         bar.removeClass("d-none");
-        $("#compareCount").text(count + (count === 1 ? " selecionada" : " selecionadas") + " (mÃ­n. 2 para comparar)");
+        $("#compareCount").text(count + (count === 1 ? " selecionada" : " selecionadas") + " (mín. 2 para comparar)");
 
         chips.empty();
         Object.entries(selectedSims).forEach(([id, label]) => {
@@ -1414,7 +1415,7 @@ $(document).ready(function () {
         }
     });
 
-    // â”€â”€ Advanced Metric Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Advanced Metric Filters 
 
     // Toggle panel
     const advToggle = document.getElementById("advFilterToggle");
@@ -1524,7 +1525,7 @@ $(document).ready(function () {
         if (activeCount > 0) {
             const shown = table.rows({ search: 'applied' }).count();
             const total = table.rows().count();
-            resultCount.textContent = shown + " de " + total + " simulaÃ§Ãµes";
+            resultCount.textContent = shown + " de " + total + " simulações";
             resultCount.classList.remove("d-none");
         } else {
             resultCount.classList.add("d-none");
@@ -1557,22 +1558,22 @@ $(document).ready(function () {
     });
 
     // Auto-open filter panel if any filter is active on page load
-    // (useful for back-navigation persistence â€” no server state needed here)
+    // (useful for back-navigation persistence — no server state needed here)
 });
 
-// â”€â”€ Modal: Criar Novo PortfÃ³lio a partir do Snapshot â”€â”€
+//  Modal: Criar Novo Portfólio a partir do Snapshot 
 function prepareCreateFromSnapshot(btn) {
     const simId     = btn.getAttribute('data-sim-id');
     const createUrl = btn.getAttribute('data-create-url');
     document.getElementById('cfsSimId').value      = simId;
     document.getElementById('cfsFormAction').action = createUrl;
-    // SugestÃ£o automÃ¡tica de nome
+    // Sugestão automática de nome
     const snap = SNAPSHOTS[simId];
     const dateStr = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
     const periodStr = snap && snap.portfolio && snap.portfolio.start_date
         ? snap.portfolio.start_date.substring(0,7).split('-').reverse().join('/')
         : '';
-    const suggested = 'PortfÃ³lio â€” SimulaÃ§Ã£o #' + simId + (periodStr ? ' (' + periodStr + ')' : '');
+    const suggested = 'Portfólio — Simulação #' + simId + (periodStr ? ' (' + periodStr + ')' : '');
     const nameInput = document.getElementById('cfsPortfolioName');
     nameInput.value = suggested;
     setTimeout(() => { nameInput.focus(); nameInput.select(); }, 400);
@@ -1580,9 +1581,9 @@ function prepareCreateFromSnapshot(btn) {
 </script>
 ENDJS;
 
-// â”€â”€ Modal HTML (outside ob_get_clean output, added to $content) â”€â”€
+//  Modal HTML (outside ob_get_clean output, added to $content) 
 $modalHtml = <<<HTML
-<!-- Modal: Criar Novo PortfÃ³lio a partir do Snapshot -->
+<!-- Modal: Criar Novo Portfólio a partir do Snapshot -->
 <div class="modal fade" id="createFromSnapshotModal" tabindex="-1" aria-labelledby="cfsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
@@ -1592,8 +1593,8 @@ $modalHtml = <<<HTML
             <i class="bi bi-folder-plus text-success fs-4"></i>
           </div>
           <div>
-            <h5 class="modal-title fw-bold mb-0" id="cfsModalLabel">Criar Novo PortfÃ³lio</h5>
-            <p class="text-muted mb-0" style="font-size:.78rem;">A partir da configuraÃ§Ã£o desta simulaÃ§Ã£o</p>
+            <h5 class="modal-title fw-bold mb-0" id="cfsModalLabel">Criar Novo Portfólio</h5>
+            <p class="text-muted mb-0" style="font-size:.78rem;">A partir da configuração desta simulação</p>
           </div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -1604,21 +1605,21 @@ $modalHtml = <<<HTML
           <input type="hidden" name="simulation_id" id="cfsSimId" value="">
           <div class="mb-1">
             <label for="cfsPortfolioName" class="form-label fw-semibold" style="font-size:.85rem;">
-              <i class="bi bi-tag me-1 text-success"></i>Nome do novo portfÃ³lio
+              <i class="bi bi-tag me-1 text-success"></i>Nome do novo portfólio
             </label>
             <input type="text" class="form-control form-control-lg rounded-3" id="cfsPortfolioName" name="portfolio_name"
-              placeholder="Ex: EstratÃ©gia Conservadora 2025" maxlength="80" required autofocus>
-            <div class="form-text" style="font-size:.73rem;">Escolha um nome descritivo para identificar facilmente este portfÃ³lio.</div>
+              placeholder="Ex: Estratégia Conservadora 2025" maxlength="80" required autofocus>
+            <div class="form-text" style="font-size:.73rem;">Escolha um nome descritivo para identificar facilmente este portfólio.</div>
           </div>
           <div class="alert alert-success border-0 rounded-3 d-flex align-items-start gap-2 mt-3 mb-0 py-2 px-3" style="font-size:.78rem;background:rgba(25,135,84,.07);">
             <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
-            <span>SerÃ¡ criado um portfÃ³lio com todos os parÃ¢metros e ativos desta simulaÃ§Ã£o. <strong>Nenhum portfÃ³lio existente serÃ¡ alterado.</strong></span>
+            <span>Será criado um portfólio com todos os parâmetros e ativos desta simulação. <strong>Nenhum portfólio existente será alterado.</strong></span>
           </div>
         </div>
         <div class="modal-footer border-0 px-4 pt-2 pb-4 gap-2">
           <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-success rounded-pill px-5 fw-semibold shadow-sm">
-            <i class="bi bi-plus-lg me-2"></i>Criar PortfÃ³lio
+            <i class="bi bi-plus-lg me-2"></i>Criar Portfólio
           </button>
         </div>
       </form>

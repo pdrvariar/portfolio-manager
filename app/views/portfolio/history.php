@@ -1,16 +1,17 @@
 ﻿<?php
 /**
- * @var array  $portfolio   Dados do portfÃ³lio
- * @var array  $simulations Lista das Ãºltimas 10 simulaÃ§Ãµes (com snapshot)
+ * @var array  $portfolio   Dados do portfólio
+ * @var array  $simulations Lista das últimas 10 simulações (com snapshot)
  */
 
-$title = 'HistÃ³rico de SimulaÃ§Ãµes â€” ' . htmlspecialchars($portfolio['name']);`n$meta_robots = 'noindex, nofollow';
+$title = 'Histórico de Simulações — ' . htmlspecialchars($portfolio['name']);
+$meta_robots = 'noindex, nofollow';
 
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
-    ['label' => 'PortfÃ³lios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
     ['label' => htmlspecialchars($portfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolio['id'])],
-    ['label' => 'HistÃ³rico', 'url' => '#'],
+    ['label' => 'Histórico', 'url' => '#'],
 ];
 
 ob_start();
@@ -20,9 +21,9 @@ $freqLabels = [
     'quarterly'=> 'Trimestral','biannual' => 'Semestral','annual'   => 'Anual',
 ];
 $simTypeLabels = [
-    'standard'           => 'PadrÃ£o (sem aportes)',
-    'monthly_deposit'    => 'Aporte periÃ³dico',
-    'strategic_deposit'  => 'Aporte estratÃ©gico',
+    'standard'           => 'Padrão (sem aportes)',
+    'monthly_deposit'    => 'Aporte periódico',
+    'strategic_deposit'  => 'Aporte estratégico',
     'smart_deposit'      => 'Aporte inteligente',
     'selic_cash_deposit' => 'Reserva Selic + Aporte',
 ];
@@ -33,22 +34,22 @@ $rebalTypeLabels = [
 ];
 ?>
 
-<!-- â”€â”€ CabeÃ§alho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Cabeçalho  -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
         <h2 class="fw-bold mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-clock-history text-primary"></i>
-            HistÃ³rico de SimulaÃ§Ãµes
+            Histórico de Simulações
         </h2>
         <p class="text-muted small mb-0 mt-1">
-            Ãšltimas simulaÃ§Ãµes de <strong><?= htmlspecialchars($portfolio['name']) ?></strong>.
-            Expanda cada linha para ver a configuraÃ§Ã£o exata â€” e reproduza a melhor quando quiser.
+            Últimas simulações de <strong><?= htmlspecialchars($portfolio['name']) ?></strong>.
+            Expanda cada linha para ver a configuração exata — e reproduza a melhor quando quiser.
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>"
            class="btn btn-primary rounded-pill px-4 shadow-sm">
-            <i class="bi bi-play-fill me-1"></i> Nova SimulaÃ§Ã£o
+            <i class="bi bi-play-fill me-1"></i> Nova Simulação
         </a>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>"
            class="btn btn-outline-secondary rounded-pill px-4">
@@ -58,15 +59,15 @@ $rebalTypeLabels = [
 </div>
 
 <?php if (empty($simulations)): ?>
-<!-- â”€â”€ Estado Vazio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Estado Vazio  -->
 <div class="card shadow-sm border-0 rounded-4 text-center py-5">
     <div class="card-body">
         <i class="bi bi-bar-chart-line text-muted mb-3 d-block" style="font-size:3.5rem;opacity:.35;"></i>
-        <h5 class="fw-bold text-muted">Nenhuma simulaÃ§Ã£o encontrada</h5>
-        <p class="text-muted small mb-4">Execute a primeira simulaÃ§Ã£o para comeÃ§ar a comparar resultados.</p>
+        <h5 class="fw-bold text-muted">Nenhuma simulação encontrada</h5>
+        <p class="text-muted small mb-4">Execute a primeira simulação para começar a comparar resultados.</p>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/run/' . $portfolio['id']) ?>"
            class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-play-fill me-1"></i> Executar SimulaÃ§Ã£o
+            <i class="bi bi-play-fill me-1"></i> Executar Simulação
         </a>
     </div>
 </div>
@@ -103,7 +104,7 @@ $rebalTypeLabels = [
     }
 ?>
 
-<!-- â”€â”€ Banner melhor simulaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Banner melhor simulação  -->
 <div class="alert border-0 rounded-4 mb-4 shadow-sm d-flex align-items-center gap-3"
      style="background:linear-gradient(135deg,#e8f5e9 0%,#f1f8e9 100%);">
     <div class="bg-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
@@ -111,26 +112,26 @@ $rebalTypeLabels = [
         <i class="bi bi-trophy-fill text-white fs-5"></i>
     </div>
     <div class="flex-grow-1">
-        <div class="fw-bold text-success mb-0" style="font-size:.9rem;">Melhor SimulaÃ§Ã£o Â· Ãndice Sharpe mais alto</div>
+        <div class="fw-bold text-success mb-0" style="font-size:.9rem;">Melhor Simulação · Índice Sharpe mais alto</div>
         <div class="text-muted small">
-            Executada em <strong><?= date('d/m/Y H:i', strtotime($best['created_at'])) ?></strong> &nbsp;Â·&nbsp;
-            Retorno anual: <strong><?= number_format((float)$best['annual_return'], 2, ',', '.') ?>%</strong> &nbsp;Â·&nbsp;
-            Sharpe: <strong><?= number_format((float)$best['sharpe_ratio'], 2, ',', '.') ?></strong> &nbsp;Â·&nbsp;
-            Drawdown mÃ¡x.: <strong>-<?= number_format(abs((float)$best['max_drawdown']), 2, ',', '.') ?>%</strong>
+            Executada em <strong><?= date('d/m/Y H:i', strtotime($best['created_at'])) ?></strong> &nbsp;·&nbsp;
+            Retorno anual: <strong><?= number_format((float)$best['annual_return'], 2, ',', '.') ?>%</strong> &nbsp;·&nbsp;
+            Sharpe: <strong><?= number_format((float)$best['sharpe_ratio'], 2, ',', '.') ?></strong> &nbsp;·&nbsp;
+            Drawdown máx.: <strong>-<?= number_format(abs((float)$best['max_drawdown']), 2, ',', '.') ?>%</strong>
         </div>
     </div>
     <span class="badge bg-success rounded-pill px-3 py-2 fs-6 flex-shrink-0">#<?= $best['id'] ?></span>
 </div>
 
-<!-- â”€â”€ Dica de uso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Dica de uso  -->
 <div class="alert border-0 rounded-3 mb-3 py-2 px-3 small d-flex align-items-center gap-2"
      style="background:#eef6fd;color:#374151;">
     <i class="bi bi-info-circle-fill flex-shrink-0" style="color:#3b82f6;"></i>
     Clique em <kbd><i class="bi bi-chevron-down"></i></kbd> ou em qualquer linha para ver a
-    <strong>configuraÃ§Ã£o exata</strong> que foi usada naquela simulaÃ§Ã£o.
+    <strong>configuração exata</strong> que foi usada naquela simulação.
 </div>
 
-<!-- â”€â”€ Tabela â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Tabela  -->
 <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -143,10 +144,10 @@ $rebalTypeLabels = [
                         <th style="width:11%">Executada em</th>
                         <th class="text-end" style="width:11%">Valor Final</th>
                         <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Com aportes</small></th>
-                        <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">EstratÃ©gia</small></th>
+                        <th class="text-end" style="width:9%">Ret. Anual<br><small class="fw-normal text-muted">Estratégia</small></th>
                         <th class="text-end" style="width:8%">Volatili-<br>dade</th>
                         <th class="text-end" style="width:7%">Sharpe</th>
-                        <th class="text-end" style="width:9%">Drawdown<br>MÃ¡x.</th>
+                        <th class="text-end" style="width:9%">Drawdown<br>Máx.</th>
                         <th class="text-end" style="width:8%">ROI</th>
                         <th class="text-end pe-3" style="width:9%">Ganho Bruto</th>
                     </tr>
@@ -166,7 +167,7 @@ $rebalTypeLabels = [
                 <tr class="<?= $isBest ? 'table-success' : '' ?>" data-sim-id="<?= $sim['id'] ?>">
                     <td class="ps-3 text-center">
                         <button class="btn btn-sm btn-outline-secondary border-0 btn-expand rounded-circle p-0"
-                                style="width:28px;height:28px;line-height:1;" title="Ver configuraÃ§Ã£o">
+                                style="width:28px;height:28px;line-height:1;" title="Ver configuração">
                             <i class="bi bi-chevron-down" style="font-size:.75rem;"></i>
                         </button>
                     </td>
@@ -215,35 +216,35 @@ $rebalTypeLabels = [
     </div>
 </div>
 
-<!-- â”€â”€ Legenda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Legenda  -->
 <div class="card border-0 rounded-4 bg-light shadow-sm mt-3">
     <div class="card-body py-3 px-4">
         <h6 class="fw-bold mb-2 text-muted small text-uppercase" style="letter-spacing:.05em;">
-            <i class="bi bi-info-circle me-1"></i> Guia de InterpretaÃ§Ã£o
+            <i class="bi bi-info-circle me-1"></i> Guia de Interpretação
         </h6>
         <div class="row g-2">
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Ret. EstratÃ©gia</span>
-                    <span class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influÃªncia dos aportes.</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1 text-nowrap" style="font-size:.65rem;">Ret. Estratégia</span>
+                    <span class="text-muted" style="font-size:.75rem;">Performance pura dos ativos, sem influência dos aportes.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">Sharpe</span>
-                    <span class="text-muted" style="font-size:.75rem;">â‰¥ 1 = excelente Â· 0,5â€“1 = bom Â· < 0,5 = fraco. Retorno por unidade de risco.</span>
+                    <span class="text-muted" style="font-size:.75rem;">à 1 = excelente · 0,5–1 = bom · < 0,5 = fraco. Retorno por unidade de risco.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">Drawdown</span>
-                    <span class="text-muted" style="font-size:.75rem;">Maior queda. Quanto menor, mais estÃ¡vel a estratÃ©gia.</span>
+                    <span class="text-muted" style="font-size:.75rem;">Maior queda. Quanto menor, mais estável a estratégia.</span>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="d-flex align-items-start gap-2">
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1" style="font-size:.65rem;">ROI</span>
-                    <span class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periÃ³dicos).</span>
+                    <span class="text-muted" style="font-size:.75rem;">Retorno sobre todo o capital aportado (inicial + periódicos).</span>
                 </div>
             </div>
         </div>
@@ -263,13 +264,13 @@ $historyUrl         = isset($portfolio) ? obfuscateUrl('portfolio/history/' . $p
 $additional_css = '
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <style>
-    /* â”€â”€ Tabela â”€â”€ */
+    /*  Tabela  */
     #historyTable thead th { font-size:.78rem; font-weight:700; white-space:nowrap; vertical-align:middle; }
     #historyTable tbody td { font-size:.82rem; vertical-align:middle; }
     .table-success td      { background-color:rgba(25,135,84,.06) !important; }
     tr.dt-hasChild td      { background-color:rgba(13,110,253,.04) !important; }
 
-    /* â”€â”€ Child row â€” light mode â”€â”€ */
+    /*  Child row — light mode  */
     .child-config {
         background: var(--bg-body, #f8f9fa);
         border-radius: 12px;
@@ -292,17 +293,17 @@ $additional_css = '
     .config-pill .text-muted { color: var(--text-muted, #6c757d) !important; }
     .config-pill strong      { color: var(--text-main, #212529); }
 
-    /* CÃ©lulas da tabela interna de ativos */
+    /* Células da tabela interna de ativos */
     .child-config table td  { color: var(--text-main, #212529); }
 
-    /* Barra de alocaÃ§Ã£o */
+    /* Barra de alocação */
     .asset-bar-wrap { background: var(--border-color, #e9ecef); border-radius:6px; height:8px; overflow:hidden; }
     .asset-bar      { height:8px; border-radius:6px; }
 
-    /* â”€â”€ DataTables child row background â”€â”€ */
+    /*  DataTables child row background  */
     #historyTable tbody tr.child td { background-color: var(--bg-body, #f8f9fa) !important; padding:0 !important; }
 
-    /* â”€â”€ Resumo dos Resultados â€” KPI Cards â”€â”€ */
+    /*  Resumo dos Resultados — KPI Cards  */
     .result-summary-block {
         background: var(--bg-card, #fff);
         border: 1px solid var(--border-color, #dee2e6);
@@ -369,7 +370,7 @@ const APPLY_SNAPSHOT_URL = "/index.php?url={$applySnapshotUrl}";
 const CSRF_TOKEN         = {$csrfTokenJson};
 const HISTORY_URL        = "/index.php?url={$historyUrl}";
 const FREQ_LABELS = {never:"Nunca",monthly:"Mensal",quarterly:"Trimestral",biannual:"Semestral",annual:"Anual"};
-const SIM_TYPE_LABELS = {standard:"PadrÃ£o (sem aportes)",monthly_deposit:"Aporte periÃ³dico",strategic_deposit:"Aporte estratÃ©gico",smart_deposit:"Aporte inteligente",selic_cash_deposit:"Reserva Selic + Aporte"};
+const SIM_TYPE_LABELS = {standard:"Padrão (sem aportes)",monthly_deposit:"Aporte periódico",strategic_deposit:"Aporte estratégico",smart_deposit:"Aporte inteligente",selic_cash_deposit:"Reserva Selic + Aporte"};
 const REBAL_TYPE_LABELS = {full:"Rebalanceamento total",partial:"Rebalanceamento parcial",none:"Sem rebalanceamento"};
 const BAR_COLORS = ["#0d6efd","#198754","#dc3545","#fd7e14","#6f42c1","#20c997","#0dcaf0","#ffc107","#6c757d","#d63384"];
 
@@ -390,7 +391,7 @@ function buildChildRow(simId) {
     const data = SNAPSHOTS[simId];
     const m    = METRICS[simId] || {};
 
-    /* â”€â”€ SeÃ§Ã£o: Resumo dos Resultados â”€â”€ */
+    /*  Seção: Resumo dos Resultados  */
     const cur = (data && data.portfolio && data.portfolio.output_currency) ? data.portfolio.output_currency : "BRL";
 
     function kpi(icon, label, value, colorClass, bgClass) {
@@ -402,7 +403,7 @@ function buildChildRow(simId) {
     }
 
     function pctBadge(val, alwaysSign) {
-        if (val === null || val === undefined || val === "") return '<span class="text-muted">â€”</span>';
+        if (val === null || val === undefined || val === "") return '<span class="text-muted">—</span>';
         const v = parseFloat(val);
         const sign = v >= 0 ? "+" : "";
         const cls  = v >= 0 ? "text-success" : "text-danger";
@@ -430,49 +431,49 @@ function buildChildRow(simId) {
     const summaryHtml =
         '<div class="result-summary-block mb-3">'+
 
-        /* â”€â”€ Grupo PatrimÃ´nio â”€â”€ */
-        '<div class="result-group-label"><i class="bi bi-wallet2 me-1"></i>PatrimÃ´nio</div>'+
+        /*  Grupo Patrimônio  */
+        '<div class="result-group-label"><i class="bi bi-wallet2 me-1"></i>Patrimônio</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-bank",        "Capital Inicial",   fmtCurrency(totalInvested,  cur), "text-primary",   "kpi-primary") +
             kpi("bi-plus-circle", "Total de Aportes",  fmtCurrency(totalDeposits,  cur), "text-info",      "kpi-info") +
-            kpi("bi-graph-up-arrow","PatrimÃ´nio Final", fmtCurrency(totalValue,    cur), totalValue >= totalInvested ? "text-success" : "text-danger", totalValue >= totalInvested ? "kpi-success" : "kpi-danger") +
+            kpi("bi-graph-up-arrow","Patrimônio Final", fmtCurrency(totalValue,    cur), totalValue >= totalInvested ? "text-success" : "text-danger", totalValue >= totalInvested ? "kpi-success" : "kpi-danger") +
             kpi("bi-cash-stack",  "Ganho Bruto",       (interestEarned >= 0 ? "+" : "") + fmtCurrency(interestEarned, cur), interestEarned >= 0 ? "text-success" : "text-danger", interestEarned >= 0 ? "kpi-success" : "kpi-danger") +
             (taxPaid > 0 ? kpi("bi-receipt", "Imposto Pago", "âˆ’" + fmtCurrency(taxPaid, cur), "text-danger", "kpi-danger") : "") +
         '</div>'+
 
-        /* â”€â”€ Grupo Performance â”€â”€ */
+        /*  Grupo Performance  */
         '<div class="result-group-label mt-3"><i class="bi bi-bar-chart-line me-1"></i>Performance</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-percent",         "Retorno Anual<br><small style=\'font-size:.6rem;opacity:.7;\'>com aportes</small>",    pctBadge(m.annual_return),              annReturn >= 0 ? "text-success" : "text-danger") +
-            kpi("bi-trophy",          "Retorno EstratÃ©gia<br><small style=\'font-size:.6rem;opacity:.7;\'>puro dos ativos</small>", pctBadge(m.strategy_annual_return), strReturn >= 0 ? "text-success" : "text-danger") +
+            kpi("bi-trophy",          "Retorno Estratégia<br><small style=\'font-size:.6rem;opacity:.7;\'>puro dos ativos</small>", pctBadge(m.strategy_annual_return), strReturn >= 0 ? "text-success" : "text-danger") +
             kpi("bi-tags",            "ROI Total",          (roi >= 0 ? "+" : "") + fmt(roi) + "%",           roi >= 0 ? "text-success" : "text-danger") +
         '</div>'+
 
-        /* â”€â”€ Grupo Risco â”€â”€ */
+        /*  Grupo Risco  */
         '<div class="result-group-label mt-3"><i class="bi bi-shield-exclamation me-1"></i>Risco</div>'+
         '<div class="result-kpi-grid">'+
             kpi("bi-activity",        "Volatilidade",        fmt(vol) + "%",   volColor) +
-            kpi("bi-speedometer2",    "Ãndice Sharpe",       fmt(sharpe),      sharpeColor) +
-            kpi("bi-arrow-down-circle","Drawdown MÃ¡x.",      "âˆ’" + fmt(dd) + "%", ddColor) +
-            kpi("bi-arrow-up-right",  "Melhor MÃªs",         "+" + fmt(maxGain) + "%", "text-success") +
-            kpi("bi-arrow-down-left", "Pior MÃªs",           "âˆ’" + fmt(maxLoss) + "%", "text-danger") +
+            kpi("bi-speedometer2",    "Índice Sharpe",       fmt(sharpe),      sharpeColor) +
+            kpi("bi-arrow-down-circle","Drawdown Máx.",      "âˆ’" + fmt(dd) + "%", ddColor) +
+            kpi("bi-arrow-up-right",  "Melhor Mês",         "+" + fmt(maxGain) + "%", "text-success") +
+            kpi("bi-arrow-down-left", "Pior Mês",           "âˆ’" + fmt(maxLoss) + "%", "text-danger") +
         '</div>'+
 
         '</div>';
 
     if (!data || !data.portfolio) {
         return '<div class="child-config p-3 m-2">'+summaryHtml+
-               '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>ConfiguraÃ§Ã£o nÃ£o disponÃ­vel (simulaÃ§Ã£o anterior Ã  ativaÃ§Ã£o desta funcionalidade).</div></div>';
+               '<div class="p-3 text-muted small"><i class="bi bi-exclamation-circle me-1"></i>Configuração não disponível (simulação anterior  ativação desta funcionalidade).</div></div>';
     }
     const p = data.portfolio;
     const assets = data.assets || [];
 
     const genPills = [
         pill("bi-cash-coin",       "Capital inicial",  fmtCurrency(p.initial_capital, p.output_currency)),
-        pill("bi-calendar3",       "PerÃ­odo",
+        pill("bi-calendar3",       "Período",
              (p.start_date ? p.start_date.substring(0,7).split("-").reverse().join("/") : "?") +
              " > " + (p.end_date ? p.end_date.substring(0,7).split("-").reverse().join("/") : "Hoje")),
-        pill("bi-currency-exchange","Moeda saÃ­da",     p.output_currency || "BRL"),
+        pill("bi-currency-exchange","Moeda saída",     p.output_currency || "BRL"),
         pill("bi-arrow-repeat",    "Rebalanceamento",  FREQ_LABELS[p.rebalance_frequency] || p.rebalance_frequency || "-"),
         pill("bi-sliders",         "Tipo rebal.",      REBAL_TYPE_LABELS[p.rebalance_type] || p.rebalance_type || "-"),
     ];
@@ -484,14 +485,14 @@ function buildChildRow(simId) {
         const dPills = [ pill("bi-wallet2","Tipo", SIM_TYPE_LABELS[p.simulation_type] || p.simulation_type) ];
         if (p.deposit_amount) {
             dPills.push(pill("bi-plus-circle","Valor aporte", fmtCurrency(p.deposit_amount, p.deposit_currency)));
-            dPills.push(pill("bi-calendar-check","FrequÃªncia", FREQ_LABELS[p.deposit_frequency] || p.deposit_frequency || "-"));
+            dPills.push(pill("bi-calendar-check","Frequência", FREQ_LABELS[p.deposit_frequency] || p.deposit_frequency || "-"));
         }
-        if (p.deposit_inflation_adjusted == 1) dPills.push('<span class="config-pill"><i class="bi bi-graph-up text-success"></i><strong class="text-success">Ajustado pela inflaÃ§Ã£o</strong></span>');
-        if (p.strategic_threshold)          dPills.push(pill("bi-bullseye","Gatilho estratÃ©gico", fmt(p.strategic_threshold)+"%"));
+        if (p.deposit_inflation_adjusted == 1) dPills.push('<span class="config-pill"><i class="bi bi-graph-up text-success"></i><strong class="text-success">Ajustado pela inflação</strong></span>');
+        if (p.strategic_threshold)          dPills.push(pill("bi-bullseye","Gatilho estratégico", fmt(p.strategic_threshold)+"%"));
         if (p.strategic_deposit_percentage) dPills.push(pill("bi-percent","% no gatilho", fmt(p.strategic_deposit_percentage)+"%"));
-        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet-fill me-1"></i>EstratÃ©gia de Aportes</div><div class="d-flex flex-wrap gap-2">'+dPills.join("")+'</div></div>';
+        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet-fill me-1"></i>Estratégia de Aportes</div><div class="d-flex flex-wrap gap-2">'+dPills.join("")+'</div></div>';
     } else {
-        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet me-1"></i>Aportes</div><span class="config-pill text-muted"><i class="bi bi-dash-circle"></i> Sem aportes periÃ³dicos</span></div>';
+        depositHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-wallet me-1"></i>Aportes</div><span class="config-pill text-muted"><i class="bi bi-dash-circle"></i> Sem aportes periódicos</span></div>';
     }
 
     let taxHtml = "";
@@ -500,7 +501,7 @@ function buildChildRow(simId) {
         ETF_US: "ETF (EUA)",
         ETF_BR: "ETF (BR)",
         RENDA_FIXA: "Renda Fixa",
-        FUNDO_IMOBILIARIO: "Fundo ImobiliÃ¡rio"
+        FUNDO_IMOBILIARIO: "Fundo Imobiliário"
     };
     const TAX_GROUPS_ORDER = ["CRIPTOMOEDA","ETF_US","ETF_BR","RENDA_FIXA","FUNDO_IMOBILIARIO"];
     // Try per-group rates first (new format), fallback to legacy single rate
@@ -518,7 +519,7 @@ function buildChildRow(simId) {
             taxHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+taxPills+'</div></div>';
         }
     } else if (p.profit_tax_rate) {
-        taxHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+pill("bi-percent","AlÃ­quota geral", fmt(p.profit_tax_rate)+"%","text-danger")+'</div></div>';
+        taxHtml = '<div class="mt-3"><div class="config-section-title"><i class="bi bi-receipt me-1"></i>Imposto de Renda</div><div class="d-flex flex-wrap gap-2">'+pill("bi-percent","Alíquota geral", fmt(p.profit_tax_rate)+"%","text-danger")+'</div></div>';
     }
 
     let assetsRows = "";
@@ -526,7 +527,7 @@ function buildChildRow(simId) {
         const pct   = parseFloat(a.allocation_percentage || 0);
         const color = BAR_COLORS[i % BAR_COLORS.length];
         const margin = (a.rebalance_margin_down || a.rebalance_margin_up)
-            ? '<span>Entre '+fmt(a.rebalance_margin_down||0)+'% Ã  '+fmt(a.rebalance_margin_up||0)+'%</span>'
+            ? '<span>Entre '+fmt(a.rebalance_margin_down||0)+'%  '+fmt(a.rebalance_margin_up||0)+'%</span>'
             : "-";
         assetsRows +=
             '<tr>' +
@@ -538,12 +539,12 @@ function buildChildRow(simId) {
     });
 
     const assetsHtml = assets.length > 0
-        ? '<div class="mt-3"><div class="config-section-title"><i class="bi bi-pie-chart-fill me-1"></i>ComposiÃ§Ã£o dos Ativos</div>' +
+        ? '<div class="mt-3"><div class="config-section-title"><i class="bi bi-pie-chart-fill me-1"></i>Composição dos Ativos</div>' +
           '<table class="table table-borderless mb-0" style="background:transparent;">' +
           '<thead><tr>' +
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Ativo</th>' +
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Moeda</th>' +
-          '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">AlocaÃ§Ã£o</th>' +
+          '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;">Alocação</th>' +
           '<th style="font-size:.7rem;padding:3px 8px;opacity:.7;text-align:right;">Margem Rebal.</th>' +
           '</tr></thead><tbody>'+assetsRows+'</tbody></table></div>'
         : "";
@@ -553,28 +554,28 @@ function buildChildRow(simId) {
         '<div class="d-flex align-items-start gap-2">' +
         '<i class="bi bi-lightbulb-fill text-warning fs-5 flex-shrink-0 mt-1"></i>' +
         '<div>' +
-        '<div class="fw-bold child-config-title" style="font-size:.85rem;">Quer repetir esta simulaÃ§Ã£o?</div>' +
-        '<div class="text-muted" style="font-size:.75rem;">Aplica todos os parÃ¢metros e alocaÃ§Ãµes ao portfÃ³lio atual. Depois execute uma nova simulaÃ§Ã£o para comparar.</div>' +
+        '<div class="fw-bold child-config-title" style="font-size:.85rem;">Quer repetir esta simulação?</div>' +
+        '<div class="text-muted" style="font-size:.75rem;">Aplica todos os parâmetros e alocações ao portfólio atual. Depois execute uma nova simulação para comparar.</div>' +
         '</div></div>' +
-        '<form method="POST" action="'+APPLY_SNAPSHOT_URL+'" onsubmit="return confirm(\'AtenÃ§Ã£o: isso irÃ¡ substituir as configuraÃ§Ãµes atuais do portfÃ³lio.\\n\\nCapital, perÃ­odo, aportes, rebalanceamento e ativos serÃ£o alterados.\\n\\nDeseja continuar?\')">' +
+        '<form method="POST" action="'+APPLY_SNAPSHOT_URL+'" onsubmit="return confirm(\'Atenção: isso irá substituir as configurações atuais do portfólio.\\n\\nCapital, período, aportes, rebalanceamento e ativos serão alterados.\\n\\nDeseja continuar?\')">' +
         '<input type="hidden" name="csrf_token" value="'+CSRF_TOKEN+'">' +
         '<input type="hidden" name="simulation_id" value="'+simId+'">' +
         '<button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm no-spinner">' +
-        '<i class="bi bi-arrow-counterclockwise me-2"></i>Aplicar ao PortfÃ³lio' +
+        '<i class="bi bi-arrow-counterclockwise me-2"></i>Aplicar ao Portfólio' +
         '</button></form></div>';
 
     return '<div class="child-config p-3 m-2">' +
 
-        /* â”€â”€ SeÃ§Ã£o 1: Resumo dos Resultados â”€â”€ */
+        /*  Seção 1: Resumo dos Resultados  */
         summaryHtml +
 
-        /* â”€â”€ SeÃ§Ã£o 2: ConfiguraÃ§Ã£o â”€â”€ */
+        /*  Seção 2: Configuração  */
         '<div class="d-flex align-items-center gap-2 mb-3">' +
         '<i class="bi bi-clipboard-data text-primary fs-5"></i>' +
-        '<span class="fw-bold child-config-title" style="font-size:.9rem;">ConfiguraÃ§Ã£o usada nesta simulaÃ§Ã£o</span>' +
+        '<span class="fw-bold child-config-title" style="font-size:.9rem;">Configuração usada nesta simulação</span>' +
         '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1" style="font-size:.68rem;">ID #'+simId+'</span>' +
         '</div>' +
-        '<div class="config-section-title"><i class="bi bi-gear me-1"></i>ParÃ¢metros Gerais</div>' +
+        '<div class="config-section-title"><i class="bi bi-gear me-1"></i>Parâmetros Gerais</div>' +
         '<div class="d-flex flex-wrap gap-2">'+genPills.join("")+'</div>' +
         depositHtml + taxHtml + assetsHtml + applyBtn +
         '</div>';
@@ -591,11 +592,11 @@ $(document).ready(function () {
         ],
         language: {
             sProcessing:"Processando...", sLengthMenu:"Mostrar _MENU_ registros",
-            sZeroRecords:"Nenhuma simulaÃ§Ã£o encontrada", sEmptyTable:"Nenhum dado disponÃ­vel",
+            sZeroRecords:"Nenhuma simulação encontrada", sEmptyTable:"Nenhum dado disponível",
             sInfo:"Mostrando _START_ a _END_ de _TOTAL_ registros",
             sInfoEmpty:"Mostrando 0 a 0 de 0 registros",
             sInfoFiltered:"(filtrado de _MAX_ no total)",
-            sSearch:"Pesquisar:", sSearchPlaceholder:"Buscar simulaÃ§Ã£o...",
+            sSearch:"Pesquisar:", sSearchPlaceholder:"Buscar simulação...",
             oPaginate:{
                 sFirst:'<i class="bi bi-chevron-bar-left"></i>',
                 sPrevious:'<i class="bi bi-chevron-left"></i>',

@@ -1,5 +1,6 @@
 ﻿<?php
-$title = 'Ocorreu um problema';`n$meta_robots = 'noindex, nofollow';
+$title = 'Ocorreu um problema';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="row justify-content-center">

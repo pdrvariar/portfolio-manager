@@ -1,12 +1,13 @@
 ﻿<?php
 /**
- * @var array $users Lista de todos os usuÃ¡rios do sistema
+ * @var array $users Lista de todos os usuários do sistema
  */
-$title = 'Gerenciar UsuÃ¡rios';`n$meta_robots = 'noindex, nofollow';
+$title = 'Gerenciar Usuários';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0">Gerenciar UsuÃ¡rios</h2>
+    <h2 class="fw-bold mb-0">Gerenciar Usuários</h2>
 </div>
 
 <div class="card shadow-sm border-0 rounded-3">
@@ -16,15 +17,15 @@ ob_start();
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">ID</th>
-                        <th>Nome / UsuÃ¡rio</th>
+                        <th>Nome / Usuário</th>
                         <th>E-mail</th>
                         <th>Status</th>
                         <th>Tipo</th>
                         <th>Plano</th>
                         <th>Tipo Assinatura</th>
-                        <th>ExpiraÃ§Ã£o</th>
+                        <th>Expiração</th>
                         <th>Criado em</th>
-                        <th class="text-end pe-3">AÃ§Ãµes</th>
+                        <th class="text-end pe-3">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +63,7 @@ ob_start();
                             <?php if (!empty($user['subscription_plan_type'])): ?>
                                 <?php echo $user['subscription_plan_type'] === 'yearly' ? '<span class="badge bg-info text-dark">Anual</span>' : '<span class="badge bg-info text-dark">Mensal</span>'; ?>
                             <?php else: ?>
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -72,7 +73,7 @@ ob_start();
                                     <?php if ($isExpired): ?><i class="bi bi-exclamation-triangle-fill ms-1" title="Expirada"></i><?php endif; ?>
                                 </span>
                             <?php else: ?>
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
                         <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>

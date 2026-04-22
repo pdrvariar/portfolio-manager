@@ -1,31 +1,32 @@
 ﻿<?php
 /**
- * @var array $portfolio  Dados do portfÃ³lio
+ * @var array $portfolio  Dados do portfólio
  * @var array $assets     Lista de ativos vinculados
- * @var array $latest     Ãšltimo resultado de simulaÃ§Ã£o
- * @var array $chartData  Dados da simulaÃ§Ã£o decodificados
+ * @var array $latest     Último resultado de simulação
+ * @var array $chartData  Dados da simulação decodificados
  * @var array $assetNames Mapeamento de ID para Nome
  * @var array $assetTargets Mapeamento de ID para Meta
  * @var array $assetCurrencies Mapeamento de ID para Moeda
  */
 
-$title = 'Detalhes da SimulaÃ§Ã£o: ' . htmlspecialchars($portfolio['name']);`n$meta_robots = 'noindex, nofollow';
+$title = 'Detalhes da Simulação: ' . htmlspecialchars($portfolio['name']);
+$meta_robots = 'noindex, nofollow';
 
 $breadcrumbs = [
     ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
-    ['label' => 'PortfÃ³lios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+    ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
     ['label' => htmlspecialchars($portfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $portfolio['id'])],
-    ['label' => 'Detalhes da SimulaÃ§Ã£o', 'url' => '#'],
+    ['label' => 'Detalhes da Simulação', 'url' => '#'],
 ];
 
 ob_start();
 ?>
 
-<!-- â”€â”€â”€ CabeÃ§alho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Cabeçalho  -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-0">Progresso Mensal Detalhado</h2>
-        <p class="text-muted small mb-0">AnÃ¡lise profunda da evoluÃ§Ã£o de cada ativo mÃªs a mÃªs.</p>
+        <p class="text-muted small mb-0">Análise profunda da evolução de cada ativo mês a mês.</p>
     </div>
     <div>
         <a href="/index.php?url=<?= obfuscateUrl('portfolio/view/' . $portfolio['id']) ?>"
@@ -35,44 +36,44 @@ ob_start();
     </div>
 </div>
 
-<!-- â”€â”€â”€ Card principal com a DataTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Card principal com a DataTable  -->
 <div class="card shadow-sm border-0 rounded-3 mb-5">
     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold text-dark">
-            <i class="bi bi-table me-2 text-primary"></i>HistÃ³rico de Performance
+            <i class="bi bi-table me-2 text-primary"></i>Histórico de Performance
         </h5>
         <small class="text-muted">
-            Clique em <i class="bi bi-chevron-down"></i> ou na linha para expandir os detalhes do mÃªs.
+            Clique em <i class="bi bi-chevron-down"></i> ou na linha para expandir os detalhes do mês.
         </small>
     </div>
     <div class="card-body p-3">
 
-        <!-- Nota explicativa sobre as cotaÃ§Ãµes e o Capital Inicial -->
+        <!-- Nota explicativa sobre as cotações e o Capital Inicial -->
         <div class="alert d-flex gap-2 align-items-start py-3 px-3 mb-3 small border-0 rounded-3" style="background:#eef6fd;">
             <i class="bi bi-lightbulb-fill flex-shrink-0 mt-1" style="color:#3b82f6;font-size:1rem;"></i>
             <div style="color:#374151;line-height:1.6;">
                 <strong style="color:#1e3a5f;font-size:.85rem;letter-spacing:.01em;">
-                    ðŸ“… Como ler a coluna MÃªs/Ano
+                    ðŸ“… Como ler a coluna Mês/Ano
                 </strong>
                 <p class="mb-2 mt-1">
-                    Cada perÃ­odo exibido nesta tabela tem sua performance calculada com base no
-                    <strong>preÃ§o de fechamento do Ãºltimo dia Ãºtil do respectivo mÃªs</strong> â€”
-                    incluindo cotaÃ§Ãµes, compras, vendas, aportes e rebalanceamentos.
+                    Cada período exibido nesta tabela tem sua performance calculada com base no
+                    <strong>preço de fechamento do último dia útil do respectivo mês</strong> —
+                    incluindo cotações, compras, vendas, aportes e rebalanceamentos.
                 </p>
                 <p class="mb-1"><strong style="color:#1e3a5f;">Exemplos para facilitar a leitura:</strong></p>
                 <ul class="mb-0 ps-3" style="list-style:disc;">
                     <li class="mb-1">
-                        A linha <strong>07/2015</strong> representa o desempenho do portfÃ³lio usando as cotaÃ§Ãµes
-                        do <strong>Ãºltimo dia Ãºtil de julho de 2015</strong> â€” neste caso, 31/07/2015.
+                        A linha <strong>07/2015</strong> representa o desempenho do portfólio usando as cotações
+                        do <strong>último dia útil de julho de 2015</strong> — neste caso, 31/07/2015.
                     </li>
                     <li>
-                        Se o histÃ³rico apresenta uma linha marcada como <strong>Capital Inicial</strong> aparentemente
-                        <em>um mÃªs antes</em> do inÃ­cio da simulaÃ§Ã£o, nÃ£o se preocupe: esse comportamento Ã©
-                        intencional. A compra dos ativos com o capital inicial Ã© feita com base nas cotaÃ§Ãµes
-                        do <strong>Ãºltimo dia Ãºtil do mÃªs anterior</strong> ao inÃ­cio.
-                        Assim, uma simulaÃ§Ã£o que comeÃ§a em <strong>01/2015</strong> utiliza os preÃ§os de
-                        fechamento de <strong>dezembro/2014</strong> â€” que pode corresponder ao dia&nbsp;29,
-                        30&nbsp;ou&nbsp;31, dependendo do calendÃ¡rio de mercado daquele ano.
+                        Se o histórico apresenta uma linha marcada como <strong>Capital Inicial</strong> aparentemente
+                        <em>um mês antes</em> do início da simulação, não se preocupe: esse comportamento é
+                        intencional. A compra dos ativos com o capital inicial é feita com base nas cotações
+                        do <strong>último dia útil do mês anterior</strong> ao início.
+                        Assim, uma simulação que começa em <strong>01/2015</strong> utiliza os preços de
+                        fechamento de <strong>dezembro/2014</strong> — que pode corresponder ao dia&nbsp;29,
+                        30&nbsp;ou&nbsp;31, dependendo do calendário de mercado daquele ano.
                     </li>
                 </ul>
             </div>
@@ -81,9 +82,9 @@ ob_start();
         <table id="detailsTable" class="table table-hover align-middle mb-0 w-100">
             <thead class="table-light">
                 <tr>
-                    <th>MÃªs/Ano</th>
+                    <th>Mês/Ano</th>
                     <th>Saldo Total</th>
-                    <th>VariaÃ§Ã£o Mensal</th>
+                    <th>Variação Mensal</th>
                     <th>Aporte</th>
                     <th class="text-center">Status</th>
                     <th class="text-center">Expandir</th>
@@ -119,7 +120,7 @@ ob_start();
                 ?>
                 <tr data-date="<?= htmlspecialchars($date) ?>" class="<?= $isInitialPoint ? 'tr-initial-point' : '' ?>">
 
-                    <!-- MÃªs/Ano â€” data-order usa ISO para ordenaÃ§Ã£o cronolÃ³gica correta -->
+                    <!-- Mês/Ano — data-order usa ISO para ordenação cronológica correta -->
                     <td data-order="<?= $date ?>">
                         <span class="fw-bold"><?= $dateLabel ?></span>
                         <?php if ($isInitialPoint): ?>
@@ -127,17 +128,17 @@ ob_start();
                         <?php endif; ?>
                     </td>
 
-                    <!-- Saldo Total â€” data-order com valor numÃ©rico -->
+                    <!-- Saldo Total — data-order com valor numérico -->
                     <td data-order="<?= $currentValue ?>">
                         <span class="fw-bold text-primary">
                             <?= formatCurrency($currentValue, $portfolio['output_currency']) ?>
                         </span>
                     </td>
 
-                    <!-- VariaÃ§Ã£o -->
+                    <!-- Variação -->
                     <td data-order="<?= $variation ?>">
                         <?php if ($isInitialPoint): ?>
-                            <span class="text-muted small">â€”</span>
+                            <span class="text-muted small">—</span>
                         <?php else: ?>
                             <span class="badge fs-6 px-2 py-1 <?= $variation >= 0 ? 'bg-soft-success' : 'bg-soft-danger' ?>">
                                 <?= ($variation >= 0 ? '+' : '') . number_format($variation, 2, ',', '.') ?>%
@@ -148,14 +149,14 @@ ob_start();
                     <!-- Aporte -->
                     <td data-order="<?= $depositMade ?>">
                         <?php if ($isInitialPoint): ?>
-                            <span class="text-muted small">â€”</span>
+                            <span class="text-muted small">—</span>
                         <?php elseif ($depositMade > 0): ?>
                             <span class="text-success small fw-semibold">
                                 <i class="bi bi-plus-circle-fill me-1"></i>
                                 <?= formatCurrency($depositMade, $portfolio['output_currency']) ?>
                             </span>
                         <?php else: ?>
-                            <span class="text-muted small">â€”</span>
+                            <span class="text-muted small">—</span>
                         <?php endif; ?>
                     </td>
 
@@ -174,7 +175,7 @@ ob_start();
                         <?php endif; ?>
                     </td>
 
-                    <!-- BotÃ£o expandir -->
+                    <!-- Botão expandir -->
                     <td class="text-center">
                         <button class="btn btn-sm <?= $isInitialPoint ? 'btn-primary' : 'btn-outline-secondary' ?> border-0 rounded-circle btn-expand"
                                 title="Ver detalhes dos ativos em <?= $dateLabel ?>">
@@ -188,7 +189,7 @@ ob_start();
                 ?>
             </tbody>
 
-            <!-- Filtros por coluna no rodapÃ© da tabela -->
+            <!-- Filtros por coluna no rodapé da tabela -->
             <tfoot class="table-light">
                 <tr>
                     <th>
@@ -197,7 +198,7 @@ ob_start();
                     </th>
                     <th>
                         <input type="search" class="form-control form-control-sm col-filter"
-                               placeholder="Buscar saldoâ€¦">
+                               placeholder="Buscar saldo™">
                     </th>
                     <th>
                         <input type="search" class="form-control form-control-sm col-filter"
@@ -205,7 +206,7 @@ ob_start();
                     </th>
                     <th>
                         <input type="search" class="form-control form-control-sm col-filter"
-                               placeholder="Buscar aporteâ€¦">
+                               placeholder="Buscar aporte™">
                     </th>
                     <th class="text-center">
                         <select class="form-select form-select-sm col-filter-status">
@@ -221,15 +222,15 @@ ob_start();
     </div>
 </div>
 
-<!-- â”€â”€â”€ Estilos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!--  Estilos  -->
 <style>
-    /* â”€â”€ Badge soft colours â”€â”€ */
+    /*  Badge soft colours  */
     .bg-soft-success { background-color: rgba(25,135,84,.12);  color: #198754; }
     .bg-soft-danger  { background-color: rgba(220,53,69,.12);  color: #dc3545; }
     .bg-soft-info    { background-color: rgba(13,202,240,.12); color: #0aa2c0; }
     .bg-soft-primary { background-color: rgba(13,110,253,.12); color: #0d6efd; }
 
-    /* â”€â”€ Child row (Expandida) â”€â”€ */
+    /*  Child row (Expandida)  */
     .child-row-wrapper {
         padding: 24px;
         background-color: var(--bg-body, #f8f9fa);
@@ -257,13 +258,13 @@ ob_start();
         border-bottom: none;
     }
 
-    /* â”€â”€ Expanded row highlight â”€â”€ */
+    /*  Expanded row highlight  */
     #detailsTable tbody tr.shown > td { background-color: rgba(13,110,253,.06) !important; }
 
-    /* â”€â”€ tfoot filter cells â”€â”€ */
+    /*  tfoot filter cells  */
     #detailsTable tfoot th { padding: 6px 8px; }
 
-    /* â”€â”€ DataTables Dark Mode â”€â”€ */
+    /*  DataTables Dark Mode  */
     [data-theme="dark"] .dataTables_wrapper { color: var(--text-main); }
     [data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
     [data-theme="dark"] .dataTables_wrapper .dataTables_length select,
@@ -294,10 +295,10 @@ ob_start();
 </style>
 
 <?php
-/* â”€â”€â”€ Captura o conteÃºdo principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  Captura o conteúdo principal  */
 $content = ob_get_clean();
 
-/* â”€â”€â”€ CSS adicional (ob_start garante execuÃ§Ã£o correta do PHP) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  CSS adicional (ob_start garante execução correta do PHP)  */
 ob_start();
 ?>
 <!-- DataTables 1.13.8 (Bootstrap 5) -->
@@ -305,19 +306,19 @@ ob_start();
 <?php
 $additional_css = ob_get_clean();
 
-/* â”€â”€â”€ JS adicional (ob_start resolve o bug de PHP-dentro-de-string) â”€â”€â”€â”€â”€â”€â”€â”€â”€
- *  IMPORTANTE: O padrÃ£o anterior usava $additional_js = '...<?php echo ... ?>...'
- *  (single-quoted string) onde o PHP NÃƒO executa as tags embutidas, causando
+/*  JS adicional (ob_start resolve o bug de PHP-dentro-de-string) 
+ *  IMPORTANTE: O padrão anterior usava $additional_js = '...<?php echo ... ?>...'
+ *  (single-quoted string) onde o PHP NÃO executa as tags embutidas, causando
  *  output literal de "<?php echo ... ?>" e quebrando todo o JavaScript.
- *  Com ob_start()/ob_get_clean() o PHP Ã© executado normalmente.
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+ *  Com ob_start()/ob_get_clean() o PHP é executado normalmente.
+ *  */
 ob_start();
 ?>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-/* â”€â”€ Dados do PHP â€” executados corretamente via ob_start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  Dados do PHP — executados corretamente via ob_start  */
 window.simulationAuditLog = <?= json_encode(
     $chartData['audit_log'] ?? [],
     JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
@@ -331,7 +332,7 @@ const assetCurrencies = <?= json_encode($assetCurrencies, JSON_HEX_TAG | JSON_HE
 const assetTaxGroups  = <?= json_encode($assetTaxGroups ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 const outputCurrency = <?= json_encode($portfolio['output_currency'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
-/* â”€â”€ Helper: formata moeda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  Helper: formata moeda  */
 function fmtCur(value, currency) {
     const targetCurrency = currency || outputCurrency;
     return new Intl.NumberFormat('pt-BR', {
@@ -341,15 +342,15 @@ function fmtCur(value, currency) {
     }).format(value);
 }
 
-/* â”€â”€ PrÃ©-cÃ¡lculo do Custo MÃ©dio de AquisiÃ§Ã£o (Base Total) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- * O Custo de AquisiÃ§Ã£o nÃ£o altera com a valorizaÃ§Ã£o.
+/*  Pré-cálculo do Custo Médio de Aquisição (Base Total) 
+ * O Custo de Aquisição não altera com a valorização.
  * Na compra, soma-se o valor. Na venda, abate-se proporcionalmente.
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+ *  */
 (function preCalculateAcquisitionCosts() {
     const log = window.simulationAuditLog;
     if (!log) return;
 
-    // DEBUG: VerificaÃ§Ã£o dos dados iniciais
+    // DEBUG: Verificação dos dados iniciais
     console.log("Audit Log carregado:", Object.keys(log).length, "registros");
     console.log("Grupos de Imposto carregados:", assetTaxGroups);
     window._debug_tax_logged = false;
@@ -359,12 +360,12 @@ function fmtCur(value, currency) {
     const currentCosts = {};
     const accumulatedRealized = {};
     
-    // Controle de prejuÃ­zos acumulados por grupo de imposto (tax_group)
+    // Controle de prejuízos acumulados por grupo de imposto (tax_group)
     const groupTaxResults = {
         // Ex: 'ETF_BR': { accumulatedLoss: 0, accumulatedProfit: 0, taxRate: 0.15 }
     };
 
-    // AlÃ­quotas por grupo (Pode ser expandido conforme necessidade)
+    // Alíquotas por grupo (Pode ser expandido conforme necessidade)
     const TAX_RATES = <?php 
         $defaultRates = [
             'CRIPTOMOEDA' => 0.15,
@@ -392,7 +393,7 @@ function fmtCur(value, currency) {
         data.realized_profits = {};
         data.accumulated_realized_profits = {};
         
-        // Resultados do mÃªs por grupo para cÃ¡lculo de IR
+        // Resultados do mês por grupo para cálculo de IR
         const monthlyGroupResults = {};
 
         for (const id in assets) {
@@ -414,7 +415,7 @@ function fmtCur(value, currency) {
                 console.log(`Ativo #${id} (${assetNames[id] || '?'}) -> Grupo: ${taxGroup}`);
             }
 
-            // 1. InicializaÃ§Ã£o do custo (Ponto inicial ou primeiro mÃªs ou quando o ativo estava zerado)
+            // 1. Inicialização do custo (Ponto inicial ou primeiro mês ou quando o ativo estava zerado)
             if (currentCosts[id] === 0 || isInitialPoint) {
                 if (isInitialPoint) {
                     currentCosts[id] = parseFloat(assets[id] || 0);
@@ -430,15 +431,15 @@ function fmtCur(value, currency) {
                     }
                 }
             }
-            // 2. OperaÃ§Ãµes subsequentes (Compras e Vendas)
+            // 2. Operações subsequentes (Compras e Vendas)
             else {
                 if (delta > 0) {
                     // COMPRA: Aumenta o custo base investido
                     currentCosts[id] += delta;
                 } else if (delta < 0) {
-                    // VENDA: Apura Lucro/PrejuÃ­zo Realizado sobre o valor de mercado atualizado
-                    // Se houver compra e venda no mesmo mÃªs (ex: rebalanceamento com aporte),
-                    // o delta lÃ­quido pode ser negativo. O lucro Ã© apurado apenas sobre a parte vendida.
+                    // VENDA: Apura Lucro/Prejuízo Realizado sobre o valor de mercado atualizado
+                    // Se houver compra e venda no mesmo mês (ex: rebalanceamento com aporte),
+                    // o delta líquido pode ser negativo. O lucro é apurado apenas sobre a parte vendida.
                     // Para simplificar, usamos o valor absoluto do delta se for negativo.
                     
                     const sellAmount = Math.abs(delta);
@@ -464,21 +465,21 @@ function fmtCur(value, currency) {
                 }
             }
             
-            // Injeta o custo calculado em cada ativo no log deste mÃªs para a tabela renderizar (se necessÃ¡rio)
+            // Injeta o custo calculado em cada ativo no log deste mês para a tabela renderizar (se necessário)
             if (!data.asset_costs) data.asset_costs = {};
             if (parseFloat(assets[id] || 0) > 0.01) {
                 data.asset_costs[id] = currentCosts[id];
             } else {
-                currentCosts[id] = 0; // Zera custo se a posiÃ§Ã£o for liquidada
+                currentCosts[id] = 0; // Zera custo se a posição for liquidada
             }
 
             data.accumulated_realized_profits[id] = accumulatedRealized[id];
         }
 
-        // CÃLCULO DE IR POR GRUPO (Com compensaÃ§Ã£o de prejuÃ­zo)
+        // CÃLCULO DE IR POR GRUPO (Com compensação de prejuízo)
         data.tax_summary = {};
         
-        // Garante que todos os grupos que jÃ¡ tiveram movimentaÃ§Ã£o ou tem saldo acumulado apareÃ§am
+        // Garante que todos os grupos que já tiveram movimentação ou tem saldo acumulado apareçam
         const allGroups = new Set([...Object.keys(monthlyGroupResults), ...Object.keys(groupTaxResults)]);
 
     for (const group of allGroups) {
@@ -496,7 +497,7 @@ function fmtCur(value, currency) {
         groupTaxResults[group].accumulatedResult += monthProfit;
 
             if (monthProfit > 0) {
-                // Se teve lucro, abate do prejuÃ­zo acumulado
+                // Se teve lucro, abate do prejuízo acumulado
                 if (prevLoss < 0) {
                     const absLoss = Math.abs(prevLoss);
                     if (monthProfit > absLoss) {
@@ -513,18 +514,18 @@ function fmtCur(value, currency) {
                 const rate = TAX_RATES[group] || 0.15;
                 taxToPay = taxableProfit * rate;
             } else if (monthProfit < 0) {
-                // Se teve prejuÃ­zo, aumenta o prejuÃ­zo acumulado
+                // Se teve prejuízo, aumenta o prejuízo acumulado
                 groupTaxResults[group].accumulatedLoss += monthProfit;
                 taxableProfit = 0;
                 taxToPay = 0;
             } else {
-                // Se nÃ£o teve lucro nem prejuÃ­zo no mÃªs (monthProfit === 0)
+                // Se não teve lucro nem prejuízo no mês (monthProfit === 0)
                 taxableProfit = 0;
                 taxToPay = 0;
             }
 
-        // SÃ³ adiciona ao resumo se houver algo relevante para mostrar:
-        // Lucro no mÃªs OU prejuÃ­zo no mÃªs OU prejuÃ­zo acumulado de meses anteriores OU saldo acumulado significativo
+        // Só adiciona ao resumo se houver algo relevante para mostrar:
+        // Lucro no mês OU prejuízo no mês OU prejuízo acumulado de meses anteriores OU saldo acumulado significativo
         const hasActivity = Math.abs(monthProfit) > 0.000001;
         const hasPrevLoss = prevLoss < -0.000001;
         const hasAccResult = Math.abs(groupTaxResults[group].accumulatedResult) > 0.000001;
@@ -538,20 +539,20 @@ function fmtCur(value, currency) {
                 tax: taxToPay,
                 new_loss: groupTaxResults[group].accumulatedLoss,
                 accumulated_result: groupTaxResults[group].accumulatedResult,
-                // Novo campo especÃ­fico para mostrar o "CrÃ©dito de PrejuÃ­zo" acumulado (estoque de prejuÃ­zo para compensaÃ§Ã£o)
+                // Novo campo específico para mostrar o "Crédito de Prejuízo" acumulado (estoque de prejuízo para compensação)
                 credit_loss: Math.abs(groupTaxResults[group].accumulatedLoss)
             };
         }
     }
 
-    // DEBUG: Log do primeiro mÃªs com tax_summary
+    // DEBUG: Log do primeiro mês com tax_summary
     if (Object.keys(data.tax_summary).length > 0 && !window._debug_tax_logged) {
-        console.log("Exemplo de tax_summary no mÃªs " + date + ":", data.tax_summary);
+        console.log("Exemplo de tax_summary no mês " + date + ":", data.tax_summary);
         window._debug_tax_logged = true;
     }
     });
 
-    // â”€â”€ Atualiza o Card de Total de Impostos no Hero â”€â”€
+    //  Atualiza o Card de Total de Impostos no Hero 
     const totalTaxPaid = Object.values(log)
         .filter(d => d.tax_summary)
         .reduce((acc, d) => {
@@ -573,7 +574,7 @@ function fmtCur(value, currency) {
         taxLabel.innerHTML = '<i class="bi bi-receipt me-1"></i> Impostos sobre lucro';
     }
 
-    // â”€â”€ Atualiza o Card de PatrimÃ´nio Final (Valor LÃ­quido) â”€â”€
+    //  Atualiza o Card de Patrimônio Final (Valor Líquido) 
     const finalDate = dates[dates.length - 1];
     if (finalDate && log[finalDate]) {
         const finalValue = log[finalDate].total_value || 0;
@@ -581,7 +582,7 @@ function fmtCur(value, currency) {
         const initialCapital = <?= (float)$portfolio['initial_capital'] ?>;
         const totalDeposits = Object.values(log).reduce((acc, d) => acc + (d.deposit_made || 0), 0);
         
-        // Retorno total lÃ­quido (sobre o capital investido total)
+        // Retorno total líquido (sobre o capital investido total)
         const totalInvested = initialCapital + totalDeposits;
         const netTotalReturn = totalInvested > 0 ? ((netFinalValue / totalInvested) - 1) * 100 : 0;
         
@@ -600,7 +601,7 @@ function fmtCur(value, currency) {
                 totalReturnBadgeEl.classList.remove('bg-success', 'bg-danger');
                 totalReturnBadgeEl.classList.add(isPositive ? 'bg-success' : 'bg-danger');
                 
-                // Atualiza cores do card se o retorno lÃ­quido mudou de sinal (raro mas possÃ­vel)
+                // Atualiza cores do card se o retorno líquido mudou de sinal (raro mas possível)
                 if (finalAmountEl) {
                     finalAmountEl.classList.remove('text-primary', 'text-danger');
                     finalAmountEl.classList.add(isPositive ? 'text-primary' : 'text-danger');
@@ -629,11 +630,11 @@ function fmtCur(value, currency) {
     }
 })();
 
-/* â”€â”€ Monta o HTML da linha expandida â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  Monta o HTML da linha expandida  */
 function buildChildRow(dateKey) {
     const log = window.simulationAuditLog;
     if (!log || !log[dateKey]) {
-        return '<div class="child-row-wrapper text-muted p-4">Dados nÃ£o disponÃ­veis para este perÃ­odo.</div>';
+        return '<div class="child-row-wrapper text-muted p-4">Dados não disponíveis para este período.</div>';
     }
 
     const data         = log[dateKey];
@@ -649,15 +650,15 @@ function buildChildRow(dateKey) {
     const isRebalance  = Object.keys(trades).length > 0;
 
     const depositLabels = {
-        monthly:    'Aporte PeriÃ³dico',
-        strategic:  'Aporte EstratÃ©gico',
+        monthly:    'Aporte Periódico',
+        strategic:  'Aporte Estratégico',
         smart:      'Aporte Direcionado ao Alvo',
         selic_cash: 'Aporte em Caixa SELIC'
     };
 
     let html = '<div class="child-row-wrapper">';
 
-    /* â”€â”€ Barra de resumo do mÃªs â”€â”€ */
+    /*  Barra de resumo do mês  */
     if (deposit > 0 || isRebalance) {
         html += '<div class="d-flex flex-wrap gap-2 mb-3 pb-3 border-bottom align-items-center" style="border-color: var(--border-color) !important;">';
         if (deposit > 0) {
@@ -674,21 +675,21 @@ function buildChildRow(dateKey) {
         html += '</div>';
     }
 
-    /* â”€â”€ Destaque de L/P ACUMULADO por grupo de IR â”€â”€ */
+    /*  Destaque de L/P ACUMULADO por grupo de IR  */
     if (data.tax_summary && Object.keys(data.tax_summary).length > 0) {
         html += `<div class="mb-4 bg-light bg-opacity-50 p-3 rounded-3 border">
             <div class="row align-items-center mb-2">
                 <div class="col">
                     <h6 class="fw-bold mb-0 text-dark">
                         <i class="bi bi-graph-up-arrow me-2 text-primary"></i>L/P ACUM. por Grupo de IR
-                        <small class="ms-2 text-muted fw-normal" style="font-size: 0.75rem;">(Considera prejuÃ­zos acumulados para abatimento)</small>
+                        <small class="ms-2 text-muted fw-normal" style="font-size: 0.75rem;">(Considera prejuízos acumulados para abatimento)</small>
                     </h6>
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-3">`;
         
         for (const [group, info] of Object.entries(data.tax_summary)) {
-            // Exibimos o Saldo Acumulado (accumulated_result) do grupo atÃ© este mÃªs
+            // Exibimos o Saldo Acumulado (accumulated_result) do grupo até este mês
             const accResult = info.accumulated_result || 0;
             const isNegative = accResult < -0.01;
             const icon = isNegative ? 'bi-dash-circle' : 'bi-plus-circle';
@@ -705,8 +706,8 @@ function buildChildRow(dateKey) {
                                 ${accResult > 0.01 ? '+' : ''}${fmtCur(accResult)}
                             </div>
                             ${info.credit_loss > 0.01 ? `
-                            <div class="text-danger border-start ps-2" title="PrejuÃ­zo acumulado disponÃ­vel para abatimento de IR">
-                                <span style="font-size: 0.65rem;" class="fw-bold">PREJUÃZO PARA COMPENSAÃ‡ÃƒO:</span>
+                            <div class="text-danger border-start ps-2" title="Prejuízo acumulado disponível para abatimento de IR">
+                                <span style="font-size: 0.65rem;" class="fw-bold">PREJUÍZO PARA COMPENSAÇÃO:</span>
                                 <span class="smaller fw-bold">${fmtCur(-info.credit_loss)}</span>
                             </div>
                             ` : ''}
@@ -719,12 +720,12 @@ function buildChildRow(dateKey) {
         </div>`;
     }
 
-    /* â”€â”€ Resumo de Imposto de Renda por Grupo â”€â”€ */
+    /*  Resumo de Imposto de Renda por Grupo  */
     if (data.tax_summary && Object.keys(data.tax_summary).length > 0) {
         html += `<div class="mb-4">
             <h6 class="fw-bold mb-3 text-dark d-flex align-items-center">
-                <i class="bi bi-calculator me-2 text-primary"></i>Resumo de Imposto de Renda (IR) do MÃªs
-                <small class="ms-auto text-muted fw-normal" style="font-size: 0.75rem;">Regra: CompensaÃ§Ã£o de prejuÃ­zos acumulados por grupo</small>
+                <i class="bi bi-calculator me-2 text-primary"></i>Resumo de Imposto de Renda (IR) do Mês
+                <small class="ms-auto text-muted fw-normal" style="font-size: 0.75rem;">Regra: Compensação de prejuízos acumulados por grupo</small>
             </h6>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">`;
         
@@ -744,7 +745,7 @@ function buildChildRow(dateKey) {
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="fw-bold text-dark small text-uppercase">${group.replace(/_/g, ' ')}</span>
                                 <span class="badge ${bgClass} bg-opacity-10 ${info.tax > 0 || hasLoss ? 'text-danger' : 'text-success'} border ${statusClass} smaller">
-                                    ${info.tax > 0 ? 'Imposto a Pagar' : (hasLoss ? 'PrejuÃ­zo Acumulado' : 'Sem Imposto')}
+                                    ${info.tax > 0 ? 'Imposto a Pagar' : (hasLoss ? 'Prejuízo Acumulado' : 'Sem Imposto')}
                                 </span>
                             </div>
                             
@@ -758,21 +759,21 @@ function buildChildRow(dateKey) {
                                 </div>
                                 ${info.credit_loss > 0.01 ? `
                                 <div class="d-flex justify-content-between mb-1">
-                                    <span class="text-danger smaller fw-bold"><i class="bi bi-patch-minus-fill me-1"></i>PrejuÃ­zo Acumulado (CrÃ©dito):</span>
+                                    <span class="text-danger smaller fw-bold"><i class="bi bi-patch-minus-fill me-1"></i>Prejuízo Acumulado (Crédito):</span>
                                     <span class="text-danger smaller fw-bold">${fmtCur(-info.credit_loss)}</span>
                                 </div>
                                 ` : ''}
                             </div>
 
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted smaller">L/P no MÃªs:</span>
+                                <span class="text-muted smaller">L/P no Mês:</span>
                                 <span class="fw-medium smaller ${info.profit >= 0 ? 'text-success' : 'text-danger'}">${info.profit > 0 ? '+' : ''}${fmtCur(info.profit)}</span>
                             </div>`;
             
             if (info.prev_loss < -0.01) {
                 html += `
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted smaller">PrejuÃ­zo a Compensar:</span>
+                                <span class="text-muted smaller">Prejuízo a Compensar:</span>
                                 <span class="text-danger smaller fw-medium">${fmtCur(info.prev_loss)}</span>
                             </div>`;
             }
@@ -780,7 +781,7 @@ function buildChildRow(dateKey) {
             if (info.taxable > 0) {
                 html += `
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted smaller">Base TributÃ¡vel:</span>
+                                <span class="text-muted smaller">Base Tributável:</span>
                                 <span class="text-dark smaller fw-bold">${fmtCur(info.taxable)}</span>
                             </div>`;
             }
@@ -800,7 +801,7 @@ function buildChildRow(dateKey) {
             } else {
                 html += `
                             <div class="d-flex justify-content-between mt-2 pt-2 border-top text-success small fw-medium">
-                                <span>Isento / Sem lucro tributÃ¡vel</span>
+                                <span>Isento / Sem lucro tributável</span>
                             </div>`;
             }
 
@@ -814,7 +815,7 @@ function buildChildRow(dateKey) {
         </div>`;
     }
 
-    /* â”€â”€ Tabela de ativos (Similar ao Ver Ativos) â”€â”€ */
+    /*  Tabela de ativos (Similar ao Ver Ativos)  */
     html += `
     <div class="asset-table-container shadow-sm">
         <div class="table-responsive">
@@ -823,17 +824,17 @@ function buildChildRow(dateKey) {
                     <tr>
                         <th class="ps-3 py-2 text-muted fw-semibold">Ativo</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Quantidade">Qtd.</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="PreÃ§o do ativo na moeda original">PreÃ§o Ativo</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="CotaÃ§Ã£o do DÃ³lar (USD-BRL)">CotaÃ§Ã£o USD</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="PreÃ§o do ativo convertido para a moeda do portfÃ³lio">PreÃ§o Conv.</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="PreÃ§o MÃ©dio UnitÃ¡rio">P. MÃ©dio</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Preço do ativo na moeda original">Preço Ativo</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Cotação do Dólar (USD-BRL)">Cotação USD</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Preço do ativo convertido para a moeda do portfólio">Preço Conv.</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Preço Médio Unitário">P. Médio</th>
                         <th class="text-end py-2 text-muted fw-semibold" title="Custo Base Total">Custo Total</th>
                         <th class="text-end py-2 text-muted fw-semibold">Valor Final</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/PrejuÃ­zo Latente (NÃ£o Realizado)">L/P Latente</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/PrejuÃ­zo Realizado na Venda">L/P Venda</th>
-                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/PrejuÃ­zo Realizado Acumulado">L/P Acum.</th>
-                        <th class="text-center py-2 text-muted fw-semibold" title="AlocaÃ§Ã£o Anterior ao Rebalanceamento">% Anterior</th>
-                        <th class="text-center py-2 text-muted fw-semibold" title="AlocaÃ§Ã£o Atual">% Atual</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Latente (Não Realizado)">L/P Latente</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Realizado na Venda">L/P Venda</th>
+                        <th class="text-end py-2 text-muted fw-semibold" title="Lucro/Prejuízo Realizado Acumulado">L/P Acum.</th>
+                        <th class="text-center py-2 text-muted fw-semibold" title="Alocação Anterior ao Rebalanceamento">% Anterior</th>
+                        <th class="text-center py-2 text-muted fw-semibold" title="Alocação Atual">% Atual</th>
                         <th class="text-center py-2 text-muted fw-semibold">Meta</th>
                         <th class="text-center py-2 text-muted fw-semibold">Desvio</th>
                         <th class="text-end pe-3 py-2 text-muted fw-semibold">Ajuste Rebal.</th>
@@ -846,39 +847,39 @@ function buildChildRow(dateKey) {
         const target = parseFloat(assetTargets[id]) || 0;
         const trade  = trades[id]       || null;
 
-        // Se o backend ainda nÃ£o retornou 'costs', fazemos fallback para o valor bruto
+        // Se o backend ainda não retornou 'costs', fazemos fallback para o valor bruto
         const cost        = costs[id] !== undefined ? costs[id] : rawVal;
-        // rawVal Ã© o valor do ativo no fim do mÃªs, refletindo a valorizaÃ§Ã£o correta.
+        // rawVal é o valor do ativo no fim do mês, refletindo a valorização correta.
         const finalVal    = rawVal;
         const profit      = finalVal - cost;
         const profitColor = Math.abs(profit) < 0.01 ? 'text-muted' : (profit > 0 ? 'text-success' : 'text-danger');
         const profitSign  = profit > 0 ? '+' : '';
 
-        // Tenta descobrir a quantidade para exibir o PreÃ§o MÃ©dio (Custo UnitÃ¡rio)
+        // Tenta descobrir a quantidade para exibir o Preço Médio (Custo Unitário)
         const prices     = data.asset_prices     || {};
         const rawPrices  = data.asset_raw_prices || {};
         const quantities = data.asset_quantities || {};
         const fxRate     = data.fx_rate          || 0;
         let qty = 0;
         
-        // Prioridade 1: Quantidade jÃ¡ vinda do backend (mais preciso)
+        // Prioridade 1: Quantidade já vinda do backend (mais preciso)
         if (quantities[id] !== undefined) {
             qty = parseFloat(quantities[id]);
         } 
-        // Prioridade 2: Calcular a partir do valor final e preÃ§o (fallback)
+        // Prioridade 2: Calcular a partir do valor final e preço (fallback)
         else if (prices[id] !== undefined && parseFloat(prices[id]) > 0) {
-            // O preÃ§o jÃ¡ vem convertido para a moeda do portfÃ³lio no log do backend (BacktestService:292)
+            // O preço já vem convertido para a moeda do portfólio no log do backend (BacktestService:292)
             qty = finalVal / parseFloat(prices[id]);
         }
         
-        // Se temos quantidade, calculamos o PreÃ§o MÃ©dio unitÃ¡rio no frontend
-        // (O backend jÃ¡ deve enviar o 'cost' total consolidado em preCalculateAcquisitionCosts)
+        // Se temos quantidade, calculamos o Preço Médio unitário no frontend
+        // (O backend já deve enviar o 'cost' total consolidado em preCalculateAcquisitionCosts)
         let unitCost = 0;
         if (qty > 0.00000001) {
             unitCost = cost / qty;
         }
 
-        let qtyHtml = '<span class="text-muted smaller" title="Requer dados no backend">â€”</span>';
+        let qtyHtml = '<span class="text-muted smaller" title="Requer dados no backend">—</span>';
         if (qty > 0) {
             qtyHtml = `<span class="text-dark fw-medium">${qty.toLocaleString('pt-BR', { maximumFractionDigits: 6 })}</span>`;
         }
@@ -888,7 +889,7 @@ function buildChildRow(dateKey) {
         const rawPriceValue = rawPrices[id] || 0;
         const convPriceValue = prices[id] || 0;
 
-        let unitCostHtml = '<span class="text-muted smaller" title="Requer quantidade ou preÃ§o no backend">â€”</span>';
+        let unitCostHtml = '<span class="text-muted smaller" title="Requer quantidade ou preço no backend">—</span>';
         if (unitCost > 0) {
             unitCostHtml = fmtCur(unitCost);
         }
@@ -896,14 +897,14 @@ function buildChildRow(dateKey) {
         const realized = data.realized_profits ? data.realized_profits[id] : undefined;
         const accumRealized = data.accumulated_realized_profits ? data.accumulated_realized_profits[id] : 0;
 
-        let realizedHtml = '<span class="text-muted smaller">â€”</span>';
+        let realizedHtml = '<span class="text-muted smaller">—</span>';
         if (realized !== undefined) {
             const rColor = Math.abs(realized) < 0.01 ? 'text-muted' : (realized > 0 ? 'text-success' : 'text-danger');
             const rSign  = realized > 0 ? '+' : '';
             realizedHtml = `<span class="${rColor} fw-semibold">${rSign}${fmtCur(realized)}</span>`;
         }
 
-        let accumHtml = '<span class="text-muted smaller">â€”</span>';
+        let accumHtml = '<span class="text-muted smaller">—</span>';
         if (accumRealized !== undefined) {
             if (Math.abs(accumRealized) < 0.01) {
                 accumHtml = `<span class="text-muted">${fmtCur(0)}</span>`;
@@ -919,12 +920,12 @@ function buildChildRow(dateKey) {
         const allocPct    = total > 0      ? (finalVal / total) * 100      : 0;
         const deviation   = allocPct - target;
 
-        // FormataÃ§Ã£o da Meta para Margens Customizadas
+        // Formatação da Meta para Margens Customizadas
         let metaHtml = `${target.toFixed(2)}%`;
         if (rebalanceType === 'custom_margin') {
             const margin = assetMargins[id] || {};
-            const min = margin.min !== null ? parseFloat(margin.min).toFixed(0) : 'â€”';
-            const max = margin.max !== null ? parseFloat(margin.max).toFixed(0) : 'â€”';
+            const min = margin.min !== null ? parseFloat(margin.min).toFixed(0) : '—';
+            const max = margin.max !== null ? parseFloat(margin.max).toFixed(0) : '—';
             const alvo = target.toFixed(0);
             metaHtml = `<span class="text-muted small">${min}%</span> <span class="fw-bold">${alvo}%</span> <span class="text-muted small">${max}%</span>`;
         }
@@ -933,7 +934,7 @@ function buildChildRow(dateKey) {
             ? 'text-success'
             : (deviation > 0 ? 'text-warning' : 'text-danger');
 
-        let tradeHtml = '<span class="text-muted small">â€”</span>';
+        let tradeHtml = '<span class="text-muted small">—</span>';
         if (trade) {
             const delta = trade.delta;
             const sign  = delta > 0 ? '+' : '';
@@ -945,9 +946,9 @@ function buildChildRow(dateKey) {
             <tr>
                 <td class="ps-3 py-2 fw-medium text-dark">${name}</td>
                 <td class="text-end py-2">${qtyHtml}</td>
-                <td class="text-end py-2 text-muted fw-medium" title="PreÃ§o do ativo na moeda original (${assetCurrency})">${fmtCur(rawPriceValue, assetCurrency)}</td>
-                <td class="text-end py-2 text-muted fw-medium" title="CotaÃ§Ã£o do DÃ³lar no perÃ­odo">${fxRate > 0 ? fxRate.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) : 'â€”'}</td>
-                <td class="text-end py-2 text-muted fw-medium" title="PreÃ§o do ativo convertido para ${outputCurrency}">${fmtCur(convPriceValue)}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Preço do ativo na moeda original (${assetCurrency})">${fmtCur(rawPriceValue, assetCurrency)}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Cotação do Dólar no período">${fxRate > 0 ? fxRate.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) : '—'}</td>
+                <td class="text-end py-2 text-muted fw-medium" title="Preço do ativo convertido para ${outputCurrency}">${fmtCur(convPriceValue)}</td>
                 <td class="text-end py-2 text-muted fw-medium">${unitCostHtml}</td>
                 <td class="text-end py-2 text-muted">${fmtCur(cost)}</td>
                 <td class="text-end py-2 fw-semibold">${fmtCur(finalVal)}</td>
@@ -976,7 +977,7 @@ function buildChildRow(dateKey) {
     return html;
 }
 
-/* â”€â”€ InicializaÃ§Ã£o da DataTable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/*  Inicialização da DataTable  */
 $(document).ready(function () {
     const table = $('#detailsTable').DataTable({
         pageLength: 25,
@@ -987,7 +988,7 @@ $(document).ready(function () {
         order: [[0, 'asc']],
         autoWidth: false,
 
-        /* â”€â”€ Layout: Tamanho + Busca | Tabela | PaginaÃ§Ã£o â”€â”€ */
+        /*  Layout: Tamanho + Busca | Tabela | Paginação  */
         dom:
             "<'row align-items-center mb-3'" +
                 "<'col-sm-6 col-md-4'l>" +
@@ -999,17 +1000,17 @@ $(document).ready(function () {
                 "<'col-sm-7'p>" +
             ">",
 
-        /* â”€â”€ TraduÃ§Ã£o pt-BR inline â”€â”€ */
+        /*  Tradução pt-BR inline  */
         language: {
-            sProcessing:   'Processandoâ€¦',
+            sProcessing:   'Processando™',
             sLengthMenu:   'Mostrar _MENU_ registros',
             sZeroRecords:  'Nenhum registro encontrado',
-            sEmptyTable:   'Nenhum dado disponÃ­vel',
+            sEmptyTable:   'Nenhum dado disponível',
             sInfo:         'Mostrando _START_ a _END_ de _TOTAL_ registros',
             sInfoEmpty:    'Mostrando 0 a 0 de 0 registros',
             sInfoFiltered: '(filtrado de _MAX_ no total)',
-            sSearch:       'Busca rÃ¡pida:',
-            sSearchPlaceholder: 'Filtrar linhasâ€¦',
+            sSearch:       'Busca rápida:',
+            sSearchPlaceholder: 'Filtrar linhas™',
             oPaginate: {
                 sFirst:    '<i class="bi bi-chevron-bar-left"></i>',
                 sPrevious: '<i class="bi bi-chevron-left"></i>',
@@ -1022,9 +1023,9 @@ $(document).ready(function () {
             }
         },
 
-        /* â”€â”€ DefiniÃ§Ãµes de coluna â”€â”€ */
+        /*  Definições de coluna  */
         columnDefs: [
-            /* Coluna "Expandir" â€“ sem ordenaÃ§Ã£o nem busca */
+            /* Coluna "Expandir" – sem ordenação nem busca */
             {
                 targets: 5,
                 orderable: false,
@@ -1033,7 +1034,7 @@ $(document).ready(function () {
             }
         ],
 
-        /* â”€â”€ Filtros individuais por coluna no tfoot â”€â”€ */
+        /*  Filtros individuais por coluna no tfoot  */
         initComplete: function () {
             const api = this.api();
 
@@ -1042,7 +1043,7 @@ $(document).ready(function () {
                 const footer = $(col.footer());
                 if (!footer.length) return;
 
-                /* Inputs de texto â€“ colunas 0, 1, 2, 3 */
+                /* Inputs de texto – colunas 0, 1, 2, 3 */
                 const input = footer.find('input.col-filter');
                 if (input.length) {
                     input.on('input search', function () {
@@ -1052,7 +1053,7 @@ $(document).ready(function () {
                     });
                 }
 
-                /* Select de Status â€“ coluna 4 */
+                /* Select de Status – coluna 4 */
                 const sel = footer.find('select.col-filter-status');
                 if (sel.length) {
                     sel.on('change', function () {
@@ -1064,7 +1065,7 @@ $(document).ready(function () {
         }
     });
 
-    /* â”€â”€ ExpansÃ£o via botÃ£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /*  Expansão via botão  */
     $('#detailsTable tbody').on('click', 'button.btn-expand', function (e) {
         e.stopPropagation();
 
@@ -1076,9 +1077,9 @@ $(document).ready(function () {
 
         if (!dateKey) return;
 
-        /* â”€â”€ Fallback seguro: se table.row() falhar por alguma interaÃ§Ã£o â”€â”€ 
+        /*  Fallback seguro: se table.row() falhar por alguma interação  
          *  Busca a linha manualmente pela API do DT comparando o data-date.
-         * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+         *  */
         if (!row || !row.length) {
             table.rows().every(function () {
                 if ($(this.node()).attr('data-date') === dateKey) {
@@ -1103,7 +1104,7 @@ $(document).ready(function () {
         }
     });
 
-    /* â”€â”€ Clique na linha inteira tambÃ©m expande â”€â”€ */
+    /*  Clique na linha inteira também expande  */
     $('#detailsTable tbody').on('click', 'tr', function (e) {
         if ($(this).hasClass('child')) return; // ignora se for a linha expandida (child row)
         if ($(e.target).closest('button, a, input, select').length) return;

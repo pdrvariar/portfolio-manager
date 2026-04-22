@@ -1,16 +1,17 @@
 ﻿<?php
 /**
- * @var array $stats EstatÃ­sticas globais (users, portfolios, simulations, assets)
- * @var array $activities Ãšltimas atividades do sistema
+ * @var array $stats Estatísticas globais (users, portfolios, simulations, assets)
+ * @var array $activities Últimas atividades do sistema
  */
-$title = 'Dashboard Administrativo';`n$meta_robots = 'noindex, nofollow';
+$title = 'Dashboard Administrativo';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-0">Dashboard Administrativo</h2>
-        <p class="text-muted small mb-0">VisÃ£o geral do sistema e controle de atividades.</p>
+        <p class="text-muted small mb-0">Visão geral do sistema e controle de atividades.</p>
     </div>
     <div class="text-end">
         <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 fw-bold">MODO ADMIN</span>
@@ -24,7 +25,7 @@ ob_start();
                 <div class="bg-soft-primary rounded-circle d-inline-flex p-3 mb-3">
                     <i class="bi bi-people fs-4 text-primary"></i>
                 </div>
-                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">UsuÃ¡rios</h6>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">Usuários</h6>
                 <h3 class="fw-bold mb-0"><?php echo $stats['users']; ?></h3>
             </div>
         </div>
@@ -35,7 +36,7 @@ ob_start();
                 <div class="bg-soft-success rounded-circle d-inline-flex p-3 mb-3">
                     <i class="bi bi-briefcase fs-4 text-success"></i>
                 </div>
-                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">PortfÃ³lios</h6>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">Portfólios</h6>
                 <h3 class="fw-bold mb-0"><?php echo $stats['portfolios']; ?></h3>
             </div>
         </div>
@@ -46,7 +47,7 @@ ob_start();
                 <div class="bg-soft-warning rounded-circle d-inline-flex p-3 mb-3">
                     <i class="bi bi-cpu fs-4 text-warning"></i>
                 </div>
-                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">SimulaÃ§Ãµes</h6>
+                <h6 class="text-muted smaller text-uppercase fw-bold mb-1">Simulações</h6>
                 <h3 class="fw-bold mb-0"><?php echo $stats['simulations']; ?></h3>
             </div>
         </div>
@@ -64,7 +65,7 @@ ob_start();
     </div>
 </div>
 
-<!-- MÃ©tricas de Receita -->
+<!-- Métricas de Receita -->
 <div class="row g-4 mb-5">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm rounded-4 h-100">
@@ -105,7 +106,7 @@ ob_start();
     <div class="col-md-5">
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div class="card-header bg-white py-3 border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-lightning-charge me-2 text-primary"></i>AÃ§Ãµes RÃ¡pidas</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-lightning-charge me-2 text-primary"></i>Ações Rápidas</h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -115,7 +116,7 @@ ob_start();
                                 <i class="bi bi-people text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="mb-0 fw-bold small">Gerenciar UsuÃ¡rios</h6>
+                                <h6 class="mb-0 fw-bold small">Gerenciar Usuários</h6>
                                 <p class="text-muted smaller mb-0">Ver e editar contas de investidores</p>
                             </div>
                         </div>
@@ -138,7 +139,7 @@ ob_start();
                             </div>
                             <div>
                                 <h6 class="mb-0 fw-bold small">Importar Dados</h6>
-                                <p class="text-muted smaller mb-0">Enviar arquivos CSV com histÃ³ricos mensais</p>
+                                <p class="text-muted smaller mb-0">Enviar arquivos CSV com históricos mensais</p>
                             </div>
                         </div>
                     </a>
@@ -148,7 +149,7 @@ ob_start();
                                 <i class="bi bi-patch-check text-info"></i>
                             </div>
                             <div>
-                                <h6 class="mb-0 fw-bold small">Gerar PortfÃ³lios Oficiais</h6>
+                                <h6 class="mb-0 fw-bold small">Gerar Portfólios Oficiais</h6>
                                 <p class="text-muted smaller mb-0">Criar modelos sugeridos pelo sistema</p>
                             </div>
                         </div>
@@ -159,7 +160,7 @@ ob_start();
                                 <i class="bi bi-credit-card text-success"></i>
                             </div>
                             <div>
-                                <h6 class="mb-0 fw-bold small">GestÃ£o de Assinaturas</h6>
+                                <h6 class="mb-0 fw-bold small">Gestão de Assinaturas</h6>
                                 <p class="text-muted smaller mb-0">Cancelar, reembolsar e reativar assinaturas</p>
                             </div>
                         </div>
@@ -172,7 +173,7 @@ ob_start();
     <div class="col-md-7">
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div class="card-header bg-white py-3 border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-activity me-2 text-primary"></i>Ãšltimas Atividades</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-activity me-2 text-primary"></i>Últimas Atividades</h5>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($activities)): ?>
@@ -185,7 +186,7 @@ ob_start();
                             <div class="list-group-item py-3 px-4 border-0">
                                 <div class="d-flex w-100 justify-content-between align-items-center mb-1">
                                     <h6 class="mb-0 small fw-bold">
-                                        <span class="badge rounded-pill bg-soft-<?= $activity['type'] == 'SimulaÃ§Ã£o' ? 'primary' : 'success' ?> text-<?= $activity['type'] == 'SimulaÃ§Ã£o' ? 'primary' : 'success' ?> me-2 px-2 py-1" style="font-size: 0.65rem;">
+                                        <span class="badge rounded-pill bg-soft-<?= $activity['type'] == 'Simulação' ? 'primary' : 'success' ?> text-<?= $activity['type'] == 'Simulação' ? 'primary' : 'success' ?> me-2 px-2 py-1" style="font-size: 0.65rem;">
                                             <?= strtoupper($activity['type']) ?>
                                         </span>
                                         <?= htmlspecialchars($activity['name']); ?>

@@ -1,5 +1,6 @@
 ﻿<?php
-$title = 'Assinatura Confirmada!';`n$meta_robots = 'noindex, nofollow';
+$title = 'Assinatura Confirmada!';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="row justify-content-center">

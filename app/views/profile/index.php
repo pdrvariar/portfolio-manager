@@ -1,8 +1,9 @@
 ﻿<?php
 /**
- * @var array $user Dados formatados do utilizador para exibiÃ§Ã£o no perfil
+ * @var array $user Dados formatados do utilizador para exibição no perfil
  */
-$title = 'Meu Perfil';`n$meta_robots = 'noindex, nofollow';
+$title = 'Meu Perfil';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 
@@ -39,7 +40,7 @@ ob_start();
                         <div class="w-100 mt-2">
                             <span class="badge bg-soft-primary text-primary border fw-medium px-3 py-2 rounded-pill shadow-sm">
                                 <i class="bi bi-calendar-check me-1"></i>
-                                <span class="opacity-75 fw-normal">VÃ¡lido atÃ©:</span> <?= formatFullDate($user['expires_at']) ?>
+                                <span class="opacity-75 fw-normal">Válido até:</span> <?= formatFullDate($user['expires_at']) ?>
                             </span>
                         </div>
                     <?php endif; ?>
@@ -67,7 +68,7 @@ ob_start();
     <div class="col-lg-8">
         <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-header bg-white py-3 border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>InformaÃ§Ãµes de SeguranÃ§a e Perfil</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Informações de Segurança e Perfil</h5>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="/index.php?url=profile/update" id="profileForm">
@@ -92,14 +93,14 @@ ob_start();
                         <div class="col-md-12">
                             <div class="alert alert-soft-secondary d-flex align-items-center mb-0" style="background: #f8f9fa;">
                                 <i class="bi bi-info-circle-fill me-2 text-primary"></i>
-                                <small class="text-muted">O seu endereÃ§o de e-mail Ã© utilizado para login e seguranÃ§a, por isso nÃ£o pode ser alterado diretamente.</small>
+                                <small class="text-muted">O seu endereço de e-mail é utilizado para login e segurança, por isso não pode ser alterado diretamente.</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top text-end">
                         <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold">
-                            Salvar AlteraÃ§Ãµes
+                            Salvar Alterações
                         </button>
                     </div>
                 </form>
@@ -109,7 +110,7 @@ ob_start();
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body d-flex justify-content-between align-items-center p-4">
                 <div>
-                    <h6 class="fw-bold mb-1">SeguranÃ§a da Conta</h6>
+                    <h6 class="fw-bold mb-1">Segurança da Conta</h6>
                     <p class="text-muted small mb-0">Deseja alterar sua senha de acesso?</p>
                 </div>
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalPassword">
@@ -162,7 +163,7 @@ ob_start();
                 <?php if ($refundEl): ?>
                     <div class="alert alert-warning py-2 small mb-3">
                         <i class="bi bi-shield-check me-1"></i>
-                        <strong>Garantia ativa!</strong> VocÃª tem <?= ceil((strtotime($activeSub['refund_eligible_until']) - time()) / 3600) ?>h para solicitar reembolso.
+                        <strong>Garantia ativa!</strong> Você tem <?= ceil((strtotime($activeSub['refund_eligible_until']) - time()) / 3600) ?>h para solicitar reembolso.
                     </div>
                 <?php endif; ?>
 
@@ -207,7 +208,7 @@ ob_start();
                     <hr class="my-4 opacity-10">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nova Senha</label>
-                        <input type="password" name="new_password" class="form-control bg-light border-0" placeholder="MÃ­nimo 6 caracteres" required>
+                        <input type="password" name="new_password" class="form-control bg-light border-0" placeholder="Mínimo 6 caracteres" required>
                     </div>
                     <div class="mb-0">
                         <label class="form-label small fw-bold">Confirmar Nova Senha</label>

@@ -1,5 +1,6 @@
 ﻿<?php
-$title = 'Pagamento em Processamento';`n$meta_robots = 'noindex, nofollow';
+$title = 'Pagamento em Processamento';
+$meta_robots = 'noindex, nofollow';
 ob_start();
 ?>
 <div class="row justify-content-center">
@@ -9,7 +10,7 @@ ob_start();
                 <i class="bi bi-clock-history text-warning" style="font-size: 5rem;"></i>
             </div>
             <h2 class="fw-bold mb-3">Pagamento Pendente</h2>
-            <p class="lead text-muted mb-4">Estamos aguardando a confirmaÃ§Ã£o do pagamento pelo Mercado Pago. Assim que for aprovado, seu plano PRO serÃ¡ ativado automaticamente.</p>
+            <p class="lead text-muted mb-4">Estamos aguardando a confirmação do pagamento pelo Mercado Pago. Assim que for aprovado, seu plano PRO será ativado automaticamente.</p>
             <div class="d-grid">
                 <a href="/index.php?url=<?= obfuscateUrl('dashboard') ?>" class="btn btn-primary btn-lg">Voltar ao Dashboard</a>
             </div>
