@@ -377,12 +377,16 @@ ob_start();
     // Configuração de parcelamento por plano (carregada do banco via PHP)
     const INSTALLMENT_CONFIG = {
         monthly: {
-            maxInstallments: <?= (int)($installments['monthly']['max_installments']    ?? 1) ?>,
-            minInstallments: 1,
+            maxInstallments:      <?= (int)  ($installments['monthly']['max_installments']      ?? 1)    ?>,
+            minInstallments:      1,
+            interest_free_up_to:  <?= (int)  ($installments['monthly']['interest_free_up_to']   ?? 1)    ?>,
+            monthly_interest_rate:<?= (float)($installments['monthly']['monthly_interest_rate'] ?? 0)    ?>,
         },
         yearly: {
-            maxInstallments: <?= (int)($installments['yearly']['max_installments']     ?? 12) ?>,
-            minInstallments: 1,
+            maxInstallments:      <?= (int)  ($installments['yearly']['max_installments']       ?? 12)   ?>,
+            minInstallments:      1,
+            interest_free_up_to:  <?= (int)  ($installments['yearly']['interest_free_up_to']    ?? 1)    ?>,
+            monthly_interest_rate:<?= (float)($installments['yearly']['monthly_interest_rate']  ?? 0)    ?>,
         },
     };
 
