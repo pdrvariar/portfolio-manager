@@ -66,6 +66,8 @@ function setupRoutes(Router $router) {
     $router->add('subscription/webhook', ['controller' => 'subscription', 'action' => 'webhook']);
     // Validação de cupom (AJAX)
     $router->add('subscription/validate-coupon', ['controller' => 'subscription', 'action' => 'validateCoupon']);
+    // Verificação de status PIX (polling AJAX)
+    $router->add('subscription/pix-status', ['controller' => 'subscription', 'action' => 'checkPixStatus']);
 
     // --- Recuperação de Senha ---
     $router->add('forgot-password', ['controller' => 'auth', 'action' => 'forgotPassword']);

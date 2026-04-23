@@ -136,6 +136,58 @@ class MercadoPagoService {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // PAGAMENTO PIX
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Cria um pagamento via PIX.
+     *
+     * @param float  $amount    Valor a cobrar
+     * @param string $email     Email do pagador
+     * @param string $planType  'monthly' | 'yearly'
+     * @param int    $userId    ID do usuário
+     * @param string|null $idempotencyKey Chave de idempotência
+     * @return object|null  Objeto de pagamento (status = 'pending') ou null em erro
+     */
+    public function processPixPayment(float $amount, string $email, string $planType, int $userId, ?string $idempotencyKey = null) {
+        $client      = new PaymentClient();
+        $description = "Assinatura SmartReturns PRO " . ($planType === 'yearly' ? 'Anual' : 'Mensal');
+
+        $request = [
+            "transaction_amount" => $amount,
+            "description"        => $description,
+            "payment_method_id"  => "pix",
+            "payer" => [
+                "email" => $email,
+            ],
+            "external_reference"  => (string)$userId,
+            "statement_descriptor" => "SMARTRETURNS",
+            "date_of_expiration"  => date('Y-m-d\TH:i:s.000O', strtotime('+30 minutes')),
+        ];
+
+        try {
+            error_log("MP PIX: Criando pagamento PIX para User ID: {$userId} | Valor: R$ {$amount}");
+
+            $request_options = new \MercadoPago\Client\Common\RequestOptions();
+            $key = $idempotencyKey ?: uniqid('pix_', true);
+            $request_options->setCustomHeaders(["X-Idempotency-Key: " . $key]);
+
+            $payment = $client->create($request, $request_options);
+
+            if (!$payment || !isset($payment->status)) {
+                error_log("ERRO MP PIX: Resposta inválida da API.");
+                return null;
+            }
+
+            error_log("MP PIX: Payment ID {$payment->id} | Status: {$payment->status}");
+            return $payment;
+        } catch (Exception $e) {
+            $this->logException($e, "ERRO CRÍTICO MP (PIX)");
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // REEMBOLSO
     // ─────────────────────────────────────────────────────────────
 

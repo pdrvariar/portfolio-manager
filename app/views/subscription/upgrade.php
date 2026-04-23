@@ -341,15 +341,80 @@ ob_start();
                                      <span id="payment-error-message"></span>
                                  </div>
 
+                                 <!-- Seletor de Método de Pagamento -->
+                                 <div class="mb-4">
+                                     <label class="form-label small fw-bold text-muted text-uppercase mb-2">
+                                         <i class="bi bi-credit-card me-1"></i>Método de Pagamento
+                                     </label>
+                                     <div class="d-flex gap-2">
+                                         <button type="button" id="btn-method-card" class="btn btn-primary flex-fill fw-semibold" onclick="selectPaymentMethod('card')">
+                                             <i class="bi bi-credit-card me-1"></i>Cartão
+                                         </button>
+                                         <button type="button" id="btn-method-pix" class="btn btn-outline-success flex-fill fw-semibold" onclick="selectPaymentMethod('pix')">
+                                             <i class="bi bi-qr-code me-1"></i>PIX
+                                         </button>
+                                     </div>
+                                 </div>
+
                                  <!-- Hint de parcelamento (aparece quando plano anual selecionado) -->
                                  <div id="installment-hint" class="alert alert-info py-2 px-3 small mb-3 d-none" role="alert"></div>
 
-                                 <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
-                                <div id="terms_warning" class="text-danger small text-center mb-3">
-                                    Habilite o aceite dos termos para pagar.
-                                </div>
-                                
-                                <p class="text-center text-muted small mb-0">
+                                 <!-- Seção Cartão -->
+                                 <div id="card-payment-section">
+                                     <div id="paymentBrick_container" class="opacity-50" style="pointer-events: none;"></div>
+                                     <div id="terms_warning" class="text-danger small text-center mb-3">
+                                         Habilite o aceite dos termos para pagar.
+                                     </div>
+                                 </div>
+
+                                 <!-- Seção PIX -->
+                                 <div id="pix-payment-section" class="d-none">
+                                     <!-- Estado: Botão gerar PIX -->
+                                     <div id="pix-generate-state">
+                                         <div class="alert alert-success py-2 px-3 small mb-3">
+                                             <i class="bi bi-info-circle me-1"></i>
+                                             O QR Code PIX expira em <strong>30 minutos</strong> após a geração. Aprovação instântanea!
+                                         </div>
+                                         <div id="terms_warning_pix" class="text-danger small text-center mb-3">
+                                             Habilite o aceite dos termos para pagar.
+                                         </div>
+                                         <button type="button" id="btn-generate-pix" class="btn btn-success w-100 fw-bold py-3 opacity-50"
+                                                 style="pointer-events:none;" onclick="generatePix()">
+                                             <i class="bi bi-qr-code me-2"></i>Gerar QR Code PIX
+                                         </button>
+                                     </div>
+                                     <!-- Estado: QR Code exibido -->
+                                     <div id="pix-qr-state" class="d-none text-center">
+                                         <div class="alert alert-info py-2 px-3 small mb-3">
+                                             <i class="bi bi-hourglass-split me-1"></i>
+                                             Aguardando pagamento... <span id="pix-timer" class="fw-bold">30:00</span>
+                                         </div>
+                                         <img id="pix-qr-img" src="" alt="QR Code PIX" class="img-fluid rounded border mb-3" style="max-width:220px;">
+                                         <p class="small text-muted mb-2">Ou copie o código abaixo:</p>
+                                         <div class="input-group input-group-sm mb-3">
+                                             <input type="text" id="pix-copy-key" class="form-control font-monospace small" readonly>
+                                             <button class="btn btn-outline-secondary" type="button" onclick="copyPixKey()" id="pix-copy-btn">
+                                                 <i class="bi bi-clipboard"></i> Copiar
+                                             </button>
+                                         </div>
+                                         <div id="pix-status-msg" class="small text-muted">
+                                             <span class="spinner-border spinner-border-sm text-success me-1"></span>
+                                             Verificando pagamento automaticamente...
+                                         </div>
+                                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="resetPixState()">
+                                             <i class="bi bi-arrow-counterclockwise me-1"></i>Gerar novo QR Code
+                                         </button>
+                                     </div>
+                                     <!-- Estado: PIX aprovado -->
+                                     <div id="pix-approved-state" class="d-none text-center py-3">
+                                         <i class="bi bi-check-circle-fill text-success" style="font-size:3rem;"></i>
+                                         <h5 class="text-success fw-bold mt-2">Pagamento PIX Confirmado!</h5>
+                                         <p class="small text-muted">Redirecionando para sua conta PRO...</p>
+                                         <div class="spinner-border spinner-border-sm text-success"></div>
+                                     </div>
+                                 </div>
+
+                                <p class="text-center text-muted small mb-0 mt-3">
                                     <i class="bi bi-lock-fill"></i> Pagamento 100% seguro via Mercado Pago
                                 </p>
                             </div>
@@ -752,16 +817,194 @@ ob_start();
     document.getElementById('accept_terms').addEventListener('change', function() {
         const container = document.getElementById('paymentBrick_container');
         const warning   = document.getElementById('terms_warning');
+        const pixBtn    = document.getElementById('btn-generate-pix');
+        const pixWarn   = document.getElementById('terms_warning_pix');
         if (this.checked) {
             container.classList.remove('opacity-50');
             container.style.pointerEvents = 'auto';
             warning.classList.add('d-none');
+            pixBtn.classList.remove('opacity-50');
+            pixBtn.style.pointerEvents = 'auto';
+            pixWarn.classList.add('d-none');
         } else {
             container.classList.add('opacity-50');
             container.style.pointerEvents = 'none';
             warning.classList.remove('d-none');
+            pixBtn.classList.add('opacity-50');
+            pixBtn.style.pointerEvents = 'none';
+            pixWarn.classList.remove('d-none');
         }
     });
+
+    // ── Seletor de Método de Pagamento ──────────────────────────
+    let currentPaymentMethod = 'card';
+    let pixPaymentId         = null;
+    let pixPollingInterval   = null;
+    let pixTimerInterval     = null;
+
+    function selectPaymentMethod(method) {
+        currentPaymentMethod = method;
+        const cardSection = document.getElementById('card-payment-section');
+        const pixSection  = document.getElementById('pix-payment-section');
+        const btnCard     = document.getElementById('btn-method-card');
+        const btnPix      = document.getElementById('btn-method-pix');
+        const instWrapper = document.getElementById('installment-picker-wrapper');
+
+        if (method === 'card') {
+            cardSection.classList.remove('d-none');
+            pixSection.classList.add('d-none');
+            btnCard.className = 'btn btn-primary flex-fill fw-semibold';
+            btnPix.className  = 'btn btn-outline-success flex-fill fw-semibold';
+            renderInstallmentPicker(selectedPlan, selectedPrice);
+        } else {
+            cardSection.classList.add('d-none');
+            pixSection.classList.remove('d-none');
+            btnCard.className = 'btn btn-outline-primary flex-fill fw-semibold';
+            btnPix.className  = 'btn btn-success flex-fill fw-semibold';
+            if (instWrapper) instWrapper.classList.add('d-none');
+        }
+    }
+
+    // ── PIX: gerar QR code ──────────────────────────────────────
+    function generatePix() {
+        const terms = document.getElementById('accept_terms');
+        if (!terms.checked) {
+            document.getElementById('terms_warning_pix').classList.remove('d-none');
+            return;
+        }
+
+        const btn = document.getElementById('btn-generate-pix');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gerando PIX...';
+
+        const payload = {
+            payment_method_id: 'pix',
+            transaction_amount: selectedPrice,
+            plan_type: selectedPlan,
+            is_upgrade: IS_UPGRADE,
+            coupon_code: appliedCoupon ? appliedCoupon.code : '',
+            payer: { email: '<?= Auth::getUser()['email'] ?>' }
+        };
+
+        fetch('/index.php?url=<?= obfuscateUrl('checkout') ?>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+        })
+        .then(r => r.json())
+        .then(result => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-qr-code me-2"></i>Gerar QR Code PIX';
+
+            if (result.status === 'pending' && result.pix_qr_code) {
+                pixPaymentId = result.payment_id;
+                showPixQrCode(result.pix_qr_code, result.pix_qr_code_b64);
+            } else if (result.status === 'approved') {
+                showPixApproved();
+            } else {
+                showPaymentError(result.message || 'Erro ao gerar PIX. Tente novamente.');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-qr-code me-2"></i>Gerar QR Code PIX';
+            showPaymentError('Erro de conexão ao gerar PIX. Tente novamente.');
+        });
+    }
+
+    function showPixQrCode(qrCode, qrCodeB64) {
+        document.getElementById('pix-generate-state').classList.add('d-none');
+        document.getElementById('pix-qr-state').classList.remove('d-none');
+
+        const imgEl = document.getElementById('pix-qr-img');
+        if (qrCodeB64) {
+            imgEl.src = 'data:image/png;base64,' + qrCodeB64;
+        } else {
+            imgEl.style.display = 'none';
+        }
+        document.getElementById('pix-copy-key').value = qrCode;
+
+        // Timer 30 minutos
+        let seconds = 30 * 60;
+        pixTimerInterval = setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+                clearInterval(pixTimerInterval);
+                clearInterval(pixPollingInterval);
+                document.getElementById('pix-timer').textContent = 'Expirado';
+                document.getElementById('pix-status-msg').innerHTML =
+                    '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>PIX expirado. Gere um novo QR code.</span>';
+            } else {
+                const m = Math.floor(seconds / 60).toString().padStart(2,'0');
+                const s = (seconds % 60).toString().padStart(2,'0');
+                document.getElementById('pix-timer').textContent = m + ':' + s;
+            }
+        }, 1000);
+
+        // Polling a cada 5 segundos
+        pixPollingInterval = setInterval(pollPixStatus, 5000);
+    }
+
+    function pollPixStatus() {
+        if (!pixPaymentId) return;
+        fetch('/index.php?url=<?= obfuscateUrl('subscription/pix-status') ?>&payment_id=' + pixPaymentId, {
+            credentials: 'include'
+        })
+        .then(r => r.json())
+        .then(result => {
+            if (result.status === 'approved') {
+                clearInterval(pixPollingInterval);
+                clearInterval(pixTimerInterval);
+                showPixApproved();
+            } else if (result.status === 'rejected' || result.status === 'cancelled' || result.status === 'expired') {
+                clearInterval(pixPollingInterval);
+                clearInterval(pixTimerInterval);
+                document.getElementById('pix-status-msg').innerHTML =
+                    '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Pagamento ' + result.status + '. Gere um novo QR code.</span>';
+            }
+        })
+        .catch(() => {});
+    }
+
+    function showPixApproved() {
+        document.getElementById('pix-generate-state').classList.add('d-none');
+        document.getElementById('pix-qr-state').classList.add('d-none');
+        document.getElementById('pix-approved-state').classList.remove('d-none');
+        setTimeout(() => {
+            window.location.href = '/index.php?url=<?= obfuscateUrl('subscription-success') ?>';
+        }, 2500);
+    }
+
+    function resetPixState() {
+        clearInterval(pixPollingInterval);
+        clearInterval(pixTimerInterval);
+        pixPaymentId = null;
+        document.getElementById('pix-qr-state').classList.add('d-none');
+        document.getElementById('pix-approved-state').classList.add('d-none');
+        document.getElementById('pix-generate-state').classList.remove('d-none');
+        const btn = document.getElementById('btn-generate-pix');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-qr-code me-2"></i>Gerar QR Code PIX';
+    }
+
+    function copyPixKey() {
+        const input = document.getElementById('pix-copy-key');
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value).then(() => {
+            const btn = document.getElementById('pix-copy-btn');
+            btn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copiado!';
+            btn.classList.replace('btn-outline-secondary','btn-success');
+            setTimeout(() => {
+                btn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+                btn.classList.replace('btn-success','btn-outline-secondary');
+            }, 2000);
+        }).catch(() => {
+            input.focus();
+            document.execCommand('copy');
+        });
+    }
 
     // Inicializar com o plano padrão selecionado
     selectPlan(selectedPlan, selectedPrice);

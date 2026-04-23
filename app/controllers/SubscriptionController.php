@@ -131,7 +131,8 @@ class SubscriptionController {
         $paymentData['plan_type']          = $planType;
 
         // ── Chave de idempotência (deterministicamente única por dia) ──
-        $idempotencyKey = 'pay_' . $user['id'] . '_' . $planType . '_' . date('Ymd');
+        $isPixPayment   = ($paymentData['payment_method_id'] ?? '') === 'pix';
+        $idempotencyKey = ($isPixPayment ? 'pix_' : 'pay_') . $user['id'] . '_' . $planType . '_' . date('Ymd');
 
         // ── Guarda duplicata: mesmo pagamento aprovado no mesmo dia ──
         $existingSub = $subModel->findByIdempotencyKey($idempotencyKey);
@@ -142,7 +143,82 @@ class SubscriptionController {
             exit;
         }
 
-        // ── Processar pagamento ──────────────────────────────────
+        // ── PIX: retornar QR code sem ativar assinatura ainda ──────
+        if ($isPixPayment) {
+            // Se já existe pagamento PIX pendente, reuse
+            if ($existingSub && $existingSub['status'] === 'pending' && !empty($existingSub['mp_payment_id'])) {
+                $mpService  = new MercadoPagoService();
+                $payment    = $mpService->getPaymentById((int)$existingSub['mp_payment_id']);
+                if ($payment && $payment->status === 'pending' && isset($payment->point_of_interaction->transaction_data)) {
+                    $txData = $payment->point_of_interaction->transaction_data;
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'status'          => 'pending',
+                        'payment_id'      => $payment->id,
+                        'pix_qr_code'     => $txData->qr_code        ?? '',
+                        'pix_qr_code_b64' => $txData->qr_code_base64 ?? '',
+                    ]);
+                    exit;
+                }
+            }
+
+            $mpService = new MercadoPagoService();
+            $userModel = new User();
+            $userData  = $userModel->findById($user['id']);
+            $payment   = $mpService->processPixPayment(
+                $expectedAmount,
+                $userData['email'],
+                $planType,
+                $user['id'],
+                $idempotencyKey
+            );
+
+            if (!$payment || !isset($payment->status)) {
+                $err = Session::getFlash('error_debug') ?: 'Falha ao gerar cobrança PIX.';
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => $err]);
+                exit;
+            }
+
+            // Criar assinatura pendente
+            $now = date('Y-m-d H:i:s');
+            $expiration = ($planType === 'yearly')
+                ? date('Y-m-d H:i:s', strtotime('+1 year'))
+                : date('Y-m-d H:i:s', strtotime('+1 month'));
+
+            $subModel->create([
+                'user_id'              => $user['id'],
+                'mp_payment_id'        => (string)$payment->id,
+                'mp_idempotency_key'   => $idempotencyKey,
+                'plan_type'            => $planType,
+                'status'               => 'pending',
+                'amount_paid'          => $expectedAmount,
+                'starts_at'            => $now,
+                'expires_at'           => $expiration,
+                'refund_eligible_until'=> date('Y-m-d H:i:s', strtotime('+7 days')),
+                'notes'                => 'PIX' . ($couponCode ? " | Cupom: {$couponCode}" : ''),
+                'coupon_id'            => $couponId,
+                'discount_amount'      => $couponDiscount,
+                'coupon_code'          => $couponCode ?: null,
+            ]);
+
+            if (isset($payment->point_of_interaction->transaction_data)) {
+                $txData = $payment->point_of_interaction->transaction_data;
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'status'          => 'pending',
+                    'payment_id'      => $payment->id,
+                    'pix_qr_code'     => $txData->qr_code        ?? '',
+                    'pix_qr_code_b64' => $txData->qr_code_base64 ?? '',
+                ]);
+            } else {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'PIX gerado mas QR code não disponível. Verifique em breve.']);
+            }
+            exit;
+        }
+
+        // ── Processar pagamento (cartão) ─────────────────────────
         $mpService = new MercadoPagoService();
         $payment   = $mpService->processPayment($paymentData, $user['id'], $idempotencyKey);
 
@@ -475,6 +551,13 @@ class SubscriptionController {
 
         if ($mpStatus === 'approved' && $sub['status'] !== 'active') {
             $subModel->updateStatus($sub['id'], 'active');
+            // Ativar plano do usuário (importante para PIX: pending → active via webhook)
+            $planType   = $sub['plan_type'] ?? 'monthly';
+            $expiration = $sub['expires_at'] ?? (($planType === 'yearly')
+                ? date('Y-m-d H:i:s', strtotime('+1 year'))
+                : date('Y-m-d H:i:s', strtotime('+1 month')));
+            $userModel  = new User();
+            $userModel->updatePlan($sub['user_id'], 'pro', $expiration, $planType, (string)$paymentId, 'active');
         } elseif (in_array($mpStatus, ['rejected', 'cancelled']) && in_array($sub['status'], ['pending', 'active'])) {
             $subModel->updateStatus($sub['id'], 'failed');
             $userModel = new User();
@@ -488,6 +571,98 @@ class SubscriptionController {
 
         http_response_code(200);
         echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // VERIFICAÇÃO DE STATUS PIX (polling AJAX)
+    // ─────────────────────────────────────────────────────────────
+
+    public function checkPixStatus() {
+        Auth::checkAuthentication();
+        header('Content-Type: application/json');
+
+        $paymentId = (int)($_GET['payment_id'] ?? 0);
+        if (!$paymentId) {
+            echo json_encode(['status' => 'error', 'message' => 'payment_id inválido']);
+            exit;
+        }
+
+        $user      = Auth::getUser();
+        $subModel  = new Subscription();
+        $sub       = $subModel->findByMpPaymentId((string)$paymentId);
+
+        if (!$sub || (int)$sub['user_id'] !== (int)$user['id']) {
+            echo json_encode(['status' => 'error', 'message' => 'Pagamento não encontrado']);
+            exit;
+        }
+
+        // Se já está ativo (aprovado por webhook), retorna direto
+        if ($sub['status'] === 'active') {
+            echo json_encode(['status' => 'approved']);
+            exit;
+        }
+
+        // Consultar MP
+        $mpService = new MercadoPagoService();
+        $payment   = $mpService->getPaymentById($paymentId);
+
+        if (!$payment || !isset($payment->status)) {
+            echo json_encode(['status' => 'pending']);
+            exit;
+        }
+
+        if ($payment->status === 'approved') {
+            // Ativar assinatura
+            $planType   = $sub['plan_type'];
+            $now        = date('Y-m-d H:i:s');
+            $expiration = ($planType === 'yearly')
+                ? date('Y-m-d H:i:s', strtotime('+1 year'))
+                : date('Y-m-d H:i:s', strtotime('+1 month'));
+
+            $subModel->updateStatus($sub['id'], 'active');
+
+            $userModel = new User();
+            if ($userModel->updatePlan($user['id'], 'pro', $expiration, $planType, (string)$payment->id, 'active')) {
+                Auth::updateSessionPlan('pro');
+            }
+
+            // Registrar uso do cupom (se houver e ainda não registrado)
+            if (!empty($sub['coupon_id'])) {
+                try {
+                    $couponModel = new DiscountCoupon();
+                    $couponModel->apply(
+                        $sub['coupon_id'],
+                        $user['id'],
+                        (float)$sub['amount_paid'] + (float)($sub['discount_amount'] ?? 0),
+                        (float)($sub['discount_amount'] ?? 0),
+                        (float)$sub['amount_paid'],
+                        $sub['id']
+                    );
+                } catch (Exception $e) {
+                    error_log("PIX coupon apply falhou: " . $e->getMessage());
+                }
+            }
+
+            // E-mail de boas-vindas
+            try {
+                $userData = $userModel->findById($user['id']);
+                EmailService::sendSubscriptionWelcome($userData['email'], $userData['full_name'], $planType, $expiration);
+            } catch (Exception $e) {
+                error_log("E-mail welcome PIX falhou: " . $e->getMessage());
+            }
+
+            logActivity("Assinatura PRO {$planType} ativada via PIX. Payment: {$payment->id}", $user['id']);
+            echo json_encode(['status' => 'approved']);
+            exit;
+        }
+
+        if (in_array($payment->status, ['rejected', 'cancelled', 'expired'])) {
+            echo json_encode(['status' => $payment->status]);
+            exit;
+        }
+
+        echo json_encode(['status' => 'pending']);
         exit;
     }
 
