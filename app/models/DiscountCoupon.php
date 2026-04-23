@@ -23,7 +23,7 @@ class DiscountCoupon {
 
     public function findByCode(string $code): ?array {
         $stmt = $this->db->prepare(
-            "SELECT * FROM discount_coupons WHERE code = ? COLLATE utf8mb4_general_ci"
+            "SELECT * FROM discount_coupons WHERE code = ?"
         );
         $stmt->execute([strtoupper(trim($code))]);
         return $stmt->fetch() ?: null;
@@ -67,75 +67,86 @@ class DiscountCoupon {
      * @return array ['valid'=>bool, 'final_price'=>float, 'discount'=>float, 'message'=>string, 'coupon'=>array|null]
      */
     public function validate(string $code, string $planType, float $basePrice, int $userId = 0): array {
-        $coupon = $this->findByCode($code);
+        try {
+            $coupon = $this->findByCode($code);
 
-        if (!$coupon) {
-            return ['valid' => false, 'message' => 'Cupom não encontrado.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        if (!$coupon['is_active']) {
-            return ['valid' => false, 'message' => 'Este cupom está inativo.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        $now = time();
-
-        if ($coupon['valid_from'] && strtotime($coupon['valid_from']) > $now) {
-            return ['valid' => false, 'message' => 'Este cupom ainda não está válido.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        if ($coupon['valid_until'] && strtotime($coupon['valid_until']) < $now) {
-            return ['valid' => false, 'message' => 'Este cupom expirou em ' . date('d/m/Y', strtotime($coupon['valid_until'])) . '.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        // Verificar plano aplicável
-        if ($coupon['applies_to'] !== 'both' && $coupon['applies_to'] !== $planType) {
-            $planLabel = $coupon['applies_to'] === 'monthly' ? 'Mensal' : 'Anual';
-            return ['valid' => false, 'message' => "Este cupom é válido apenas para o plano {$planLabel}.", 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        // Verificar preço mínimo
-        if ($coupon['min_price'] && $basePrice < (float)$coupon['min_price']) {
-            return ['valid' => false, 'message' => 'Valor mínimo para este cupom não atingido.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        // Verificar limite de usos
-        if ($coupon['max_uses'] !== null && $coupon['used_count'] >= $coupon['max_uses']) {
-            return ['valid' => false, 'message' => 'Este cupom já atingiu o limite máximo de usos.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
-        }
-
-        // Verificar se usuário já usou
-        if ($userId > 0) {
-            $used = $this->db->prepare(
-                "SELECT id FROM coupon_uses WHERE coupon_id = ? AND user_id = ?"
-            );
-            $used->execute([$coupon['id'], $userId]);
-            if ($used->fetch()) {
-                return ['valid' => false, 'message' => 'Você já utilizou este cupom.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            if (!$coupon) {
+                return ['valid' => false, 'message' => 'Cupom não encontrado.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
             }
+
+            if (!$coupon['is_active']) {
+                return ['valid' => false, 'message' => 'Este cupom está inativo.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            $now = time();
+
+            if ($coupon['valid_from'] && strtotime($coupon['valid_from']) > $now) {
+                return ['valid' => false, 'message' => 'Este cupom ainda não está válido.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            if ($coupon['valid_until'] && strtotime($coupon['valid_until']) < $now) {
+                return ['valid' => false, 'message' => 'Este cupom expirou em ' . date('d/m/Y', strtotime($coupon['valid_until'])) . '.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            // Verificar plano aplicável
+            if ($coupon['applies_to'] !== 'both' && $coupon['applies_to'] !== $planType) {
+                $planLabel = $coupon['applies_to'] === 'monthly' ? 'Mensal' : 'Anual';
+                return ['valid' => false, 'message' => "Este cupom é válido apenas para o plano {$planLabel}.", 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            // Verificar preço mínimo
+            if ($coupon['min_price'] && $basePrice < (float)$coupon['min_price']) {
+                return ['valid' => false, 'message' => 'Valor mínimo para este cupom não atingido.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            // Verificar limite de usos
+            if ($coupon['max_uses'] !== null && $coupon['used_count'] >= $coupon['max_uses']) {
+                return ['valid' => false, 'message' => 'Este cupom já atingiu o limite máximo de usos.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+            }
+
+            // Verificar se usuário já usou
+            if ($userId > 0) {
+                $used = $this->db->prepare(
+                    "SELECT id FROM coupon_uses WHERE coupon_id = ? AND user_id = ?"
+                );
+                $used->execute([$coupon['id'], $userId]);
+                if ($used->fetch()) {
+                    return ['valid' => false, 'message' => 'Você já utilizou este cupom.', 'final_price' => $basePrice, 'discount' => 0, 'coupon' => null];
+                }
+            }
+
+            // Calcular desconto
+            if ($coupon['discount_type'] === 'percent') {
+                $discount = round($basePrice * ((float)$coupon['discount_value'] / 100), 2);
+            } else {
+                $discount = (float)$coupon['discount_value'];
+            }
+
+            // Aplicar teto máximo de desconto
+            if ($coupon['max_discount'] && $discount > (float)$coupon['max_discount']) {
+                $discount = (float)$coupon['max_discount'];
+            }
+
+            $discount   = min($discount, $basePrice); // Não pode ser maior que o preço
+            $finalPrice = round(max(0, $basePrice - $discount), 2);
+
+            return [
+                'valid'       => true,
+                'message'     => "✅ Cupom <strong>{$coupon['display_name']}</strong> aplicado! Você economizou R$ " . number_format($discount, 2, ',', '.'),
+                'final_price' => $finalPrice,
+                'discount'    => $discount,
+                'coupon'      => $coupon,
+            ];
+        } catch (Exception $e) {
+            error_log("DiscountCoupon::validate error: " . $e->getMessage() . " | code=" . $code . " | planType=" . $planType . " | basePrice=" . $basePrice);
+            return [
+                'valid'       => false,
+                'message'     => 'Erro ao verificar cupom. Por favor, tente novamente.',
+                'final_price' => $basePrice,
+                'discount'    => 0,
+                'coupon'      => null,
+            ];
         }
-
-        // Calcular desconto
-        if ($coupon['discount_type'] === 'percent') {
-            $discount = round($basePrice * ((float)$coupon['discount_value'] / 100), 2);
-        } else {
-            $discount = (float)$coupon['discount_value'];
-        }
-
-        // Aplicar teto máximo de desconto
-        if ($coupon['max_discount'] && $discount > (float)$coupon['max_discount']) {
-            $discount = (float)$coupon['max_discount'];
-        }
-
-        $discount   = min($discount, $basePrice); // Não pode ser maior que o preço
-        $finalPrice = round(max(0, $basePrice - $discount), 2);
-
-        return [
-            'valid'       => true,
-            'message'     => "✅ Cupom <strong>{$coupon['display_name']}</strong> aplicado! Você economizou R$ " . number_format($discount, 2, ',', '.'),
-            'final_price' => $finalPrice,
-            'discount'    => $discount,
-            'coupon'      => $coupon,
-        ];
     }
 
     /**

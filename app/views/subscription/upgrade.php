@@ -422,7 +422,10 @@ ob_start();
 
         if (cardPaymentBrickController) {
             cardPaymentBrickController.unmount();
-            renderCardPaymentBrick(mp.bricks());
+            // Pequeno delay para evitar erro "fields_setup_failed" do Mercado Pago
+            setTimeout(() => {
+                renderCardPaymentBrick(mp.bricks());
+            }, 300);
         }
     }
 
@@ -431,8 +434,8 @@ ob_start();
         document.getElementById('summary-plan-name').textContent = planName;
         document.getElementById('summary-plan-price').textContent = 'R$ ' + selectedPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
-        // Linha de parcelamento
-        const rows = INSTALLMENT_ROWS[selectedPlan] || [];
+        // Linha de parcelamento - Recalcular com o preço atual (com ou sem cupom)
+        const rows = calculateInstallments(selectedPrice, selectedPlan);
         const chosen = rows.find(r => r.installments === selectedInstallments);
         const instRow  = document.getElementById('summary-installment-row');
         const instText = document.getElementById('summary-installment-text');
@@ -478,10 +481,16 @@ ob_start();
         fetch('/index.php?url=<?= obfuscateUrl('subscription/validate-coupon') ?>', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
             body: JSON.stringify({ code, plan_type: selectedPlan, base_price: basePrice })
         })
-        .then(r => r.json())
+        .then(r => {
+            console.log('Coupon response status:', r.status);
+            if (!r.ok && r.status === 401) return Promise.reject('Não autenticado');
+            return r.json();
+        })
         .then(result => {
+            console.log('Coupon result:', result);
             document.getElementById('applyCouponBtn').disabled = false;
             document.getElementById('applyCouponBtn').innerHTML = 'Aplicar';
             if (result.valid) {
@@ -493,19 +502,18 @@ ob_start();
                 // Re-calcular parcelas com novo preço após cupom
                 recalcInstallmentRows(selectedPlan, result.final_price);
                 updateOrderSummary();
-                if (cardPaymentBrickController) {
-                    cardPaymentBrickController.unmount();
-                    renderCardPaymentBrick(mp.bricks());
-                }
+                // Não remontamos o brick para evitar erro "fields_setup_failed"
+                // O brick será atualizado automaticamente no próximo carregamento ou pagamento
             } else {
                 msgEl.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${result.message}</span>`;
                 appliedCoupon = null;
             }
         })
-        .catch(() => {
+        .catch(err => {
+            console.error('Coupon fetch error:', err);
             document.getElementById('applyCouponBtn').disabled = false;
             document.getElementById('applyCouponBtn').innerHTML = 'Aplicar';
-            msgEl.innerHTML = '<span class="text-danger">Erro ao verificar cupom.</span>';
+            msgEl.innerHTML = '<span class="text-danger">Erro ao verificar cupom. Tente novamente.</span>';
         });
     }
 
@@ -516,10 +524,7 @@ ob_start();
         document.getElementById('couponMessage').innerHTML = '';
         hideCouponApplied();
         updateOrderSummary();
-        if (cardPaymentBrickController) {
-            cardPaymentBrickController.unmount();
-            renderCardPaymentBrick(mp.bricks());
-        }
+        // Não remontamos o brick para evitar erro "fields_setup_failed"
     }
 
     document.getElementById('couponInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
@@ -569,6 +574,7 @@ ob_start();
                         fetch('/index.php?url=' + '<?= obfuscateUrl('checkout') ?>', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
                             body: JSON.stringify(payload),
                         })
                         .then(r => r.json())
@@ -600,7 +606,8 @@ ob_start();
         const select  = document.getElementById('installment-select');
         if (!wrapper || !select) return;
 
-        const rows = INSTALLMENT_ROWS[plan] || [];
+        // Recalcular as parcelas com o novo preço
+        const rows = calculateInstallments(baseAmt, plan);
         if (rows.length <= 1) {
             wrapper.classList.add('d-none');
             return;
@@ -625,14 +632,53 @@ ob_start();
         });
     }
 
+    function calculateInstallments(price, plan) {
+        const config = INSTALLMENT_CONFIG[plan] || { maxInstallments: 1, minInstallments: 1 };
+        const max  = config.maxInstallments || 1;
+        const free = config.interest_free_up_to || 1;
+        const rate = config.monthly_interest_rate || 0;
+        const rows = [];
+
+        for (let n = 1; n <= max; n++) {
+            let installmentValue, totalValue, hasInterest;
+            
+            if (n <= free || rate == 0) {
+                installmentValue = price / n;
+                totalValue = price;
+                hasInterest = false;
+            } else {
+                // Price + Compound interest: P*(r*(1+r)^n)/((1+r)^n - 1)
+                const factor = rate * Math.pow(1 + rate, n) / (Math.pow(1 + rate, n) - 1);
+                installmentValue = price * factor;
+                totalValue = Math.round(installmentValue * n * 100) / 100;
+                hasInterest = true;
+            }
+            
+            rows.push({
+                installments: n,
+                installment_value: Math.round(installmentValue * 100) / 100,
+                total_value: totalValue,
+                has_interest: hasInterest,
+            });
+        }
+        return rows;
+    }
+
     function chooseInstallment(n) {
         selectedInstallments = n;
         updateOrderSummary();
-        // Remontar o brick com installments pré-selecionado
+        // Remontar o brick com installments pré-selecionado (com delay para evitar erro do MP)
         if (cardPaymentBrickController) {
             cardPaymentBrickController.unmount();
-            renderCardPaymentBrick(mp.bricks());
+            setTimeout(() => {
+                renderCardPaymentBrick(mp.bricks());
+            }, 300);
         }
+    }
+
+    function recalcInstallmentRows(plan, newPrice) {
+        // Recalcula as parcelas com o novo preço (após aplicação de cupom)
+        renderInstallmentPicker(plan, newPrice);
     }
 
     function updateInstallmentHint() { /* substituído por renderInstallmentPicker */ }

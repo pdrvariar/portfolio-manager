@@ -551,28 +551,39 @@ class SubscriptionController {
         Auth::checkAuthentication();
         header('Content-Type: application/json');
 
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true) ?? $_POST;
+        try {
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true) ?? $_POST;
 
-        $code      = trim($data['code'] ?? '');
-        $planType  = in_array($data['plan_type'] ?? '', ['monthly','yearly']) ? $data['plan_type'] : 'monthly';
-        $basePrice = (float)($data['base_price'] ?? 0);
+            $code      = trim($data['code'] ?? '');
+            $planType  = in_array($data['plan_type'] ?? '', ['monthly','yearly']) ? $data['plan_type'] : 'monthly';
+            $basePrice = (float)($data['base_price'] ?? 0);
+            $userId    = Auth::getUserId();
 
-        if (!$code) {
-            echo json_encode(['valid' => false, 'message' => 'Informe o código do cupom.']);
+            error_log("validateCoupon called: code=$code, planType=$planType, basePrice=$basePrice, userId=$userId");
+
+            if (!$code) {
+                echo json_encode(['valid' => false, 'message' => 'Informe o código do cupom.']);
+                exit;
+            }
+
+            if ($basePrice <= 0) {
+                $planModel = new SubscriptionPlan();
+                $basePrice = $planModel->getPriceFor($planType);
+                error_log("validateCoupon: basePrice was 0, set to $basePrice from plan");
+            }
+
+            $couponModel = new DiscountCoupon();
+            $result      = $couponModel->validate($code, $planType, $basePrice, $userId);
+
+            error_log("validateCoupon result: " . json_encode($result));
+            echo json_encode($result);
+            exit;
+        } catch (Exception $e) {
+            error_log("SubscriptionController::validateCoupon error: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
+            echo json_encode(['valid' => false, 'message' => 'Erro ao verificar cupom.', 'error' => $e->getMessage()]);
             exit;
         }
-
-        if ($basePrice <= 0) {
-            $planModel = new SubscriptionPlan();
-            $basePrice = $planModel->getPriceFor($planType);
-        }
-
-        $couponModel = new DiscountCoupon();
-        $result      = $couponModel->validate($code, $planType, $basePrice, Auth::getUserId());
-
-        echo json_encode($result);
-        exit;
     }
 
     public function failure() {
