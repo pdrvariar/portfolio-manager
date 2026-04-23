@@ -256,6 +256,100 @@ $installmentPreviews = ['monthly' => $monthlyInstall, 'yearly' => $yearlyInstall
 </div>
 <?php endforeach; ?>
 
+<!-- ═══════════════════════════════════════════════════════════
+     CONFIGURAÇÕES DE MÉTODOS DE PAGAMENTO
+     ═══════════════════════════════════════════════════════════ -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-transparent border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-info bg-opacity-10 rounded-3 p-2">
+                <i class="bi bi-sliders text-info fs-5"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold">Métodos de Pagamento</h5>
+                <p class="text-muted small mb-0">Habilite ou desabilite métodos na página de checkout.</p>
+            </div>
+        </div>
+    </div>
+    <div class="card-body px-4 py-4">
+        <form method="POST" action="/index.php?url=<?= obfuscateUrl('admin/payment-settings') ?>">
+            <input type="hidden" name="csrf_token" value="<?= Session::getCsrfToken() ?>">
+
+            <div class="row g-3">
+                <!-- Cartão (sempre ativo) -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 border bg-light">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary bg-opacity-10 rounded-2 p-2">
+                                <i class="bi bi-credit-card-fill text-primary fs-5"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Cartão de Crédito / Débito</div>
+                                <div class="small text-muted">Via Mercado Pago Brick</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-success px-3 py-2">
+                            <i class="bi bi-check-circle me-1"></i>Sempre ativo
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PIX toggle -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 border <?= $pixEnabled ? 'border-success bg-success bg-opacity-10' : 'bg-light' ?>">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-success bg-opacity-10 rounded-2 p-2">
+                                <i class="bi bi-qr-code text-success fs-5"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">PIX</div>
+                                <div class="small text-muted">Pagamento instantâneo</div>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch mb-0 ms-3">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   id="pix_payment_enabled" name="pix_payment_enabled"
+                                   <?= $pixEnabled ? 'checked' : '' ?>
+                                   style="width:2.5em; height:1.4em; cursor:pointer;">
+                            <label class="form-check-label fw-semibold ms-1" for="pix_payment_enabled">
+                                <span id="pix-toggle-label"><?= $pixEnabled ? '<span class="text-success">Habilitado</span>' : '<span class="text-muted">Desabilitado</span>' ?></span>
+                            </label>
+                        </div>
+                    </div>
+                    <?php if (!$pixEnabled): ?>
+                    <div class="small text-muted mt-1 ps-1">
+                        <i class="bi bi-info-circle me-1"></i>PIX desabilitado — não aparece no checkout para os usuários.
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-floppy me-1"></i>Salvar Configurações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Toggle label dinâmico do PIX
+document.getElementById('pix_payment_enabled').addEventListener('change', function() {
+    const label = document.getElementById('pix-toggle-label');
+    const card  = this.closest('.d-flex.align-items-center.justify-content-between');
+    if (this.checked) {
+        label.innerHTML = '<span class="text-success">Habilitado</span>';
+        card.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+        card.classList.remove('bg-light');
+    } else {
+        label.innerHTML = '<span class="text-muted">Desabilitado</span>';
+        card.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+        card.classList.add('bg-light');
+    }
+});
+</script>
+
 <script>
 // Dados dos preços atuais para preview JS
 const planPrices = {

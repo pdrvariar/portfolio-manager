@@ -300,6 +300,8 @@ class AdminController {
             'monthly' => $planModel->getInstallmentConfig('monthly'),
             'yearly'  => $planModel->getInstallmentConfig('yearly'),
         ];
+        $settings        = new Settings();
+        $pixEnabled      = $settings->getBool('pix_payment_enabled', false);
         $title = 'Gestão de Preços';
         require_once __DIR__ . '/../views/admin/pricing.php';
     }
@@ -338,6 +340,38 @@ class AdminController {
             } else {
                 Session::setFlash('error', 'Erro ao atualizar preço.');
             }
+        }
+
+        header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+        exit;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // CONFIGURAÇÕES DE MÉTODOS DE PAGAMENTO
+    // ─────────────────────────────────────────────────────────────
+
+    public function updatePaymentSettings() {
+        Auth::checkAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+            exit;
+        }
+        if (!Session::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token de segurança inválido.');
+            header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));
+            exit;
+        }
+
+        $settings   = new Settings();
+        $pixEnabled = isset($_POST['pix_payment_enabled']) ? '1' : '0';
+        $ok         = $settings->set('pix_payment_enabled', $pixEnabled);
+
+        if ($ok) {
+            $status = $pixEnabled === '1' ? 'habilitado' : 'desabilitado';
+            logActivity("Admin {$status} pagamento por PIX", Auth::getUserId());
+            Session::setFlash('success', "PIX {$status} com sucesso!");
+        } else {
+            Session::setFlash('error', 'Erro ao salvar configuração de pagamento.');
         }
 
         header('Location: /index.php?url=' . obfuscateUrl('admin/pricing'));

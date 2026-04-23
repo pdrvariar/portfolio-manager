@@ -10,6 +10,10 @@ $proratedYearlyPrice = $proratedYearlyPrice ?? 179.40;
 $activeSub           = $activeSub           ?? null;
 $plans               = $plans               ?? [];
 
+// Verificar se PIX está habilitado
+$settingsModel = new Settings();
+$pixEnabled    = $settingsModel->getBool('pix_payment_enabled', false);
+
 // Preços dinâmicos do banco
 $planModel    = new SubscriptionPlan();
 $monthlyPrice = (float)(($plans['monthly']['price'] ?? null) ?: $planModel->getPriceFor('monthly'));
@@ -341,7 +345,8 @@ ob_start();
                                      <span id="payment-error-message"></span>
                                  </div>
 
-                                 <!-- Seletor de Método de Pagamento -->
+                                 <!-- Seletor de Método de Pagamento (apenas se PIX habilitado) -->
+                                 <?php if ($pixEnabled): ?>
                                  <div class="mb-4">
                                      <label class="form-label small fw-bold text-muted text-uppercase mb-2">
                                          <i class="bi bi-credit-card me-1"></i>Método de Pagamento
@@ -355,6 +360,7 @@ ob_start();
                                          </button>
                                      </div>
                                  </div>
+                                 <?php endif; ?>
 
                                  <!-- Hint de parcelamento (aparece quando plano anual selecionado) -->
                                  <div id="installment-hint" class="alert alert-info py-2 px-3 small mb-3 d-none" role="alert"></div>
@@ -367,7 +373,8 @@ ob_start();
                                      </div>
                                  </div>
 
-                                 <!-- Seção PIX -->
+                                 <!-- Seção PIX (apenas se habilitado) -->
+                                 <?php if ($pixEnabled): ?>
                                  <div id="pix-payment-section" class="d-none">
                                      <!-- Estado: Botão gerar PIX -->
                                      <div id="pix-generate-state">
@@ -411,8 +418,9 @@ ob_start();
                                          <h5 class="text-success fw-bold mt-2">Pagamento PIX Confirmado!</h5>
                                          <p class="small text-muted">Redirecionando para sua conta PRO...</p>
                                          <div class="spinner-border spinner-border-sm text-success"></div>
-                                     </div>
+                                      </div>
                                  </div>
+                                 <?php endif; // $pixEnabled ?>
 
                                 <p class="text-center text-muted small mb-0 mt-3">
                                     <i class="bi bi-lock-fill"></i> Pagamento 100% seguro via Mercado Pago
@@ -823,20 +831,19 @@ ob_start();
             container.classList.remove('opacity-50');
             container.style.pointerEvents = 'auto';
             warning.classList.add('d-none');
-            pixBtn.classList.remove('opacity-50');
-            pixBtn.style.pointerEvents = 'auto';
-            pixWarn.classList.add('d-none');
+            if (pixBtn)  { pixBtn.classList.remove('opacity-50'); pixBtn.style.pointerEvents = 'auto'; }
+            if (pixWarn) { pixWarn.classList.add('d-none'); }
         } else {
             container.classList.add('opacity-50');
             container.style.pointerEvents = 'none';
             warning.classList.remove('d-none');
-            pixBtn.classList.add('opacity-50');
-            pixBtn.style.pointerEvents = 'none';
-            pixWarn.classList.remove('d-none');
+            if (pixBtn)  { pixBtn.classList.add('opacity-50'); pixBtn.style.pointerEvents = 'none'; }
+            if (pixWarn) { pixWarn.classList.remove('d-none'); }
         }
     });
 
     // ── Seletor de Método de Pagamento ──────────────────────────
+    <?php if ($pixEnabled): ?>
     let currentPaymentMethod = 'card';
     let pixPaymentId         = null;
     let pixPollingInterval   = null;
@@ -1005,6 +1012,7 @@ ob_start();
             document.execCommand('copy');
         });
     }
+    <?php endif; // $pixEnabled ?>
 
     // Inicializar com o plano padrão selecionado
     selectPlan(selectedPlan, selectedPrice);

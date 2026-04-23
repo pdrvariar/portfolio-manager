@@ -95,6 +95,8 @@ function setupRoutes(Router $router) {
     // Admin — Preços
     $router->add('admin/pricing', ['controller' => 'admin', 'action' => 'pricing']);
     $router->add('admin/pricing/update', ['controller' => 'admin', 'action' => 'updatePricing']);
+    // Admin — Configurações de Pagamento
+    $router->add('admin/payment-settings', ['controller' => 'admin', 'action' => 'updatePaymentSettings']);
     // Admin — Cupons
     $router->add('admin/coupons', ['controller' => 'admin', 'action' => 'coupons']);
     $router->add('admin/coupons/create', ['controller' => 'admin', 'action' => 'createCoupon']);
