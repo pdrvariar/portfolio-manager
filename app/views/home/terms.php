@@ -49,17 +49,26 @@ ob_start();
                     <section class="mb-5" id="reembolso">
                         <h4 class="fw-bold text-primary">4. Garantia e Direito de Arrependimento (Reembolso)</h4>
                         <p>
-                            Em conformidade com o <strong>Artigo 49 do Código de Defesa do Consumidor (Brasil)</strong>, o usuário possui o direito de desistir da assinatura (Plano PRO) no prazo de <strong>7 (sete) dias</strong> a contar da data da aprovação do pagamento.
+                            Em plena conformidade com o <strong>Art. 49 do Código de Defesa do Consumidor (Lei nº 8.078/1990)</strong>, o usuário que contratar o Plano PRO por meio eletrônico possui o direito de arrependimento e de solicitar o cancelamento da assinatura com reembolso integral, sem necessidade de justificativa, dentro do prazo de <strong>7 (sete) dias corridos</strong> contados da data de aprovação do pagamento.
                         </p>
-                        <h5 class="fw-bold mt-4">Como solicitar o estorno:</h5>
-                        <p>
-                            Para solicitar o reembolso integral do valor pago, o usuário deve:
-                        </p>
+                        <div class="alert alert-info border-0 bg-light-info mt-3">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Reembolso 100% self-service:</strong> O estorno é solicitado diretamente pelo próprio site, sem necessidade de entrar em contato com o suporte.
+                        </div>
+                        <h5 class="fw-bold mt-4">Como solicitar o reembolso:</h5>
                         <ol>
-                            <li>Enviar um e-mail para <span class="text-primary">contato@smartreturns.com.br</span> (ou o e-mail de suporte indicado no painel).</li>
-                            <li>Informar o e-mail da conta e o comprovante de transação do Mercado Pago.</li>
-                            <li>O estorno será processado diretamente através da plataforma Mercado Pago conforme os prazos da operadora do seu cartão.</li>
+                            <li>Acesse sua conta e vá até <strong>Minha Assinatura</strong> (menu do usuário).</li>
+                            <li>Dentro do prazo de 7 dias, o botão <strong>"Solicitar Reembolso"</strong> estará disponível automaticamente.</li>
+                            <li>Confirme a solicitação. O sistema cancela o acesso PRO imediatamente e aciona o estorno via Mercado Pago de forma automática.</li>
+                            <li>Um e-mail de confirmação será enviado ao endereço cadastrado na conta.</li>
                         </ol>
+                        <h5 class="fw-bold mt-4">Prazo de crédito:</h5>
+                        <p>
+                            O valor é estornado integralmente ao meio de pagamento utilizado na contratação. O prazo para o crédito aparecer na fatura depende da operadora do cartão e pode chegar a <strong>até 5 dias úteis</strong> para cartão de débito, ou até <strong>2 faturas subsequentes</strong> para cartão de crédito, conforme as regras da bandeira.
+                        </p>
+                        <p class="text-muted small">
+                            <strong>Observação:</strong> Após o encerramento do prazo de 7 dias, não haverá direito a reembolso proporcional pelo período não utilizado, salvo nos casos previstos em lei ou mediante análise individual pelo suporte (<span class="text-primary">contato@smartreturns.com.br</span>).
+                        </p>
                     </section>
 
                     <section class="mb-4">
