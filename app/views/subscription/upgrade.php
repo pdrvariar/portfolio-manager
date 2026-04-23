@@ -113,6 +113,30 @@ ob_start();
 
 <div class="row justify-content-center">
     <div class="col-lg-10">
+
+        <?php if (!empty($pixPendingData)): ?>
+        <!-- ── Banner: PIX pendente detectado ── -->
+        <div class="alert alert-warning border-warning shadow-sm rounded-4 mb-4 d-flex align-items-start gap-3">
+            <i class="bi bi-qr-code fs-3 text-warning mt-1 flex-shrink-0"></i>
+            <div class="flex-grow-1">
+                <h6 class="fw-bold mb-1">Você tem um PIX aguardando confirmação</h6>
+                <p class="small mb-2 text-muted">
+                    Pagamento de <strong>R$ <?= number_format($pixPendingData['amount'], 2, ',', '.') ?></strong>
+                    (Plano <?= ucfirst($pixPendingData['plan_type'] === 'monthly' ? 'Mensal' : 'Anual') ?>)
+                    gerado em <?= date('d/m/Y \à\s H:i', strtotime($pixPendingData['created_at'])) ?>.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-warning btn-sm fw-bold" onclick="resumePendingPix()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Verificar / Retomar QR Code
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="dismissPixBanner()">
+                        <i class="bi bi-x me-1"></i>Ignorar e fazer novo pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="text-center mb-5">
             <h2 class="fw-bold display-5">
                 <?= $upgradeMode ? 'Upgrade para PRO Anual' : 'Escolha seu Plano PRO' ?>
@@ -446,6 +470,9 @@ ob_start();
     const PRORATED_PRICE = <?= (float)$proratedYearlyPrice ?>;
     const MONTHLY_PRICE  = <?= (float)$monthlyPrice ?>;
     const YEARLY_PRICE   = <?= (float)$yearlyPrice ?>;
+
+    // PIX pendente detectado pelo servidor
+    const PIX_PENDING_DATA = <?= !empty($pixPendingData) ? json_encode($pixPendingData) : 'null' ?>;
 
     // Configuração de parcelamento por plano (carregada do banco via PHP)
     const INSTALLMENT_CONFIG = {
@@ -842,12 +869,64 @@ ob_start();
         }
     });
 
-    // ── Seletor de Método de Pagamento ──────────────────────────
     <?php if ($pixEnabled): ?>
     let currentPaymentMethod = 'card';
     let pixPaymentId         = null;
     let pixPollingInterval   = null;
     let pixTimerInterval     = null;
+
+    // ── Retomar PIX pendente detectado pelo servidor ─────────────
+    function resumePendingPix() {
+        if (!PIX_PENDING_DATA) return;
+        // Selecionar aba PIX
+        selectPaymentMethod('pix');
+        pixPaymentId = PIX_PENDING_DATA.payment_id;
+        // Atualizar preço selecionado com o do PIX pendente
+        selectedPlan  = PIX_PENDING_DATA.plan_type;
+        selectedPrice = PIX_PENDING_DATA.amount;
+        updateOrderSummary();
+        // Mostrar QR ou iniciar verificação direta
+        if (PIX_PENDING_DATA.pix_qr_code) {
+            showPixQrCode(PIX_PENDING_DATA.pix_qr_code, PIX_PENDING_DATA.pix_qr_code_b64);
+        } else {
+            // Sem QR data (pode ter expirado), fazer poll direto
+            document.getElementById('pix-generate-state').classList.add('d-none');
+            document.getElementById('pix-qr-state').classList.remove('d-none');
+            document.getElementById('pix-qr-img').style.display = 'none';
+            document.getElementById('pix-copy-key').value = 'QR Code expirado. Verifique se o pagamento foi recebido...';
+            document.getElementById('pix-status-msg').innerHTML =
+                '<span class="spinner-border spinner-border-sm text-success me-1"></span>Verificando pagamento...';
+            pollPixStatus();
+            pixPollingInterval = setInterval(pollPixStatus, 5000);
+        }
+        // Remover banner
+        document.querySelector('.alert-warning')?.remove();
+    }
+
+    function dismissPixBanner() {
+        document.querySelector('.alert-warning')?.remove();
+    }
+
+    // Auto-retomar se houver PIX pendente e PIX está habilitado
+    if (PIX_PENDING_DATA) {
+        // Apenas polling silencioso: não abre a aba mas verifica no background
+        pixPaymentId = PIX_PENDING_DATA.payment_id;
+        const silentCheck = () => {
+            if (!pixPaymentId) return;
+            fetch('/index.php?url=<?= obfuscateUrl('subscription/pix-status') ?>&payment_id=' + pixPaymentId, {
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'approved') {
+                    window.location.href = '/index.php?url=<?= obfuscateUrl('subscription-success') ?>';
+                }
+            })
+            .catch(() => {});
+        };
+        silentCheck();
+        setInterval(silentCheck, 10000); // verifica a cada 10s em background
+    }
 
     function selectPaymentMethod(method) {
         currentPaymentMethod = method;

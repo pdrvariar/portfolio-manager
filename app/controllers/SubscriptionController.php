@@ -42,6 +42,36 @@ class SubscriptionController {
             exit;
         }
 
+        // ── Verificar PIX pendente: se existir, checar status na API do MP ──
+        $pendingPixSub = $subModel->findPendingPixByUserId($user['id']);
+        if ($pendingPixSub) {
+            // Tentar ativar automaticamente consultando a API
+            $mpService = new MercadoPagoService();
+            $payment   = $mpService->getPaymentById((int)$pendingPixSub['mp_payment_id']);
+            if ($payment && $payment->status === 'approved') {
+                $this->activatePixSubscription($pendingPixSub, $payment, $user);
+                Session::setFlash('success', 'Pagamento PIX confirmado! Seu plano PRO foi ativado.');
+                header('Location: /index.php?url=' . obfuscateUrl('subscription-success'));
+                exit;
+            }
+            // Se ainda pendente, passar dados para a view retomar o QR code
+            $pixPendingData = null;
+            if ($payment && $payment->status === 'pending'
+                && isset($payment->point_of_interaction->transaction_data)) {
+                $txData = $payment->point_of_interaction->transaction_data;
+                $pixPendingData = [
+                    'payment_id'      => $pendingPixSub['mp_payment_id'],
+                    'pix_qr_code'     => $txData->qr_code        ?? '',
+                    'pix_qr_code_b64' => $txData->qr_code_base64 ?? '',
+                    'plan_type'       => $pendingPixSub['plan_type'],
+                    'amount'          => $pendingPixSub['amount_paid'],
+                    'created_at'      => $pendingPixSub['created_at'],
+                ];
+            }
+        } else {
+            $pixPendingData = null;
+        }
+
         // PRO mensal → modo upgrade para anual
         $planModel          = new SubscriptionPlan();
         $monthlyPrice       = $planModel->getPriceFor('monthly');
@@ -53,6 +83,29 @@ class SubscriptionController {
         $proratedYearlyPrice = $upgradeMode ? round($yearlyPrice - $proratedCredit, 2) : $yearlyPrice;
 
         require_once __DIR__ . '/../views/subscription/upgrade.php';
+    }
+
+    /**
+     * Ativa uma assinatura PIX aprovada — método interno reutilizável.
+     */
+    private function activatePixSubscription(array $sub, $payment, array $user): void {
+        $subModel   = new Subscription();
+        $userModel  = new User();
+        $planType   = $sub['plan_type'];
+        $expiration = $sub['expires_at'];
+
+        $subModel->updateStatus($sub['id'], 'active');
+        $userModel->updatePlan($user['id'], 'pro', $expiration, $planType, (string)$payment->id, 'active');
+        Auth::updateSessionPlan('pro');
+
+        try {
+            $userData = $userModel->findById($user['id']);
+            EmailService::sendSubscriptionWelcome($userData['email'], $userData['full_name'], $planType, $expiration);
+        } catch (Exception $e) {
+            error_log("E-mail welcome PIX (auto-recovery) falhou: " . $e->getMessage());
+        }
+
+        logActivity("Assinatura PRO {$planType} ativada via PIX (auto-recovery). Payment: {$payment->id}", $user['id']);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -316,6 +369,19 @@ class SubscriptionController {
         $usagePercent   = $activeSub ? $subModel->getUsagePercent($activeSub) : 0;
         $proratedCredit = ($activeSub && $activeSub['plan_type'] === 'monthly')
                           ? $subModel->calculateProratedCredit($activeSub) : 0;
+
+        // Verificar se existe PIX pendente (auto-ativar se aprovado)
+        $pendingPixSub = !$activeSub ? $subModel->findPendingPixByUserId($user['id']) : null;
+        if ($pendingPixSub) {
+            $mpService = new MercadoPagoService();
+            $payment   = $mpService->getPaymentById((int)$pendingPixSub['mp_payment_id']);
+            if ($payment && $payment->status === 'approved') {
+                $this->activatePixSubscription($pendingPixSub, $payment, $user);
+                Session::setFlash('success', 'Pagamento PIX confirmado! Seu plano PRO foi ativado.');
+                header('Location: /index.php?url=' . obfuscateUrl('subscription/manage'));
+                exit;
+            }
+        }
 
         $title = 'Gerenciar Assinatura';
         require_once __DIR__ . '/../views/subscription/manage.php';
@@ -588,17 +654,18 @@ class SubscriptionController {
             exit;
         }
 
-        $user      = Auth::getUser();
-        $subModel  = new Subscription();
-        $sub       = $subModel->findByMpPaymentId((string)$paymentId);
+        $user     = Auth::getUser();
+        $subModel = new Subscription();
+        $sub      = $subModel->findByMpPaymentId((string)$paymentId);
 
         if (!$sub || (int)$sub['user_id'] !== (int)$user['id']) {
             echo json_encode(['status' => 'error', 'message' => 'Pagamento não encontrado']);
             exit;
         }
 
-        // Se já está ativo (aprovado por webhook), retorna direto
+        // Já ativo (aprovado por webhook ou sessão anterior)
         if ($sub['status'] === 'active') {
+            Auth::updateSessionPlan('pro');
             echo json_encode(['status' => 'approved']);
             exit;
         }
@@ -613,56 +680,34 @@ class SubscriptionController {
         }
 
         if ($payment->status === 'approved') {
-            // Ativar assinatura
-            $planType   = $sub['plan_type'];
-            $now        = date('Y-m-d H:i:s');
-            $expiration = ($planType === 'yearly')
-                ? date('Y-m-d H:i:s', strtotime('+1 year'))
-                : date('Y-m-d H:i:s', strtotime('+1 month'));
+            $this->activatePixSubscription($sub, $payment, $user);
 
-            $subModel->updateStatus($sub['id'], 'active');
-
-            $userModel = new User();
-            if ($userModel->updatePlan($user['id'], 'pro', $expiration, $planType, (string)$payment->id, 'active')) {
-                Auth::updateSessionPlan('pro');
-            }
-
-            // Registrar uso do cupom (se houver e ainda não registrado)
+            // Registrar uso do cupom (se houver)
             if (!empty($sub['coupon_id'])) {
                 try {
                     $couponModel = new DiscountCoupon();
                     $couponModel->apply(
-                        $sub['coupon_id'],
-                        $user['id'],
+                        $sub['coupon_id'], $user['id'],
                         (float)$sub['amount_paid'] + (float)($sub['discount_amount'] ?? 0),
                         (float)($sub['discount_amount'] ?? 0),
-                        (float)$sub['amount_paid'],
-                        $sub['id']
+                        (float)$sub['amount_paid'], $sub['id']
                     );
                 } catch (Exception $e) {
                     error_log("PIX coupon apply falhou: " . $e->getMessage());
                 }
             }
 
-            // E-mail de boas-vindas
-            try {
-                $userData = $userModel->findById($user['id']);
-                EmailService::sendSubscriptionWelcome($userData['email'], $userData['full_name'], $planType, $expiration);
-            } catch (Exception $e) {
-                error_log("E-mail welcome PIX falhou: " . $e->getMessage());
-            }
-
-            logActivity("Assinatura PRO {$planType} ativada via PIX. Payment: {$payment->id}", $user['id']);
             echo json_encode(['status' => 'approved']);
             exit;
         }
 
         if (in_array($payment->status, ['rejected', 'cancelled', 'expired'])) {
+            $subModel->updateStatus($sub['id'], 'failed');
             echo json_encode(['status' => $payment->status]);
             exit;
         }
 
-        echo json_encode(['status' => 'pending']);
+        echo json_encode(['status' => 'pending', 'mp_status' => $payment->status]);
         exit;
     }
 

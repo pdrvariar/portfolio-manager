@@ -108,6 +108,24 @@ class Subscription {
         return $stmt->fetch() ?: null;
     }
 
+    /**
+     * Retorna a assinatura PIX mais recente com status 'pending' para um usuário.
+     * Usada para auto-recuperação ao voltar à página de upgrade.
+     */
+    public function findPendingPixByUserId(int $userId) {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM subscriptions
+             WHERE user_id = ?
+               AND status = 'pending'
+               AND notes LIKE '%PIX%'
+               AND mp_payment_id IS NOT NULL
+             ORDER BY created_at DESC
+             LIMIT 1"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetch() ?: null;
+    }
+
     // ─────────────────────────────────────────────────────────────
     // ATUALIZAÇÕES DE CICLO DE VIDA
     // ─────────────────────────────────────────────────────────────
