@@ -4,6 +4,18 @@
  * @var array  $simulations       Lista de simulações filtradas
  * @var int    $portfolioId       ID do portfólio selecionado (0 = todos)
  * @var array|null $selectedPortfolio Portfólio selecionado (null = todos)
+ * @var array  $sortedPortfolios  Portfólios ordenados alfabeticamente
+ * @var array  $displaySimulations Simulações para exibição (filtradas por grupo)
+ * @var array  $snapshotsJs       Dados dos snapshots para JS
+ * @var array  $metricsJs         Métricas para JS
+ * @var array  $portfolioUrlsJs   URLs dos portfólios para JS
+ * @var string $csrfTokenJson     Token CSRF em JSON
+ * @var string $baseHistoryUrl    URL base para histórico
+ * @var int    $totalCount        Contagem total de simulações exibidas
+ * @var array|null $bestSharpe    Melhor simulação por Sharpe
+ * @var array|null $bestReturn    Melhor simulação por retorno
+ * @var array  $breadcrumbs       Breadcrumb para layout
+ * @var string|null $advancedGroup Grupo de simulação avançada ativo
  */
 
 $title = $selectedPortfolio
@@ -1631,5 +1643,4 @@ HTML;
 $content = ob_get_clean() . $modalHtml;
 include_once __DIR__ . '/../layouts/main.php';
 ?>
-
 

@@ -768,6 +768,79 @@ class PortfolioController {
         // Advanced simulation group filter
         $advancedGroup = isset($_GET['group']) ? trim($_GET['group']) : null;
 
+        // Sort portfolios alphabetically for the filter
+        $sortedPortfolios = $portfolios;
+        usort($sortedPortfolios, fn($a,$b) => strcasecmp($a['name'], $b['name']));
+
+        // If a group is active, filter only those simulations for display  
+        $displaySimulations = $simulations;
+        if ($advancedGroup) {
+            $displaySimulations = array_filter($simulations, fn($s) => ($s['advanced_simulation_group'] ?? '') === $advancedGroup);
+            $displaySimulations = array_values($displaySimulations);
+        }
+
+        // Build JS data structures
+        $snapshotsJs = [];
+        $metricsJs   = [];
+        foreach ($simulations as $sim) {
+            $pc = $sim['portfolio_config'] ? json_decode($sim['portfolio_config'], true) : null;
+            $ac = $sim['assets_config']    ? json_decode($sim['assets_config'],    true) : null;
+            $snapshotsJs[$sim['id']] = ['portfolio' => $pc, 'assets' => $ac];
+            $metricsJs[$sim['id']] = [
+                'total_invested'         => $sim['total_invested']          ?? null,
+                'total_deposits'         => $sim['total_deposits']          ?? null,
+                'total_value'            => $sim['total_value']             ?? null,
+                'interest_earned'        => $sim['interest_earned']         ?? null,
+                'total_tax_paid'         => $sim['total_tax_paid']          ?? null,
+                'roi'                    => $sim['roi']                     ?? null,
+                'annual_return'          => $sim['annual_return']           ?? null,
+                'strategy_annual_return' => $sim['strategy_annual_return']  ?? null,
+                'strategy_return'        => $sim['strategy_return']         ?? null,
+                'volatility'             => $sim['volatility']              ?? null,
+                'sharpe_ratio'           => $sim['sharpe_ratio']            ?? null,
+                'max_drawdown'           => $sim['max_drawdown']            ?? null,
+                'max_monthly_gain'       => $sim['max_monthly_gain']        ?? null,
+                'max_monthly_loss'       => $sim['max_monthly_loss']        ?? null,
+                'portfolio_name'         => $sim['portfolio_name']          ?? null,
+                'advanced_group'         => $sim['advanced_simulation_group'] ?? null,
+                'allocation_label'       => $sim['allocation_label']        ?? null,
+            ];
+        }
+
+        // Per-portfolio apply snapshot URLs and run URLs
+        $portfolioUrlsJs = [];
+        foreach ($portfolios as $p) {
+            $portfolioUrlsJs[$p['id']] = [
+                'apply'            => '/index.php?url=' . obfuscateUrl('portfolio/apply-snapshot/' . $p['id']),
+                'create_from_snap' => '/index.php?url=' . obfuscateUrl('portfolio/create-from-snapshot'),
+                'run'              => '/index.php?url=' . obfuscateUrl('portfolio/run/' . $p['id']),
+                'view'             => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $p['id']),
+                'name'             => $p['name'],
+            ];
+        }
+
+        $csrfToken     = Session::getCsrfToken();
+        $csrfTokenJson = json_encode($csrfToken);
+        $baseHistoryUrl = obfuscateUrl('portfolio/simulations');
+
+        // Summary stats
+        $totalCount = count($displaySimulations);
+        $bestSharpe = null; $bestReturn = null;
+        foreach ($displaySimulations as $s) {
+            if ($bestSharpe === null || (float)$s['sharpe_ratio'] > (float)$bestSharpe['sharpe_ratio']) $bestSharpe = $s;
+            if ($bestReturn === null || (float)$s['annual_return'] > (float)$bestReturn['annual_return']) $bestReturn = $s;
+        }
+
+        // Breadcrumb injetado no layout
+        $breadcrumbs = [
+            ['label' => '<i class="bi bi-house-door"></i> Home', 'url' => '/index.php?url=' . obfuscateUrl('dashboard')],
+            ['label' => 'Portfólios', 'url' => '/index.php?url=' . obfuscateUrl('portfolio')],
+        ];
+        if ($selectedPortfolio) {
+            $breadcrumbs[] = ['label' => htmlspecialchars($selectedPortfolio['name']), 'url' => '/index.php?url=' . obfuscateUrl('portfolio/view/' . $selectedPortfolio['id'])];
+        }
+        $breadcrumbs[] = ['label' => 'Histórico de Simulações', 'url' => '#'];
+
         require_once __DIR__ . '/../views/portfolio/all_simulations.php';
     }
 
